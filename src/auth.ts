@@ -24,6 +24,8 @@ const LOGIN_ROLES: Role[] = [Role.ADMIN, Role.HR];
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   secret: env.AUTH_SECRET,
+  // Self-hosted (non-Vercel) deployment — trust the host header.
+  trustHost: true,
   session: { strategy: "jwt" },
   pages: { signIn: "/login" },
   providers: [
