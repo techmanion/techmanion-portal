@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { signOutAction } from "@/app/(app)/actions";
 
 const NAV = [
-  { href: "/", label: "Employees", icon: Users },
+  { href: "/employees", label: "Employees", icon: Users },
   { href: "/payroll", label: "Payroll", icon: Banknote },
   { href: "/projects", label: "Projects", icon: FolderKanban },
   { href: "/settings", label: "Settings", icon: Settings },
@@ -29,8 +29,7 @@ export function AppSidebar({
 
       <nav className="flex-1 space-y-1 px-3">
         {NAV.map(({ href, label, icon: Icon }) => {
-          const active =
-            href === "/" ? pathname === "/" : pathname.startsWith(href);
+          const active = pathname === href || pathname.startsWith(`${href}/`);
           return (
             <Link
               key={href}
