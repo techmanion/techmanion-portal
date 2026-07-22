@@ -49,3 +49,14 @@ next-env.d.ts
 
 # claude local settings
 .claude/settings.local.json
+
+/src/generated/prisma
+
+# prisma generated client
+/src/generated/
+
+# prisma-installed agent skill docs (local tooling, not app code)
+.agents/
+.windsurf/
+.claude/skills/
+skills-lock.json
