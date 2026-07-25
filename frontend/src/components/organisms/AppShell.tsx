@@ -1,14 +1,35 @@
-import { Outlet } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../../auth";
 import { AppHeader } from "./AppHeader";
 import { Sidebar } from "./Sidebar";
 
 export function AppShell() {
   const { logout } = useAuth();
+  const { pathname } = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!sidebarOpen) return;
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setSidebarOpen(false);
+    }
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [sidebarOpen]);
+
   return (
     <div className="min-h-screen bg-background text-on-surface">
-      <AppHeader onLogout={logout} />
-      <Sidebar />
+      <AppHeader onLogout={logout} onMenuClick={() => setSidebarOpen((current) => !current)} />
+      <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <main className="portal-main min-h-screen pt-16 lg:pl-60">
         <Outlet />
       </main>

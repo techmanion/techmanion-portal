@@ -54,6 +54,13 @@ export function ProjectsPage() {
     [projects, search, status, client],
   );
 
+  const hasActiveFilters = Boolean(search || status || client);
+  function clearFilters() {
+    setSearch("");
+    setStatus("");
+    setClient("");
+  }
+
   async function createProject(event: React.FormEvent) {
     event.preventDefault();
     try {
@@ -135,10 +142,18 @@ export function ProjectsPage() {
             <button className="flex h-9 items-center gap-2 rounded-full bg-surface-container-highest px-4 text-sm">
               Timeline <Icon className="text-[16px]">calendar_today</Icon>
             </button>
-            <div className="mx-1.5 h-8 w-px bg-outline-variant/50" />
-            <IconButton aria-label="Filter list">
-              <Icon>filter_list</Icon>
-            </IconButton>
+            <div className="mx-1.5 hidden h-8 w-px bg-outline-variant/50 sm:block" />
+            <div className="ml-auto flex items-center gap-1.5 sm:ml-0">
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={clearFilters}>
+                  <Icon className="text-[16px]">filter_alt_off</Icon>
+                  Clear filters
+                </Button>
+              )}
+              <IconButton aria-label="Filter list">
+                <Icon>filter_list</Icon>
+              </IconButton>
+            </div>
           </FilterToolbar>
         </div>
 

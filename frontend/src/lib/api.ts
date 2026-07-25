@@ -1,3 +1,6 @@
+import { BACKEND_DISABLED } from "./mockData";
+import { MockApiError, mockDownload, mockLogin, mockRequest } from "./mockApi";
+
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000/api/v1";
 const TOKEN_KEY = "techmanion_access_token";
 
@@ -10,6 +13,12 @@ export class ApiError extends Error {
   }
 }
 
+function toApiError(reason: unknown): ApiError {
+  if (reason instanceof MockApiError) return new ApiError(reason.message, reason.status);
+  if (reason instanceof ApiError) return reason;
+  return new ApiError(reason instanceof Error ? reason.message : "Something went wrong. Try again.", 500);
+}
+
 export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
@@ -20,6 +29,14 @@ export function setToken(token: string | null): void {
 }
 
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
+  if (BACKEND_DISABLED) {
+    try {
+      return (await mockRequest(path, init)) as T;
+    } catch (reason) {
+      throw toApiError(reason);
+    }
+  }
+
   const token = getToken();
   const headers = new Headers(init.headers);
   if (token) headers.set("Authorization", `Bearer ${token}`);
@@ -42,6 +59,14 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 export async function apiBlob(path: string): Promise<Blob> {
+  if (BACKEND_DISABLED) {
+    try {
+      return await mockDownload(path);
+    } catch (reason) {
+      throw toApiError(reason);
+    }
+  }
+
   const token = getToken();
   const response = await fetch(`${API_URL}${path}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : undefined,
@@ -51,6 +76,14 @@ export async function apiBlob(path: string): Promise<Blob> {
 }
 
 export async function login(email: string, password: string) {
+  if (BACKEND_DISABLED) {
+    try {
+      return await mockLogin(email, password);
+    } catch (reason) {
+      throw toApiError(reason);
+    }
+  }
+
   const form = new URLSearchParams({ username: email, password });
   const response = await fetch(`${API_URL}/auth/login`, {
     method: "POST",

@@ -10,12 +10,12 @@ function SummaryMetric({
   tone?: "default" | "primary" | "tertiary";
 }) {
   return (
-    <div className="min-w-0 flex-1 px-5 first:pl-0">
-      <span className="block text-xs font-semibold uppercase tracking-[0.1em] text-on-surface-variant">
+    <div className="min-w-0 sm:flex-1 sm:px-5 sm:first:pl-0">
+      <span className="block truncate text-xs font-semibold uppercase tracking-[0.1em] text-on-surface-variant">
         {labelText}
       </span>
       <strong
-        className={`mt-2 block text-xl font-semibold leading-tight ${
+        className={`mt-2 block truncate text-xl font-semibold leading-tight ${
           tone === "primary" ? "text-primary" : tone === "tertiary" ? "text-tertiary" : "text-on-surface"
         }`}
       >
@@ -52,7 +52,7 @@ export function PayrollSummary({
 }) {
   return (
     <div>
-      <div className="flex divide-x divide-outline-variant/50">
+      <div className="grid grid-cols-2 gap-x-4 gap-y-5 sm:flex sm:gap-0 sm:divide-x sm:divide-outline-variant/50">
         <SummaryMetric labelText="Employees" value={String(totalCount)} />
         <SummaryMetric labelText="Gross Payroll" value={formatMoney(gross, currency)} />
         <SummaryMetric labelText="Tax Deductions" value={formatMoney(tax, currency)} />

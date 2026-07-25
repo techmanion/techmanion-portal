@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Icon, IconButton } from "../components/atoms";
+import { Button, Icon, IconButton } from "../components/atoms";
 import { EmptyState, FilterSelect, PaginationControls, SearchInput } from "../components/molecules";
 import { EmployeeTable, FilterToolbar, PageHeader } from "../components/organisms";
 import { api } from "../lib/api";
@@ -59,29 +59,39 @@ export function EmployeesPage() {
     [employees, employeeType],
   );
 
-  return (
-    <div className="min-h-[calc(100vh-64px)] p-3 lg:p-4">
-      <section className="surface-panel mx-auto flex min-h-[calc(100vh-96px)] max-w-[1450px] flex-col overflow-hidden">
-        <div className="flex flex-col gap-4 border-b border-outline-variant/30 px-6 py-6">
-          <PageHeader
-            title="Employees"
-            meta={
-              <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
-                {employees.length.toLocaleString()} Total
-              </span>
-            }
-            description="Manage your team and employment records from a centralized command center."
-            actions={
-              <Link
-                to="/employees/new"
-                className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-5 text-sm font-medium text-on-primary shadow-md shadow-black/10 hover:brightness-105"
-              >
-                <Icon className="text-[18px]">add</Icon>
-                Add employee
-              </Link>
-            }
-          />
+  const hasActiveFilters = Boolean(search || status || department || designation || employeeType);
+  function clearFilters() {
+    setSearch("");
+    setStatus("");
+    setDepartment("");
+    setDesignation("");
+    setEmployeeType("");
+  }
 
+  return (
+    <div className="mx-auto max-w-[1450px] px-6 py-7">
+      <PageHeader
+        className="mb-8 px-1"
+        title="Employees"
+        meta={
+          <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+            {employees.length.toLocaleString()} Total
+          </span>
+        }
+        description="Manage your team and employment records from a centralized command center."
+        actions={
+          <Link
+            to="/employees/new"
+            className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-5 text-sm font-medium text-on-primary shadow-md shadow-black/10 hover:brightness-105"
+          >
+            <Icon className="text-[18px]">add</Icon>
+            Add employee
+          </Link>
+        }
+      />
+
+      <section className="surface-panel overflow-hidden">
+        <div className="bg-surface-container-high/30 px-6 py-4">
           <FilterToolbar>
             <SearchInput value={search} onChange={setSearch} placeholder="Search employees..." className="lg:max-w-[380px]" />
             <div className="mx-2 hidden h-8 w-px bg-outline-variant/50 xl:block" />
@@ -105,29 +115,32 @@ export function EmployeesPage() {
                 <option key={value} value={value}>{label(value)}</option>
               ))}
             </FilterSelect>
-            <IconButton className="ml-auto" aria-label="Filter list">
-              <Icon>filter_list</Icon>
-            </IconButton>
-            <IconButton aria-label="Grid view">
-              <Icon>grid_view</Icon>
-            </IconButton>
+            <div className="ml-auto flex items-center gap-1.5">
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={clearFilters}>
+                  <Icon className="text-[16px]">filter_alt_off</Icon>
+                  Clear filters
+                </Button>
+              )}
+              <IconButton aria-label="Filter list">
+                <Icon>filter_list</Icon>
+              </IconButton>
+            </div>
           </FilterToolbar>
         </div>
 
-        <div className="flex-1 overflow-x-auto">
-          <EmployeeTable employees={visibleEmployees} avatars={portraits} onRowClick={(employee) => navigate(`/employees/${employee.id}`)} />
-          {!loading && !error && visibleEmployees.length === 0 && (
-            <EmptyState>No employees match the selected filters.</EmptyState>
-          )}
-          {error && <EmptyState>{error}</EmptyState>}
-        </div>
+        <EmployeeTable employees={visibleEmployees} avatars={portraits} onRowClick={(employee) => navigate(`/employees/${employee.id}`)} />
+        {!loading && !error && visibleEmployees.length === 0 && (
+          <EmptyState>No employees match the selected filters.</EmptyState>
+        )}
+        {error && <EmptyState>{error}</EmptyState>}
 
-        <footer className="flex flex-wrap items-center justify-between gap-4 border-t border-outline-variant/30 px-6 py-3.5 text-sm text-on-surface-variant">
+        <footer className="flex flex-wrap items-center justify-between gap-4 border-t border-outline-variant/30 bg-surface-container-highest/20 px-6 py-3.5 text-sm text-on-surface-variant">
           <div className="flex items-center gap-5">
             <span>Showing {visibleEmployees.length ? `1–${visibleEmployees.length}` : "0"} of {employees.length}</span>
-            <span className="rounded-full bg-surface-container-low px-3 py-1.5 text-xs">Rows per page: <strong className="ml-1.5 text-on-surface">10⌄</strong></span>
+            <span>Rows per page: <strong className="ml-1.5 text-on-surface">10⌄</strong></span>
           </div>
-          <PaginationControls page={1} pageCount={3} />
+          <PaginationControls page={1} pageCount={3} showEdges={false} />
         </footer>
       </section>
     </div>

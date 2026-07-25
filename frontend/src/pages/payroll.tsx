@@ -4,7 +4,7 @@ import { EmployeeCell, EmptyState, FilterSelect, PaginationControls, SearchInput
 import { DataTable, FilterToolbar, PageHeader, PayrollSummary, TableHeadRow, TableRow } from "../components/organisms";
 import { api } from "../lib/api";
 import { formatMoney } from "../lib/format";
-import type { PayrollRun } from "../types";
+import type { Employee, NamedOption, PayrollRun } from "../types";
 
 export function PayrollPage() {
   const [runs, setRuns] = useState<PayrollRun[]>([]);
@@ -12,6 +12,9 @@ export function PayrollPage() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
+  const [department, setDepartment] = useState("");
+  const [departments, setDepartments] = useState<NamedOption[]>([]);
+  const [employeeDepartments, setEmployeeDepartments] = useState<Record<number, number>>({});
   const [error, setError] = useState("");
 
   function load() {
@@ -24,16 +27,36 @@ export function PayrollPage() {
   }
 
   useEffect(load, []);
+  useEffect(() => {
+    Promise.all([api<NamedOption[]>("/settings/departments"), api<Employee[]>("/employees")])
+      .then(([departmentRows, employeeRows]) => {
+        setDepartments(departmentRows);
+        setEmployeeDepartments(
+          Object.fromEntries(
+            employeeRows.filter((employee) => employee.departmentId).map((employee) => [employee.id, employee.departmentId as number]),
+          ),
+        );
+      })
+      .catch(() => undefined);
+  }, []);
   const selected = useMemo(() => runs.find((run) => run.id === selectedId), [runs, selectedId]);
   const visible = useMemo(
     () =>
       (selected?.payslips ?? []).filter(
         (payslip) =>
           (!search || payslip.employeeName.toLowerCase().includes(search.toLowerCase())) &&
-          (!status || payslip.paymentStatus === status),
+          (!status || payslip.paymentStatus === status) &&
+          (!department || employeeDepartments[payslip.employeeId] === Number(department)),
       ),
-    [selected, search, status],
+    [selected, search, status, department, employeeDepartments],
   );
+
+  const hasActiveFilters = Boolean(search || status || department);
+  function clearFilters() {
+    setSearch("");
+    setStatus("");
+    setDepartment("");
+  }
   const totals = useMemo(() => {
     const rows = selected?.payslips ?? [];
     return {
@@ -75,74 +98,74 @@ export function PayrollPage() {
   );
 
   return (
-    <div className="min-h-[calc(100vh-64px)] p-3 lg:p-4">
-      <section className="surface-panel mx-auto max-w-[1540px] overflow-hidden">
-        <div className="px-7 pb-6 pt-7">
-          <PageHeader
-            title="Payroll"
-            description="Manage monthly payroll, deductions and employee payments"
-            actions={
-              <>
-                <label className="relative flex h-10 items-center rounded-full bg-surface-container-high px-4">
-                  <Icon className="mr-2.5 text-[18px]">calendar_month</Icon>
-                  <input
-                    aria-label="Payroll month"
-                    type="month"
-                    value={month}
-                    onChange={(event) => setMonth(event.target.value)}
-                    className="w-32 bg-transparent text-sm font-medium text-on-surface outline-none [color-scheme:dark]"
-                  />
-                  <span className="pointer-events-none absolute inset-y-0 left-11 flex items-center bg-surface-container-high pr-3 text-sm font-medium">
-                    {monthLabel}
-                  </span>
-                </label>
-                <Button size="lg" onClick={createRun}>
-                  <Icon className="text-[18px]">add</Icon>
-                  Generate Payroll
-                </Button>
-              </>
-            }
-          />
+    <div className="mx-auto max-w-[1540px] px-6 py-7">
+      <PageHeader
+        className="mb-8 px-1"
+        title="Payroll"
+        description="Manage monthly payroll, deductions and employee payments"
+        actions={
+          <>
+            <label className="relative flex h-10 items-center rounded-full bg-surface-container-high px-4">
+              <Icon className="mr-2.5 text-[18px]">calendar_month</Icon>
+              <input
+                aria-label="Payroll month"
+                type="month"
+                value={month}
+                onChange={(event) => setMonth(event.target.value)}
+                className="w-32 bg-transparent text-sm font-medium text-on-surface outline-none [color-scheme:dark]"
+              />
+              <span className="pointer-events-none absolute inset-y-0 left-11 flex items-center bg-surface-container-high pr-3 text-sm font-medium">
+                {monthLabel}
+              </span>
+            </label>
+            <Button size="lg" onClick={createRun}>
+              <Icon className="text-[18px]">add</Icon>
+              Generate Payroll
+            </Button>
+          </>
+        }
+      />
 
-          {runs.length > 1 && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {runs.map((run) => (
-                <button
-                  key={run.id}
-                  onClick={() => {
-                    setSelectedId(run.id);
-                    setMonth(run.periodMonth);
-                  }}
-                  className={`rounded-full px-3 py-1.5 text-xs ${run.id === selectedId ? "bg-primary/20 text-primary" : "bg-surface-container-high text-on-surface-variant"}`}
-                >
-                  {run.periodMonth}
-                </button>
-              ))}
-            </div>
-          )}
-
-          <div className="mt-8">
-            <PayrollSummary
-              totalCount={totalCount}
-              gross={totals.gross}
-              tax={totals.tax}
-              net={totals.net}
-              outstanding={Math.max(0, totals.net - totals.paid)}
-              currency={currency}
-              paidCount={totals.paidCount}
-              partialCount={totals.partialCount}
-              pendingCount={totals.pendingCount}
-              paidPct={paidPct}
-              partialPct={partialPct}
-            />
-          </div>
+      {runs.length > 1 && (
+        <div className="mb-6 flex flex-wrap gap-2 px-1">
+          {runs.map((run) => (
+            <button
+              key={run.id}
+              onClick={() => {
+                setSelectedId(run.id);
+                setMonth(run.periodMonth);
+              }}
+              className={`rounded-full px-3 py-1.5 text-xs ${run.id === selectedId ? "bg-primary/20 text-primary" : "bg-surface-container-high text-on-surface-variant"}`}
+            >
+              {run.periodMonth}
+            </button>
+          ))}
         </div>
+      )}
 
-        <div className="border-t border-outline-variant/30 bg-surface-container-high/20 px-7 py-4">
+      <section className="surface-panel mb-6 p-6">
+        <PayrollSummary
+          totalCount={totalCount}
+          gross={totals.gross}
+          tax={totals.tax}
+          net={totals.net}
+          outstanding={Math.max(0, totals.net - totals.paid)}
+          currency={currency}
+          paidCount={totals.paidCount}
+          partialCount={totals.partialCount}
+          pendingCount={totals.pendingCount}
+          paidPct={paidPct}
+          partialPct={partialPct}
+        />
+      </section>
+
+      <section className="surface-panel overflow-hidden">
+        <div className="bg-surface-container-high/30 px-6 py-4">
           <FilterToolbar>
             <SearchInput value={search} onChange={setSearch} placeholder="Search employees..." className="lg:max-w-[380px]" />
-            <FilterSelect value="" onChange={() => undefined} labelText="Department">
-              <option>Department: All</option>
+            <FilterSelect value={department} onChange={setDepartment} labelText="Department">
+              <option value="">Department: All</option>
+              {departments.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
             </FilterSelect>
             <FilterSelect value={status} onChange={setStatus} labelText="Status">
               <option value="">Status: All</option>
@@ -150,8 +173,16 @@ export function PayrollPage() {
               <option value="PARTIALLY_PAID">Partial</option>
               <option value="PENDING">Pending</option>
             </FilterSelect>
-            <IconButton aria-label="Download"><Icon>download</Icon></IconButton>
-            <IconButton aria-label="Print" onClick={() => window.print()}><Icon>print</Icon></IconButton>
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={clearFilters}>
+                <Icon className="text-[16px]">filter_alt_off</Icon>
+                Clear filters
+              </Button>
+            )}
+            <div className="ml-auto flex items-center gap-1">
+              <IconButton aria-label="Download"><Icon>download</Icon></IconButton>
+              <IconButton aria-label="Print" onClick={() => window.print()}><Icon>print</Icon></IconButton>
+            </div>
           </FilterToolbar>
         </div>
 
@@ -196,12 +227,12 @@ export function PayrollPage() {
         {!selected && <EmptyState>Select a month and generate payroll.</EmptyState>}
         {selected && !visible.length && <EmptyState>No employees match these filters.</EmptyState>}
 
-        <footer className="flex items-center justify-between border-t border-outline-variant/30 px-7 py-4 text-sm text-on-surface-variant">
+        <footer className="flex flex-wrap items-center justify-between gap-4 border-t border-outline-variant/30 bg-surface-container-highest/20 px-7 py-4 text-sm text-on-surface-variant">
           <span>Showing {visible.length} of {totalCount} employees</span>
           <PaginationControls page={1} pageCount={3} showEdges={false} />
         </footer>
       </section>
-      {error && <div className="mx-auto mt-4 max-w-[1540px] rounded-xl bg-error/10 px-4 py-3 text-sm text-error">{error}</div>}
+      {error && <div className="mt-4 rounded-xl bg-error/10 px-4 py-3 text-sm text-error">{error}</div>}
     </div>
   );
 }

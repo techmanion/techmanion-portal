@@ -1,18 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { Icon } from "../atoms/Icon";
-
-const mainItems = [
-  { to: "/employees", label: "Employees", icon: "group" },
-  { to: "/projects", label: "Projects", icon: "list_alt" },
-  { to: "/clients", label: "Clients", icon: "corporate_fare", disabled: true },
-  { to: "/payroll", label: "Payroll", icon: "payments" },
-];
-
-const adminItems = [
-  { to: "/settings", label: "Organization", icon: "hub" },
-  { to: "/settings", label: "Tax Configuration", icon: "description" },
-  { to: "/settings", label: "Audit History", icon: "history" },
-];
+import { ADMIN_NAV_ITEMS, NAV_ITEMS } from "../../lib/nav";
 
 function NavRow({
   to,
@@ -50,22 +38,31 @@ function NavRow({
   );
 }
 
-export function Sidebar() {
+export function Sidebar({ open = false, onClose }: { open?: boolean; onClose?: () => void }) {
   return (
-    <aside className="portal-sidebar fixed bottom-0 left-0 top-16 z-40 hidden w-60 bg-background px-3 pt-2 lg:block">
-      <nav className="flex flex-col gap-1">
-        <span className="mb-1.5 flex h-10 items-center gap-3 rounded-full px-4 text-sm text-on-surface-variant">
-          <Icon className="text-[20px]">dashboard</Icon>
-          Overview
-        </span>
-        {mainItems.map((item) => (
-          <NavRow key={item.label} {...item} />
-        ))}
-        <div className="mx-4 my-4 h-px bg-outline-variant/50" />
-        {adminItems.map((item) => (
-          <NavRow key={item.label} {...item} />
-        ))}
-      </nav>
-    </aside>
+    <>
+      <div
+        aria-hidden="true"
+        onClick={onClose}
+        className={`fixed inset-x-0 bottom-0 top-16 z-30 bg-black/50 transition-opacity duration-200 lg:hidden ${
+          open ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+      />
+      <aside
+        className={`portal-sidebar fixed bottom-0 left-0 top-16 z-40 w-60 bg-background px-3 pt-2 transition-transform duration-200 ease-out lg:translate-x-0 ${
+          open ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <nav className="flex flex-col gap-1" onClick={onClose}>
+          {NAV_ITEMS.map((item) => (
+            <NavRow key={item.label} {...item} />
+          ))}
+          <div className="mx-4 my-4 h-px bg-outline-variant/50" />
+          {ADMIN_NAV_ITEMS.map((item) => (
+            <NavRow key={item.label} {...item} />
+          ))}
+        </nav>
+      </aside>
+    </>
   );
 }

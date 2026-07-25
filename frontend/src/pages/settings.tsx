@@ -30,9 +30,11 @@ export function SettingsPage() {
       api<NamedOption[]>("/settings/designations"),
       api<TaxSlab[]>("/settings/tax-slabs"),
       user?.role === "ADMIN" ? api<AuditLog[]>("/audit") : Promise.resolve([]),
-    ]).then(([departmentRows, designationRows, taxRows, auditRows]) => {
-      setDepartments(departmentRows); setDesignations(designationRows); setSlabs(taxRows); setAudits(auditRows);
-    });
+    ])
+      .then(([departmentRows, designationRows, taxRows, auditRows]) => {
+        setDepartments(departmentRows); setDesignations(designationRows); setSlabs(taxRows); setAudits(auditRows);
+      })
+      .catch(() => undefined);
   }
   useEffect(load, [user?.role]);
 

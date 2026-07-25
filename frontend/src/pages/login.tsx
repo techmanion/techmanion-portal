@@ -7,7 +7,7 @@ export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("admin@techmanion.com");
-  const [password, setPassword] = useState("ChangeMe123!");
+  const [password, setPassword] = useState("12345678");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -28,46 +28,38 @@ export function LoginPage() {
 
   return (
     <main className="flex min-h-screen w-full bg-background text-on-background">
-      <section className="hidden w-1/2 flex-col justify-between p-8 lg:flex">
+      <section className="hidden w-1/2 flex-col justify-between px-18 py-8 lg:flex">
         <Logo />
-        <div className="max-w-lg">
-          <p className="text-2xl font-semibold leading-[1.3] tracking-[-0.01em] text-on-surface">
-            Unified workspace management for high-performance teams.
+        <div className="-mt-36 flex flex-col gap-4">
+          <p className="text-5xl font-bold leading-[1.25] tracking-[-0.01em] text-on-surface">
+            One workspace for your people, projects, and operations.
+          </p>
+          <p className="max-w-md text-lg leading-6 text-on-surface-variant">
+            Employees, payroll, projects and company operations, organized in one workspace.
           </p>
         </div>
-        <div className="flex gap-5 text-sm text-on-surface-variant">
-          <span>© 2026 WorkCore Inc.</span>
+        <div className="flex gap-5 text-xs text-on-surface-variant">
+          <span>© 2026 TECHMANION</span>
           <a className="hover:text-primary" href="#">Privacy</a>
           <a className="hover:text-primary" href="#">Terms</a>
         </div>
       </section>
 
-      <section className="flex min-h-screen w-full items-center justify-center p-5 lg:w-1/2">
-        <div className="surface-panel relative flex min-h-[calc(100vh-96px)] w-full max-w-[640px] flex-col justify-between overflow-hidden p-8 lg:max-h-[980px]">
-          <div className="pointer-events-none absolute -left-24 -top-24 size-96 rounded-full bg-primary/5 blur-[120px]" />
+      <section className="flex flex-col min-h-screen w-full items-center justify-center p-6 sm:p-10 lg:w-1/2 lg:p-26">
+        <div className="mb-8 flex justify-center lg:hidden">
+          <Logo />
+        </div>
+        <div className="surface-panel relative flex w-full flex-col justify-between overflow-hidden p-8 sm:p-10 lg:p-14">
+
           <div className="relative z-10">
-            <div className="flex items-center gap-2.5">
-              <div className="flex size-8 items-center justify-center rounded-lg bg-primary-container">
-                <Icon className="text-[18px] text-on-primary-container">layers</Icon>
-              </div>
-              <span className="text-sm font-medium text-on-surface">Management Portal</span>
-            </div>
-
-            <div className="mt-10 max-w-xl">
-              <h1 className="text-title font-semibold leading-[1.3] tracking-tight text-on-surface">
-                Manage your team and operations in one place
-              </h1>
-              <p className="mt-3 max-w-lg text-sm leading-6 text-on-surface-variant">
-                Employees, payroll, projects and company operations — organized in one workspace.
-              </p>
-            </div>
-
-            <div className="mx-auto mt-10 w-full max-w-[440px]">
+            <div className="mx-auto w-full max-w-[440px]">
               <div className="mb-6">
-                <h2 className="mb-1.5 text-xl font-semibold text-on-surface">Welcome back</h2>
+                <h2 className="mb-1.5 text-2xl md:text-4xl font-semibold text-on-surface">Welcome back</h2>
                 <p className="text-sm text-on-surface-variant">Sign in with your company account</p>
               </div>
               <form className="flex flex-col gap-5" onSubmit={submit}>
+
+                {error && <div className="rounded-[var(--radius-control)] bg-error/10 px-3.5 py-2.5 text-xs text-error">{error}</div>}
                 <label className="flex flex-col gap-1.5">
                   <span className="px-1 text-xs font-medium text-on-surface-variant">Work email</span>
                   <input
@@ -101,15 +93,8 @@ export function LoginPage() {
                     </button>
                   </div>
                 </label>
-                <div className="flex items-center justify-between px-1">
-                  <label className="flex items-center gap-2.5 text-xs text-on-surface-variant">
-                    <input className="size-4 accent-primary" type="checkbox" />
-                    Stay signed in
-                  </label>
+                <div className="flex justify-between px-1 mt-4">
                   <a className="text-xs font-medium text-primary hover:underline" href="#">Forgot password?</a>
-                </div>
-                {error && <div className="rounded-[var(--radius-control)] bg-error/10 px-3.5 py-2.5 text-xs text-error">{error}</div>}
-                <div className="mt-1 flex justify-start">
                   <Button size="lg" className="min-w-32" type="submit" disabled={submitting}>
                     {submitting ? "Signing in…" : "Sign in"}
                     <Icon className="text-[16px]">arrow_forward</Icon>
@@ -120,13 +105,6 @@ export function LoginPage() {
                 Having trouble signing in? <a className="text-primary hover:underline" href="#">Contact your administrator</a>
               </div>
             </div>
-          </div>
-
-          <div className="relative z-10 mt-8 flex items-center gap-2.5 text-on-surface-variant/60">
-            <Icon className="text-[15px]">lock</Icon>
-            <span className="text-[11px] font-medium uppercase tracking-[0.16em]">
-              Internal workspace • Authorized personnel only
-            </span>
           </div>
         </div>
       </section>

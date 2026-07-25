@@ -23,6 +23,16 @@ export function SearchInput({
         value={value}
         onChange={(event) => onChange(event.target.value)}
       />
+      {value && (
+        <button
+          type="button"
+          aria-label="Clear search"
+          onClick={() => onChange("")}
+          className="grid size-5 shrink-0 place-items-center rounded-full text-on-surface-variant hover:bg-surface-bright hover:text-on-surface"
+        >
+          <Icon className="text-[16px]">close</Icon>
+        </button>
+      )}
     </label>
   );
 }

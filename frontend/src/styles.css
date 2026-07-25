@@ -13,11 +13,11 @@
   --color-surface-container-highest: #353534;
   --color-surface-variant: #353534;
   --color-on-surface: #e5e2e1;
-  --color-on-surface-variant: #c3c6d1;
+  --color-on-surface-variant: #777981;
   --color-outline: #8d919b;
   --color-outline-variant: #424750;
-  --color-primary: #b5cfff;
-  --color-on-primary: #003061;
+  --color-primary: #ffffff;
+  --color-on-primary: #000000;
   --color-primary-container: #8ab4f8;
   --color-on-primary-container: #0d4582;
   --color-primary-fixed: #d5e3ff;
@@ -29,20 +29,22 @@
   --color-error: #ffb4ab;
   --color-error-container: #93000a;
 
+  --color-brand-green: #72ff13;
+
   --font-sans:
     "Google Sans", "Google Sans Text", Roboto, ui-sans-serif, system-ui, sans-serif;
 
   /* Type scale — desktop-density (Gmail/Workspace-like) */
-  --font-size-caption: 0.8125rem; /* 13px */
-  --font-size-caption--line-height: 1.15rem;
-  --font-size-heading: 1.125rem; /* 16-18px section headings */
-  --font-size-heading--line-height: 1.5rem;
-  --font-size-title: 1.5rem; /* ~24px page title */
-  --font-size-title--line-height: 1.9rem;
+  --text-caption: 0.8125rem; /* 13px */
+  --text-caption--line-height: 1.15rem;
+  --text-heading: 1.125rem; /* 16-18px section headings */
+  --text-heading--line-height: 1.5rem;
+  --text-title: 1.75rem; /* ~24px page title */
+  --text-title--line-height: 1.9rem;
 
   /* Radii — Material-rounded but not oversized */
   --radius-control: 0.625rem; /* 10px inputs/selects */
-  --radius-panel: 1.25rem; /* 20px cards/panels */
+  --radius-panel: 2.25rem; /* 36px cards/panels */
 
   --shadow-panel: 0 12px 32px rgb(0 0 0 / 22%);
 }

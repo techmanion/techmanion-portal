@@ -38,7 +38,7 @@ export function TableRow({
   return (
     <tr
       onClick={onClick}
-      className={`h-12 transition hover:bg-surface-container-highest/40 ${onClick ? "cursor-pointer" : ""} ${className}`}
+      className={`h-16 transition hover:bg-surface-container-highest/40 ${onClick ? "cursor-pointer" : ""} ${className}`}
     >
       {children}
     </tr>
