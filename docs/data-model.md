@@ -6,7 +6,7 @@
 
 Conventions: every table has `id`, `createdAt`, `updatedAt`. Money is stored as
 integer **minor units** plus a `currency` code (default `PKR`) — see
-[architecture.md §5](architecture.md). Enums are listed inline.
+[architecture.md §6](architecture.md). Enums are listed inline.
 
 ---
 
@@ -110,7 +110,7 @@ One per employee per run.
 Pakistan salary slabs, editable in Settings without a deploy.
 - `fiscalYear`, `lowerBound` (annual, minor units), `upperBound` (nullable = ∞)
 - `fixedAmount` (minor units), `ratePctOverLower`
-- The tax engine ([architecture.md §5](architecture.md)) resolves the slab for an
+- The tax engine ([architecture.md §6](architecture.md)) resolves the slab for an
   annualized base and returns monthly withholding.
 
 ---
@@ -126,7 +126,7 @@ Single row: `name`, `address`, `defaultCurrency` (`PKR`), `logoText` (text-only 
 ### AuditLog  *(append-only)*
 - `actorUserId`, `action`, `entityType`, `entityId`
 - `before` (JSON), `after` (JSON), `createdAt`
-- Written in the same transaction as the change ([architecture.md §4](architecture.md)).
+- Written in the same transaction as the change ([architecture.md §5](architecture.md)).
 
 ---
 

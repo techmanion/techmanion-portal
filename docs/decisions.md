@@ -6,13 +6,14 @@ add a new entry rather than editing the old one.
 
 ---
 
-### D1 — Stack: Next.js full-stack + PostgreSQL + Prisma
-**Decision:** One Next.js (App Router) app for UI and server logic; PostgreSQL via Prisma.
-**Why:** Internal tool, small team, one codebase is fastest to build and operate. The
-[Design Document](design-doc.md) already mandates React + shadcn/ui, so Next.js is a
-natural fit. Relational data (employees, payroll, assignments) wants Postgres.
-**Rejected:** Separate React SPA + Node API (more moving parts than needed);
-Supabase-backed (fine, but we preferred owning the server logic in one place).
+### D1 — Stack: Vite + React, FastAPI, PostgreSQL + SQLAlchemy
+**Decision:** A Vite-built React SPA for the interface and a separate FastAPI service for
+server logic; PostgreSQL via SQLAlchemy with Alembic migrations.
+**Why:** The deployment boundary is explicit: the frontend stays a fast, static artifact,
+while validation, authorization, payroll calculation, files, and audit writes live in a
+typed Python API. Relational data (employees, payroll, assignments) wants Postgres.
+**Rejected:** Next.js full-stack (couples the UI build and API runtime);
+Supabase-backed (fine, but we prefer owning server logic and authorization).
 
 ### D2 — v1 is Admin/HR only; no employee self-service
 **Decision:** Only Admin and HR log in for v1. Employee/Manager self-service is Phase 2+.

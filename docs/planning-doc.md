@@ -24,7 +24,7 @@ around it.
 
 | Decision | Choice |
 |---|---|
-| Stack | Next.js (App Router) full-stack + PostgreSQL + Prisma |
+| Stack | Vite + React frontend, FastAPI backend, PostgreSQL + SQLAlchemy |
 | Users in v1 | Admin, HR only — no employee self-service |
 | Tenancy | Single-tenant (one company) |
 | Currency | PKR default, every money value carries a currency code |
@@ -144,6 +144,7 @@ The spec's §8 questions are answered as of this plan:
 - **Team size / growth:** design for a handful → 50+ without redesign (single-tenant).
 - **Product vs internal:** internal only; no multi-tenancy.
 - **Multi-currency:** yes — PKR default, currency stored per money value.
-- **Tech stack:** Next.js full-stack + PostgreSQL (see [architecture.md](architecture.md)).
+- **Tech stack:** Vite + React frontend, FastAPI backend, and PostgreSQL
+  (see [architecture.md](architecture.md)).
 - **Tax:** Pakistan slabs, configurable.
 - **Self-service:** not in v1; Phase 2.

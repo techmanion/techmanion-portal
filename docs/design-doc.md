@@ -60,7 +60,7 @@ No italics. No more than two weights on any screen. Numbers in tables (salaries,
 - **Cards are the only container.** White surface, 8px radius, 1px border *or* a very subtle shadow — never both. No nested cards.
 - Page anatomy is identical everywhere: page title + primary action button (top right) → optional filter row → content card.
 
-### 2.4 Components (from shadcn/ui, restyled to tokens above)
+### 2.4 Components (React primitives, restyled to tokens above)
 
 Buttons, inputs, selects, tables, dialogs, toasts — used as-is from the library with our tokens applied. Component rules:
 
