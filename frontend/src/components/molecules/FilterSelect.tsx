@@ -1,0 +1,32 @@
+import type { ReactNode } from "react";
+import { Icon } from "../atoms/Icon";
+
+export function FilterSelect({
+  value,
+  onChange,
+  labelText,
+  children,
+  className = "",
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  labelText: string;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <label className="relative">
+      <select
+        aria-label={labelText}
+        className={`h-9 appearance-none rounded-full border-0 bg-surface-container-highest py-0 pl-4 pr-9 text-sm text-on-surface outline-none hover:bg-surface-bright ${className}`}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      >
+        {children}
+      </select>
+      <Icon className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[16px] text-on-surface-variant">
+        expand_more
+      </Icon>
+    </label>
+  );
+}
