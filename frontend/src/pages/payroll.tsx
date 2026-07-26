@@ -3,8 +3,9 @@ import { Button, Icon, IconButton, StatusChip } from "../components/atoms";
 import { EmployeeCell, EmptyState, FilterSelect, PaginationControls, SearchInput } from "../components/molecules";
 import { DataTable, FilterToolbar, PageHeader, PayrollSummary, TableHeadRow, TableRow } from "../components/organisms";
 import { api } from "../lib/api";
+import { mockPayrollDepartments, mockPayrollEmployeeDepartments } from "../lib/mockApi";
 import { formatMoney } from "../lib/format";
-import type { Employee, NamedOption, PayrollRun } from "../types";
+import type { PayrollRun } from "../types";
 
 export function PayrollPage() {
   const [runs, setRuns] = useState<PayrollRun[]>([]);
@@ -13,8 +14,6 @@ export function PayrollPage() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [department, setDepartment] = useState("");
-  const [departments, setDepartments] = useState<NamedOption[]>([]);
-  const [employeeDepartments, setEmployeeDepartments] = useState<Record<number, number>>({});
   const [error, setError] = useState("");
 
   function load() {
@@ -27,18 +26,6 @@ export function PayrollPage() {
   }
 
   useEffect(load, []);
-  useEffect(() => {
-    Promise.all([api<NamedOption[]>("/settings/departments"), api<Employee[]>("/employees")])
-      .then(([departmentRows, employeeRows]) => {
-        setDepartments(departmentRows);
-        setEmployeeDepartments(
-          Object.fromEntries(
-            employeeRows.filter((employee) => employee.departmentId).map((employee) => [employee.id, employee.departmentId as number]),
-          ),
-        );
-      })
-      .catch(() => undefined);
-  }, []);
   const selected = useMemo(() => runs.find((run) => run.id === selectedId), [runs, selectedId]);
   const visible = useMemo(
     () =>
@@ -46,9 +33,9 @@ export function PayrollPage() {
         (payslip) =>
           (!search || payslip.employeeName.toLowerCase().includes(search.toLowerCase())) &&
           (!status || payslip.paymentStatus === status) &&
-          (!department || employeeDepartments[payslip.employeeId] === Number(department)),
+          (!department || mockPayrollEmployeeDepartments[payslip.employeeId] === Number(department)),
       ),
-    [selected, search, status, department, employeeDepartments],
+    [selected, search, status, department],
   );
 
   const hasActiveFilters = Boolean(search || status || department);
@@ -165,7 +152,7 @@ export function PayrollPage() {
             <SearchInput value={search} onChange={setSearch} placeholder="Search employees..." className="lg:max-w-[380px]" />
             <FilterSelect value={department} onChange={setDepartment} labelText="Department">
               <option value="">Department: All</option>
-              {departments.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+              {mockPayrollDepartments.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
             </FilterSelect>
             <FilterSelect value={status} onChange={setStatus} labelText="Status">
               <option value="">Status: All</option>

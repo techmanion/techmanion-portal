@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { useAuth } from "../../auth";
 import { Icon } from "../atoms/Icon";
 import { ADMIN_NAV_ITEMS, NAV_ITEMS } from "../../lib/nav";
 
@@ -39,6 +40,7 @@ function NavRow({
 }
 
 export function Sidebar({ open = false, onClose }: { open?: boolean; onClose?: () => void }) {
+  const { user } = useAuth();
   return (
     <>
       <div
@@ -57,10 +59,14 @@ export function Sidebar({ open = false, onClose }: { open?: boolean; onClose?: (
           {NAV_ITEMS.map((item) => (
             <NavRow key={item.label} {...item} />
           ))}
-          <div className="mx-4 my-4 h-px bg-outline-variant/50" />
-          {ADMIN_NAV_ITEMS.map((item) => (
-            <NavRow key={item.label} {...item} />
-          ))}
+          {user?.role === "ADMIN" && (
+            <>
+              <div className="mx-4 my-4 h-px bg-outline-variant/50" />
+              {ADMIN_NAV_ITEMS.map((item) => (
+                <NavRow key={item.label} {...item} />
+              ))}
+            </>
+          )}
         </nav>
       </aside>
     </>

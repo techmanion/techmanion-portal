@@ -23,3 +23,22 @@ export function label(value: string): string {
     .join(" ");
 }
 
+const roleLabels: Record<string, string> = {
+  ADMIN: "Admin",
+  HR: "HR",
+  MANAGER: "Manager",
+  EMPLOYEE: "Employee",
+};
+
+export function roleLabel(value: string): string {
+  return roleLabels[value] ?? label(value);
+}
+
+export function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return "?";
+  const first = parts[0][0] ?? "";
+  const last = parts.length > 1 ? (parts[parts.length - 1][0] ?? "") : "";
+  return (first + last).toUpperCase();
+}
+

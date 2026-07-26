@@ -31,12 +31,35 @@ class UserOut(ApiModel):
     email: EmailStr
     name: str
     role: UserRole
+    is_active: bool
+    created_at: datetime
 
 
 class TokenOut(ApiModel):
     access_token: str
     token_type: str = "bearer"
     user: UserOut
+
+
+class ProfileUpdate(ApiModel):
+    name: str = Field(min_length=1, max_length=120)
+
+
+class PasswordChange(ApiModel):
+    current_password: str
+    new_password: str = Field(min_length=8, max_length=128)
+
+
+class UserCreate(ApiModel):
+    name: str = Field(min_length=1, max_length=120)
+    email: EmailStr
+    password: str = Field(min_length=8, max_length=128)
+    role: UserRole = UserRole.HR
+
+
+class UserAdminUpdate(ApiModel):
+    role: UserRole | None = None
+    is_active: bool | None = None
 
 
 class NamedOption(ApiModel):

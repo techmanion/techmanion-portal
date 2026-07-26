@@ -29,6 +29,7 @@ from app.models import (
     SalaryRevision,
     TaxSlab,
     User,
+    UserRole,
     utc_now,
 )
 from app.schemas import (
@@ -39,9 +40,11 @@ from app.schemas import (
     EmployeeOut,
     EmployeeUpdate,
     NamedOption,
+    PasswordChange,
     PaymentUpdate,
     PayrollRunOut,
     PayslipOut,
+    ProfileUpdate,
     ProjectAssignmentCreate,
     ProjectCreate,
     ProjectOut,
@@ -50,9 +53,11 @@ from app.schemas import (
     TaxSlabInput,
     TaxSlabOut,
     TokenOut,
+    UserAdminUpdate,
+    UserCreate,
     UserOut,
 )
-from app.security import create_access_token, verify_password
+from app.security import create_access_token, hash_password, verify_password
 from app.services import audit, employee_current_salary, monthly_tax
 
 router = APIRouter()
@@ -122,6 +127,85 @@ def login(form: Annotated[OAuth2PasswordRequestForm, Depends()], db: DbSession) 
 @router.get("/auth/me", response_model=UserOut)
 def me(user: CurrentUser) -> User:
     return user
+
+
+@router.patch("/auth/me", response_model=UserOut)
+def update_profile(payload: ProfileUpdate, db: DbSession, user: CurrentUser) -> User:
+    before = {"name": user.name}
+    user.name = payload.name.strip()
+    audit(db, user, "user.profile_updated", "User", user.id, before=before, after={"name": user.name})
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@router.post("/auth/change-password", status_code=status.HTTP_204_NO_CONTENT)
+def change_password(payload: PasswordChange, db: DbSession, user: CurrentUser) -> None:
+    if not verify_password(payload.current_password, user.password_hash):
+        raise HTTPException(status_code=400, detail="Current password is incorrect.")
+    user.password_hash = hash_password(payload.new_password)
+    audit(db, user, "user.password_changed", "User", user.id)
+    db.commit()
+
+
+@router.get("/users", response_model=list[UserOut])
+def list_users(db: DbSession, _: AdminUser) -> list[User]:
+    return list(db.scalars(select(User).order_by(User.name)).all())
+
+
+@router.post("/users", response_model=UserOut, status_code=status.HTTP_201_CREATED)
+def create_user(payload: UserCreate, db: DbSession, admin: AdminUser) -> User:
+    new_user = User(
+        email=payload.email.lower(),
+        password_hash=hash_password(payload.password),
+        name=payload.name.strip(),
+        role=payload.role,
+    )
+    db.add(new_user)
+    try:
+        db.flush()
+        audit(
+            db,
+            admin,
+            "user.created",
+            "User",
+            new_user.id,
+            after={"email": new_user.email, "role": new_user.role.value},
+        )
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="A user with this email already exists.") from exc
+    db.refresh(new_user)
+    return new_user
+
+
+@router.patch("/users/{user_id}", response_model=UserOut)
+def update_user(user_id: int, payload: UserAdminUpdate, db: DbSession, admin: AdminUser) -> User:
+    target = db.get(User, user_id)
+    if not target:
+        raise HTTPException(status_code=404, detail="User was not found.")
+    demoting_self = target.id == admin.id and payload.role is not None and payload.role != UserRole.ADMIN
+    deactivating_self = target.id == admin.id and payload.is_active is False
+    if demoting_self or deactivating_self:
+        raise HTTPException(status_code=400, detail="You cannot revoke your own admin access.")
+    before = {"role": target.role.value, "isActive": target.is_active}
+    if payload.role is not None:
+        target.role = payload.role
+    if payload.is_active is not None:
+        target.is_active = payload.is_active
+    audit(
+        db,
+        admin,
+        "user.updated",
+        "User",
+        target.id,
+        before=before,
+        after={"role": target.role.value, "isActive": target.is_active},
+    )
+    db.commit()
+    db.refresh(target)
+    return target
 
 
 @router.get("/employees", response_model=list[EmployeeOut])

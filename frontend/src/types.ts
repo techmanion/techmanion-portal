@@ -1,4 +1,4 @@
-export type UserRole = "ADMIN" | "HR";
+export type UserRole = "ADMIN" | "HR" | "MANAGER" | "EMPLOYEE";
 export type EmployeeStatus = "ACTIVE" | "ON_LEAVE" | "RESIGNED" | "TERMINATED";
 export type EmployeeType = "FULL_TIME" | "PART_TIME" | "CONTRACT";
 export type ProjectStatus =
@@ -14,6 +14,8 @@ export interface User {
   email: string;
   name: string;
   role: UserRole;
+  isActive: boolean;
+  createdAt: string;
 }
 
 export interface NamedOption {

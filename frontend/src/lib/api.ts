@@ -1,8 +1,14 @@
-import { BACKEND_DISABLED } from "./mockData";
-import { MockApiError, mockDownload, mockLogin, mockRequest } from "./mockApi";
+import { MockApiError, mockRequest } from "./mockApi";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000/api/v1";
 const TOKEN_KEY = "techmanion_access_token";
+
+/**
+ * Payroll is not wired to the real backend yet — those requests are served
+ * from the in-memory fixture in mockApi.ts. Every other resource hits the
+ * live API.
+ */
+const MOCKED_PATH = /^\/(payroll|payslips)(\/|\?|$)/;
 
 export class ApiError extends Error {
   constructor(
@@ -29,7 +35,7 @@ export function setToken(token: string | null): void {
 }
 
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
-  if (BACKEND_DISABLED) {
+  if (MOCKED_PATH.test(path)) {
     try {
       return (await mockRequest(path, init)) as T;
     } catch (reason) {
@@ -59,14 +65,6 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 export async function apiBlob(path: string): Promise<Blob> {
-  if (BACKEND_DISABLED) {
-    try {
-      return await mockDownload(path);
-    } catch (reason) {
-      throw toApiError(reason);
-    }
-  }
-
   const token = getToken();
   const response = await fetch(`${API_URL}${path}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : undefined,
@@ -76,14 +74,6 @@ export async function apiBlob(path: string): Promise<Blob> {
 }
 
 export async function login(email: string, password: string) {
-  if (BACKEND_DISABLED) {
-    try {
-      return await mockLogin(email, password);
-    } catch (reason) {
-      throw toApiError(reason);
-    }
-  }
-
   const form = new URLSearchParams({ username: email, password });
   const response = await fetch(`${API_URL}/auth/login`, {
     method: "POST",
