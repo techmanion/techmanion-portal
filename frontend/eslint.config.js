@@ -23,7 +23,7 @@ export default tseslint.config(
         "warn",
         {
           allowConstantExport: true,
-          allowExportNames: ["useAuth", "useRouter", "useNavigate", "useEmployeeId"],
+          allowExportNames: ["useAuth", "useRouter", "useNavigate", "useEmployeeId", "useTheme"],
         },
       ],
     },

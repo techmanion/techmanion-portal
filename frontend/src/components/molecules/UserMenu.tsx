@@ -3,11 +3,13 @@ import { Link } from "react-router-dom";
 import { Avatar } from "../atoms/Avatar";
 import { Icon } from "../atoms/Icon";
 import { roleLabel } from "../../lib/format";
+import { useTheme } from "../../theme";
 import type { User } from "../../types";
 
 export function UserMenu({ user, onLogout }: { user: User; onLogout: () => void }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     if (!open) return;
@@ -81,6 +83,36 @@ export function UserMenu({ user, onLogout }: { user: User; onLogout: () => void 
                 Team members
               </Link>
             )}
+          </div>
+          <div className="border-t border-outline-variant/30 p-1.5">
+            <div className="flex items-center justify-between rounded-xl px-2.5 py-2">
+              <span className="flex items-center gap-3 text-sm text-on-surface">
+                <Icon className="text-[18px] text-on-surface-variant">contrast</Icon>
+                Appearance
+              </span>
+              <div role="group" aria-label="Theme" className="flex items-center gap-0.5 rounded-full bg-surface-container-highest p-0.5">
+                <button
+                  type="button"
+                  aria-pressed={theme === "dark"}
+                  onClick={() => setTheme("dark")}
+                  className={`grid size-7 place-items-center rounded-full transition ${
+                    theme === "dark" ? "bg-primary text-on-primary" : "text-on-surface-variant hover:text-on-surface"
+                  }`}
+                >
+                  <Icon className="text-[16px]">dark_mode</Icon>
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={theme === "light"}
+                  onClick={() => setTheme("light")}
+                  className={`grid size-7 place-items-center rounded-full transition ${
+                    theme === "light" ? "bg-primary text-on-primary" : "text-on-surface-variant hover:text-on-surface"
+                  }`}
+                >
+                  <Icon className="text-[16px]">light_mode</Icon>
+                </button>
+              </div>
+            </div>
           </div>
           <div className="border-t border-outline-variant/30 p-1.5">
             <button

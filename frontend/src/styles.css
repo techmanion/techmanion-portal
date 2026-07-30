@@ -1,33 +1,104 @@
 @import "tailwindcss";
 
-@theme {
-  --color-background: #131313;
-  --color-on-background: #e5e2e1;
-  --color-surface: #131313;
-  --color-surface-dim: #131313;
-  --color-surface-bright: #3a3939;
-  --color-surface-container-lowest: #0e0e0e;
-  --color-surface-container-low: #1c1b1b;
-  --color-surface-container: #201f1f;
-  --color-surface-container-high: #2a2a2a;
-  --color-surface-container-highest: #353534;
-  --color-surface-variant: #353534;
-  --color-on-surface: #e5e2e1;
-  --color-on-surface-variant: #777981;
-  --color-outline: #8d919b;
-  --color-outline-variant: #424750;
-  --color-primary: #ffffff;
-  --color-on-primary: #000000;
-  --color-primary-container: #8ab4f8;
-  --color-on-primary-container: #0d4582;
-  --color-primary-fixed: #d5e3ff;
-  --color-primary-fixed-dim: #a8c8ff;
-  --color-secondary: #c8c6c6;
-  --color-secondary-container: #474747;
-  --color-tertiary: #fbc65e;
-  --color-tertiary-container: #ddab46;
-  --color-error: #ffb4ab;
-  --color-error-container: #93000a;
+/*
+ * Theme colors live as plain custom properties (not inside @theme) so that
+ * :root[data-theme="light"] can override them at runtime. @theme inline below
+ * maps Tailwind's color utilities onto these variables via var(--x) instead of
+ * baking in literal values, which is required for the override to survive the
+ * production build (Tailwind otherwise inlines/purges @theme values).
+ */
+:root {
+  --background: #131313;
+  --on-background: #e5e2e1;
+  --surface: #131313;
+  --surface-dim: #131313;
+  --surface-bright: #3a3939;
+  --surface-container-lowest: #0e0e0e;
+  --surface-container-low: #1c1b1b;
+  --surface-container: #201f1f;
+  --surface-container-high: #2a2a2a;
+  --surface-container-highest: #353534;
+  --surface-variant: #353534;
+  --on-surface: #e5e2e1;
+  --on-surface-variant: #777981;
+  --outline: #8d919b;
+  --outline-variant: #424750;
+  --primary: #ffffff;
+  --on-primary: #000000;
+  --primary-container: #8ab4f8;
+  --on-primary-container: #0d4582;
+  --primary-fixed: #d5e3ff;
+  --primary-fixed-dim: #a8c8ff;
+  --secondary: #c8c6c6;
+  --secondary-container: #474747;
+  --tertiary: #fbc65e;
+  --tertiary-container: #ddab46;
+  --error: #ffb4ab;
+  --error-container: #93000a;
+
+  --shadow-panel-value: 0 12px 32px rgb(0 0 0 / 22%);
+}
+
+:root[data-theme="light"] {
+  --background: #f7f7f5;
+  --on-background: #1a1a19;
+  --surface: #f7f7f5;
+  --surface-dim: #d9d9d6;
+  --surface-bright: #ffffff;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f1f1ee;
+  --surface-container: #ecece8;
+  --surface-container-high: #e5e5e1;
+  --surface-container-highest: #dfdfdb;
+  --surface-variant: #e1e0dd;
+  --on-surface: #1a1a19;
+  --on-surface-variant: #5f605f;
+  --outline: #797a78;
+  --outline-variant: #cac9c5;
+  --primary: #1a1a19;
+  --on-primary: #ffffff;
+  --primary-container: #d5e3ff;
+  --on-primary-container: #0d4582;
+  --primary-fixed: #d5e3ff;
+  --primary-fixed-dim: #a8c8ff;
+  --secondary: #46464a;
+  --secondary-container: #e4e3e6;
+  --tertiary: #83590a;
+  --tertiary-container: #ddab46;
+  --error: #b3261e;
+  --error-container: #f9dedc;
+
+  --shadow-panel-value: 0 12px 32px rgb(0 0 0 / 10%);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-on-background: var(--on-background);
+  --color-surface: var(--surface);
+  --color-surface-dim: var(--surface-dim);
+  --color-surface-bright: var(--surface-bright);
+  --color-surface-container-lowest: var(--surface-container-lowest);
+  --color-surface-container-low: var(--surface-container-low);
+  --color-surface-container: var(--surface-container);
+  --color-surface-container-high: var(--surface-container-high);
+  --color-surface-container-highest: var(--surface-container-highest);
+  --color-surface-variant: var(--surface-variant);
+  --color-on-surface: var(--on-surface);
+  --color-on-surface-variant: var(--on-surface-variant);
+  --color-outline: var(--outline);
+  --color-outline-variant: var(--outline-variant);
+  --color-primary: var(--primary);
+  --color-on-primary: var(--on-primary);
+  --color-primary-container: var(--primary-container);
+  --color-on-primary-container: var(--on-primary-container);
+  --color-primary-fixed: var(--primary-fixed);
+  --color-primary-fixed-dim: var(--primary-fixed-dim);
+  --color-secondary: var(--secondary);
+  --color-secondary-container: var(--secondary-container);
+  --color-tertiary: var(--tertiary);
+  --color-tertiary-container: var(--tertiary-container);
+  --color-error: var(--error);
+  --color-error-container: var(--error-container);
 
   --color-brand-green: #72ff13;
 
@@ -46,7 +117,7 @@
   --radius-control: 0.625rem; /* 10px inputs/selects */
   --radius-panel: 2.25rem; /* 36px cards/panels */
 
-  --shadow-panel: 0 12px 32px rgb(0 0 0 / 22%);
+  --shadow-panel: var(--shadow-panel-value);
 }
 
 @layer base {
@@ -59,6 +130,14 @@
   #root {
     min-height: 100%;
     margin: 0;
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
+  :root[data-theme="light"] {
+    color-scheme: light;
   }
 
   body {
