@@ -3,7 +3,6 @@ export * from "./EmptyState";
 export * from "./FilterSelect";
 export * from "./FormField";
 export * from "./PageHeaderActions";
-export * from "./PaginationControls";
 export * from "./SearchInput";
 export * from "./TableActionMenu";
 export * from "./UserMenu";
