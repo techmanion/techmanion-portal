@@ -19,6 +19,25 @@ export function setToken(token: string | null): void {
   else localStorage.removeItem(TOKEN_KEY);
 }
 
+interface ValidationIssue {
+  loc?: (string | number)[];
+  msg?: string;
+}
+
+export function readErrorDetail(detail: unknown): string | null {
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    const messages = detail
+      .map((issue: ValidationIssue) => {
+        const field = issue.loc?.[issue.loc.length - 1];
+        return field && typeof field === "string" ? `${field}: ${issue.msg}` : issue.msg;
+      })
+      .filter(Boolean);
+    return messages.length ? messages.join(" ") : null;
+  }
+  return null;
+}
+
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = getToken();
   const headers = new Headers(init.headers);
@@ -29,8 +48,8 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (!response.ok) {
     let message = "Something went wrong. Try again.";
     try {
-      const body = (await response.json()) as { detail?: string };
-      if (body.detail) message = body.detail;
+      const body = (await response.json()) as { detail?: unknown };
+      message = readErrorDetail(body.detail) ?? message;
     } catch {
       // Keep the safe fallback when the response is not JSON.
     }

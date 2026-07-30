@@ -23,7 +23,7 @@ export function AppHeader({ onLogout, onMenuClick }: { onLogout: () => void; onM
       <IconButton className="lg:hidden" aria-label="Toggle navigation" onClick={onMenuClick}>
         <Icon>menu</Icon>
       </IconButton>
-      <div className="shrink-0 lg:w-[218px]">
+      <div className="shrink-0 lg:w-[200px]">
         <div className="lg:hidden">
           <Logo compact />
         </div>

@@ -16,7 +16,7 @@ function NavRow({
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `flex h-10 items-center gap-3 rounded-l-full px-4 text-sm transition ${
+        `flex h-10 items-center gap-3 rounded-r-full px-6 text-sm transition ${
           isActive
             ? "bg-secondary-container font-medium text-on-surface"
             : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
@@ -41,7 +41,7 @@ export function Sidebar({ open = false, onClose }: { open?: boolean; onClose?: (
         }`}
       />
       <aside
-        className={`portal-sidebar fixed bottom-0 left-0 top-16 z-40 w-60 bg-background px-3 pt-2 transition-transform duration-200 ease-out lg:translate-x-0 ${
+        className={`portal-sidebar fixed bottom-0 left-0 top-16 z-40 w-55 bg-background pt-2 transition-transform duration-200 ease-out lg:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >

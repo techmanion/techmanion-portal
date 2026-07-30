@@ -14,6 +14,11 @@ export function listPayrollEntries(month: string) {
   return api<PayrollEntry[]>(`/payroll?month=${month}`);
 }
 
+export async function getPayrollEntry(month: string, entryId: number): Promise<PayrollEntry | undefined> {
+  const entries = await listPayrollEntries(month);
+  return entries.find((entry) => entry.id === entryId);
+}
+
 export function generatePayroll(month: string) {
   return api<PayrollEntry[]>(`/payroll/generate?month=${month}`, { method: "POST" });
 }

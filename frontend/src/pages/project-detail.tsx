@@ -3,17 +3,17 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../auth";
 import { Button, Icon, Loading } from "../components/atoms";
 import { StatusChip } from "../components/atoms/Badge";
-import { EmptyState } from "../components/molecules";
-import { ProjectFormPanel, ProjectInfoPanel, ProjectTeamPanel } from "../components/organisms";
+import { Breadcrumb, ConfirmDialog, EmptyState } from "../components/molecules";
+import { ProjectInfoPanel, ProjectTeamPanel } from "../components/organisms";
 import { listEmployees } from "../lib/api/employees";
 import {
   assignEmployeeToProject,
   deleteProject,
   getProject,
   unassignEmployeeFromProject,
-  updateProject,
 } from "../lib/api/projects";
-import type { Employee, Project, ProjectPayload } from "../types";
+import { useToast } from "../toast";
+import type { Employee, Project } from "../types";
 
 export function ProjectDetailPage() {
   const { projectId } = useParams();
@@ -21,30 +21,13 @@ export function ProjectDetailPage() {
   const { user } = useAuth();
   const [project, setProject] = useState<Project | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState<ProjectPayload>({
-    name: "",
-    clientName: "",
-    status: "PLANNED",
-    startDate: "",
-    endDate: "",
-    notes: "",
-  });
   const [error, setError] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const toast = useToast();
 
   function load() {
     getProject(projectId!)
-      .then((row) => {
-        setProject(row);
-        setForm({
-          name: row.name,
-          clientName: row.clientName,
-          status: row.status,
-          startDate: row.startDate.slice(0, 10),
-          endDate: row.endDate ? row.endDate.slice(0, 10) : "",
-          notes: row.notes ?? "",
-        });
-      })
+      .then(setProject)
       .catch((reason: Error) => setError(reason.message));
     listEmployees("").then(setEmployees).catch(() => undefined);
   }
@@ -53,26 +36,12 @@ export function ProjectDetailPage() {
 
   const isAdmin = user?.role === "ADMIN";
 
-  async function save(event: React.FormEvent) {
-    event.preventDefault();
-    try {
-      await updateProject(projectId!, {
-        ...form,
-        endDate: form.endDate || undefined,
-        notes: form.notes || undefined,
-      });
-      setEditing(false);
-      load();
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Project could not be saved.");
-    }
-  }
-
   async function removeProject() {
-    if (!window.confirm("Delete this project? This cannot be undone.")) return;
+    setConfirmDelete(false);
     try {
       await deleteProject(projectId!);
       navigate("/projects");
+      toast.success("Project deleted.");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Project could not be deleted.");
     }
@@ -82,6 +51,7 @@ export function ProjectDetailPage() {
     try {
       await assignEmployeeToProject(projectId!, employeeId);
       load();
+      toast.success("Employee assigned.");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Employee could not be assigned.");
     }
@@ -91,6 +61,7 @@ export function ProjectDetailPage() {
     try {
       await unassignEmployeeFromProject(projectId!, assignmentId);
       load();
+      toast.success("Employee removed from project.");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Employee could not be removed.");
     }
@@ -117,13 +88,7 @@ export function ProjectDetailPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-7">
-      <Link
-        to="/projects"
-        className="mb-6 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.1em] text-on-surface-variant hover:text-primary"
-      >
-        <Icon className="text-[18px]">arrow_back</Icon>
-        Projects / {project.name}
-      </Link>
+      <Breadcrumb to="/projects" trail={["Projects", project.name]} />
 
       <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
         <div>
@@ -132,14 +97,17 @@ export function ProjectDetailPage() {
         </div>
         <div className="flex items-center gap-3">
           <StatusChip value={project.status} />
-          {isAdmin && !editing && (
-            <Button variant="secondary" onClick={() => setEditing(true)}>
+          {isAdmin && (
+            <Link
+              to={`/projects/${project.id}/edit`}
+              className="inline-flex h-9 items-center gap-2 rounded-full bg-surface-container-highest px-4 text-sm font-medium text-on-surface ring-1 ring-outline-variant/40 hover:bg-surface-bright"
+            >
               <Icon className="text-[16px]">edit</Icon>
               Edit
-            </Button>
+            </Link>
           )}
           {isAdmin && (
-            <Button variant="ghost" onClick={removeProject}>
+            <Button variant="ghost" onClick={() => setConfirmDelete(true)}>
               <Icon className="text-[16px]">delete</Icon>
               Delete
             </Button>
@@ -147,19 +115,16 @@ export function ProjectDetailPage() {
         </div>
       </div>
 
-      {editing ? (
-        <ProjectFormPanel
-          form={form}
-          onChange={setForm}
-          onSubmit={save}
-          onCancel={() => setEditing(false)}
-          submitLabel="Save changes"
-          className="mb-8 grid gap-4 p-6 md:grid-cols-2"
-          fullWidthClassName="md:col-span-2"
-        />
-      ) : (
-        <ProjectInfoPanel project={project} />
-      )}
+      <ConfirmDialog
+        open={confirmDelete}
+        title="Delete this project?"
+        description={`"${project.name}" will be permanently removed. This cannot be undone.`}
+        confirmLabel="Delete project"
+        onConfirm={removeProject}
+        onCancel={() => setConfirmDelete(false)}
+      />
+
+      <ProjectInfoPanel project={project} />
 
       <ProjectTeamPanel
         project={project}

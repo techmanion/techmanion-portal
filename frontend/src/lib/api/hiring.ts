@@ -12,6 +12,10 @@ export function listJobs() {
   return api<Job[]>("/jobs");
 }
 
+export function getJob(jobId: string | number) {
+  return api<Job>(`/jobs/${jobId}`);
+}
+
 export function createJob(payload: JobPayload) {
   return api<Job>("/jobs", { method: "POST", body: JSON.stringify(payload) });
 }
@@ -26,6 +30,10 @@ export function deleteJob(jobId: number) {
 
 export function listCandidates(query: string) {
   return api<Candidate[]>(`/candidates?${query}`);
+}
+
+export function getCandidate(candidateId: string | number) {
+  return api<Candidate>(`/candidates/${candidateId}`);
 }
 
 export function createCandidate(payload: CandidatePayload) {

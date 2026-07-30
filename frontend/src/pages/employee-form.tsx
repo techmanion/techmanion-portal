@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { Button, Icon, Input, Select } from "../components/atoms";
-import { SectionHeading } from "../components/atoms/Typography";
-import { FormField, MoneyInput } from "../components/molecules";
+import { useNavigate, useParams } from "react-router-dom";
+import { Input, Select } from "../components/atoms";
+import { FormField, FormSection, MoneyInput } from "../components/molecules";
+import { FormPage } from "../components/organisms";
 import { createEmployee, getEmployee, updateEmployee } from "../lib/api/employees";
 import { listDesignations } from "../lib/api/settings";
 import { label } from "../lib/format";
 import { EMPLOYEE_STATUSES, EMPLOYEE_TYPES } from "../lib/options";
+import { useToast } from "../toast";
 import type { Employee, EmployeePayload, NamedOption } from "../types";
 
 const emptyEmployee: EmployeePayload = {
@@ -30,6 +31,7 @@ export function EmployeeFormPage() {
   const [designations, setDesignations] = useState<NamedOption[]>([]);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     listDesignations().then(setDesignations);
@@ -51,6 +53,7 @@ export function EmployeeFormPage() {
   }, [employeeId]);
 
   const title = useMemo(() => (isEdit ? "Edit employee" : "Add employee"), [isEdit]);
+  const cancelTo = isEdit ? `/employees/${employeeId}` : "/employees";
 
   function set<K extends keyof EmployeePayload>(key: K, value: EmployeePayload[K]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -68,9 +71,11 @@ export function EmployeeFormPage() {
         delete payload.currency;
         const saved = await updateEmployee(employeeId!, payload);
         navigate(`/employees/${saved.id}`);
+        toast.success("Employee updated.");
       } else {
         const saved = await createEmployee(payload);
         navigate(`/employees/${saved.id}`);
+        toast.success("Employee created.");
       }
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Employee could not be saved.");
@@ -80,131 +85,100 @@ export function EmployeeFormPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-8">
-      <Link
-        to={isEdit ? `/employees/${employeeId}` : "/employees"}
-        className="mb-6 inline-flex items-center gap-2 text-sm text-on-surface-variant hover:text-primary"
-      >
-        <Icon className="text-[18px]">arrow_back</Icon> Employees
-      </Link>
-      <div className="mb-6">
-        <h1 className="text-title font-semibold tracking-tight">{title}</h1>
-        <p className="mt-1.5 text-sm text-on-surface-variant">
-          Contact, employment, and compensation details.
-        </p>
-      </div>
-      <form onSubmit={submit} className="surface-panel space-y-8 p-6">
-        <section>
-          <SectionHeading className="mb-5">Contact details</SectionHeading>
-          <div className="grid gap-4 md:grid-cols-2">
-            <FormField label="Full name" className="md:col-span-2">
-              <Input value={fullName} onChange={(event) => setFullName(event.target.value)} required />
-            </FormField>
-            <FormField label="Email">
-              <Input
-                type="email"
-                value={form.email}
-                onChange={(event) => set("email", event.target.value)}
-                required
-              />
-            </FormField>
-            <FormField label="Phone">
-              <Input value={form.phone} onChange={(event) => set("phone", event.target.value)} required />
-            </FormField>
-          </div>
-        </section>
-        <section className="border-t border-outline-variant/30 pt-7">
-          <SectionHeading accent="tertiary" className="mb-5">
-            Employment
-          </SectionHeading>
-          <div className="grid gap-4 md:grid-cols-2">
-            <FormField label="Job title">
-              <Select
-                value={form.designationId ?? ""}
-                onChange={(event) => set("designationId", Number(event.target.value) || undefined)}
-              >
-                <option value="">Select job title</option>
-                {designations.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name}
-                  </option>
-                ))}
-              </Select>
-            </FormField>
-            <FormField label="Employment type">
-              <Select
-                value={form.employeeType}
-                onChange={(event) =>
-                  set("employeeType", event.target.value as EmployeePayload["employeeType"])
-                }
-              >
-                {EMPLOYEE_TYPES.map((value) => (
-                  <option key={value} value={value}>
-                    {label(value)}
-                  </option>
-                ))}
-              </Select>
-            </FormField>
-            <FormField label="Status">
-              <Select
-                value={form.status}
-                onChange={(event) => set("status", event.target.value as EmployeePayload["status"])}
-              >
-                {EMPLOYEE_STATUSES.map((value) => (
-                  <option key={value} value={value}>
-                    {label(value)}
-                  </option>
-                ))}
-              </Select>
-            </FormField>
-            <FormField label="Joining date">
-              <Input
-                type="date"
-                value={form.joiningDate}
-                onChange={(event) => set("joiningDate", event.target.value)}
-                required
-              />
-            </FormField>
-          </div>
-        </section>
-        {!isEdit && (
-          <section className="border-t border-outline-variant/30 pt-7">
-            <SectionHeading className="mb-5">Compensation</SectionHeading>
-            <div className="grid gap-4 md:grid-cols-2">
-              <FormField
-                label="Monthly compensation"
-                hint="Enter the amount in rupees; it is stored in minor units."
-              >
-                <MoneyInput
-                  value={form.baseAmount ?? 0}
-                  onChange={(value) => set("baseAmount", value)}
-                  required
-                />
-              </FormField>
-              <FormField label="Currency">
-                <Input
-                  value={form.currency ?? "PKR"}
-                  maxLength={3}
-                  onChange={(event) => set("currency", event.target.value.toUpperCase())}
-                  required
-                />
-              </FormField>
-            </div>
-          </section>
-        )}
-        {error && <div className="rounded-xl bg-error/10 px-4 py-3 text-sm text-error">{error}</div>}
-        <div className="flex items-center gap-3 border-t border-outline-variant/30 pt-6">
-          <Button type="submit" disabled={submitting}>
-            {submitting ? "Saving…" : "Save changes"}
-          </Button>
-          <Link
-            to={isEdit ? `/employees/${employeeId}` : "/employees"}
-            className="inline-flex h-9 items-center rounded-full px-5 text-sm font-medium text-on-surface-variant hover:bg-surface-container-high"
+    <FormPage
+      breadcrumbTo={cancelTo}
+      breadcrumbTrail={isEdit ? ["Employees", fullName || "Employee", "Edit"] : ["Employees", "Add employee"]}
+      title={title}
+      description="Contact, employment, and compensation details."
+      onSubmit={submit}
+      submitLabel="Save changes"
+      submitting={submitting}
+      cancelTo={cancelTo}
+      error={error}
+    >
+      <FormSection heading="Contact details" bordered={false}>
+        <FormField label="Full name" className="md:col-span-2">
+          <Input value={fullName} onChange={(event) => setFullName(event.target.value)} required />
+        </FormField>
+        <FormField label="Email">
+          <Input
+            type="email"
+            value={form.email}
+            onChange={(event) => set("email", event.target.value)}
+            required
+          />
+        </FormField>
+        <FormField label="Phone">
+          <Input value={form.phone} onChange={(event) => set("phone", event.target.value)} required />
+        </FormField>
+      </FormSection>
+
+      <FormSection heading="Employment" accent="tertiary">
+        <FormField label="Job title">
+          <Select
+            value={form.designationId ?? ""}
+            onChange={(event) => set("designationId", Number(event.target.value) || undefined)}
           >
-            Cancel
-          </Link>
-        </div>
-      </form>
-    </div>
+            <option value="">Select job title</option>
+            {designations.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
+          </Select>
+        </FormField>
+        <FormField label="Employment type">
+          <Select
+            value={form.employeeType}
+            onChange={(event) => set("employeeType", event.target.value as EmployeePayload["employeeType"])}
+          >
+            {EMPLOYEE_TYPES.map((value) => (
+              <option key={value} value={value}>
+                {label(value)}
+              </option>
+            ))}
+          </Select>
+        </FormField>
+        <FormField label="Status">
+          <Select
+            value={form.status}
+            onChange={(event) => set("status", event.target.value as EmployeePayload["status"])}
+          >
+            {EMPLOYEE_STATUSES.map((value) => (
+              <option key={value} value={value}>
+                {label(value)}
+              </option>
+            ))}
+          </Select>
+        </FormField>
+        <FormField label="Joining date">
+          <Input
+            type="date"
+            value={form.joiningDate}
+            onChange={(event) => set("joiningDate", event.target.value)}
+            required
+          />
+        </FormField>
+      </FormSection>
+
+      {!isEdit && (
+        <FormSection heading="Compensation">
+          <FormField
+            label="Monthly compensation"
+            hint="Enter the amount in rupees; it is stored in minor units."
+          >
+            <MoneyInput value={form.baseAmount ?? 0} onChange={(value) => set("baseAmount", value)} required />
+          </FormField>
+          <FormField label="Currency">
+            <Input
+              value={form.currency ?? "PKR"}
+              maxLength={3}
+              onChange={(event) => set("currency", event.target.value.toUpperCase())}
+              required
+            />
+          </FormField>
+        </FormSection>
+      )}
+    </FormPage>
   );
 }

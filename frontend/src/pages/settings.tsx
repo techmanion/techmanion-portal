@@ -5,6 +5,7 @@ import { SectionHeading } from "../components/atoms/Typography";
 import { FormField } from "../components/molecules";
 import { PageHeader } from "../components/organisms";
 import { addDepartment, addDesignation, listDepartments, listDesignations } from "../lib/api/settings";
+import { useToast } from "../toast";
 import type { NamedOption } from "../types";
 
 export function SettingsPage() {
@@ -14,6 +15,7 @@ export function SettingsPage() {
   const [department, setDepartment] = useState("");
   const [designation, setDesignation] = useState("");
   const [error, setError] = useState("");
+  const toast = useToast();
 
   function load() {
     Promise.all([listDepartments(), listDesignations()])
@@ -30,9 +32,11 @@ export function SettingsPage() {
       if (kind === "departments") {
         await addDepartment(name);
         setDepartment("");
+        toast.success("Department added.");
       } else {
         await addDesignation(name);
         setDesignation("");
+        toast.success("Job title added.");
       }
       load();
     } catch (reason) {

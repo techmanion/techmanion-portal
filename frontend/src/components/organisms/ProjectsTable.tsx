@@ -1,7 +1,6 @@
 import { Avatar } from "../atoms/Avatar";
 import { StatusChip } from "../atoms/Badge";
 import { EmployeeAssignSelect } from "../molecules/EmployeeAssignSelect";
-import { TableActionMenu } from "../molecules/TableActionMenu";
 import { formatDate } from "../../lib/format";
 import type { Employee, Project } from "../../types";
 import { DataTable, TableHeadRow, TableRow } from "./DataTable";
@@ -28,7 +27,6 @@ export function ProjectsTable({
           <th className="px-4 py-3 font-medium">Team</th>
           <th className="px-4 py-3 font-medium">Timeline</th>
           <th className="px-4 py-3 font-medium">Status</th>
-          <th className="w-12" />
         </TableHeadRow>
       </thead>
       <tbody className="divide-y divide-outline-variant/30">
@@ -73,9 +71,6 @@ export function ProjectsTable({
             </td>
             <td className="px-4">
               <StatusChip value={project.status} />
-            </td>
-            <td>
-              <TableActionMenu onClick={() => onRowClick(project)} />
             </td>
           </TableRow>
         ))}

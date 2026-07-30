@@ -1,37 +1,28 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth";
 import { Button, Icon, Loading } from "../components/atoms";
 import { EmptyState, FilterSelect, SearchInput } from "../components/molecules";
-import { FilterToolbar, PageHeader, ProjectFormPanel, ProjectsTable } from "../components/organisms";
+import { FilterToolbar, PageHeader, ProjectsTable } from "../components/organisms";
+import { useSearchParamState } from "../hooks/useSearchParamState";
 import { listEmployees } from "../lib/api/employees";
-import { assignEmployeeToProject, createProject, listProjects } from "../lib/api/projects";
+import { assignEmployeeToProject, listProjects } from "../lib/api/projects";
 import { label } from "../lib/format";
 import { PROJECT_STATUSES } from "../lib/options";
-import type { Employee, Project, ProjectPayload } from "../types";
+import { useToast } from "../toast";
+import type { Employee, Project } from "../types";
 
 export function ProjectsPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const [projects, setProjects] = useState<Project[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [showForm, setShowForm] = useState(
-    user?.role === "ADMIN" && searchParams.get("action") === "add-project",
-  );
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("");
-  const [client, setClient] = useState("");
+  const [search, setSearch] = useSearchParamState("search");
+  const [status, setStatus] = useSearchParamState("status");
+  const [client, setClient] = useSearchParamState("client");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState<ProjectPayload>({
-    name: "",
-    clientName: "",
-    status: "PLANNED",
-    startDate: new Date().toISOString().slice(0, 10),
-    endDate: "",
-    notes: "",
-  });
+  const toast = useToast();
 
   function load() {
     Promise.all([listProjects(), listEmployees("")])
@@ -68,22 +59,11 @@ export function ProjectsPage() {
     setClient("");
   }
 
-  async function createProjectEntry(event: React.FormEvent) {
-    event.preventDefault();
-    try {
-      await createProject({ ...form, endDate: form.endDate || undefined, notes: form.notes || undefined });
-      setShowForm(false);
-      setForm({ ...form, name: "", clientName: "", endDate: "", notes: "" });
-      load();
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Project could not be created.");
-    }
-  }
-
   async function assign(projectId: number, employeeId: number) {
     try {
       await assignEmployeeToProject(projectId, employeeId);
       load();
+      toast.success("Employee assigned.");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Employee could not be assigned.");
     }
@@ -96,23 +76,17 @@ export function ProjectsPage() {
         title="Projects"
         description="Manage active and historical client projects"
         actions={
-          user?.role === "ADMIN" && !showForm ? (
-            <Button size="lg" onClick={() => setShowForm(true)}>
+          user?.role === "ADMIN" ? (
+            <Link
+              to="/projects/new"
+              className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-5 text-sm font-medium text-on-primary shadow-md shadow-black/10 hover:brightness-105"
+            >
               <Icon className="text-[18px]">add</Icon>
               New project
-            </Button>
+            </Link>
           ) : undefined
         }
       />
-
-      {showForm && (
-        <ProjectFormPanel
-          form={form}
-          onChange={setForm}
-          onSubmit={createProjectEntry}
-          onCancel={() => setShowForm(false)}
-        />
-      )}
 
       <section className="surface-panel overflow-hidden">
         <div className="bg-surface-container-high/30 px-6 py-4">

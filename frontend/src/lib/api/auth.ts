@@ -1,5 +1,5 @@
 import type { User } from "../../types";
-import { API_URL, api, ApiError } from "./client";
+import { API_URL, api, ApiError, readErrorDetail } from "./client";
 
 export async function login(email: string, password: string) {
   const form = new URLSearchParams({ username: email, password });
@@ -9,8 +9,8 @@ export async function login(email: string, password: string) {
     body: form,
   });
   if (!response.ok) {
-    const body = (await response.json()) as { detail?: string };
-    throw new ApiError(body.detail ?? "Email or password is incorrect.", response.status);
+    const body = (await response.json()) as { detail?: unknown };
+    throw new ApiError(readErrorDetail(body.detail) ?? "Email or password is incorrect.", response.status);
   }
   return response.json() as Promise<{ accessToken: string; user: User }>;
 }

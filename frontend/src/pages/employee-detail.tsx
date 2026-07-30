@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import { Icon, Loading } from "../components/atoms";
-import { EmptyState } from "../components/molecules";
+import { useParams } from "react-router-dom";
+import { Loading } from "../components/atoms";
+import { Breadcrumb, EmptyState } from "../components/molecules";
 import {
   CompensationPanel,
   DocumentsPanel,
@@ -15,6 +15,7 @@ import {
   reviseSalary,
   uploadEmployeeDocument,
 } from "../lib/api/employees";
+import { useToast } from "../toast";
 import type { Employee, EmployeeDocument } from "../types";
 
 const tabs = ["Overview", "Compensation", "Documents"];
@@ -27,6 +28,7 @@ export function EmployeeDetailPage() {
   const [salary, setSalary] = useState(0);
   const [effectiveDate, setEffectiveDate] = useState(new Date().toISOString().slice(0, 10));
   const [error, setError] = useState("");
+  const toast = useToast();
 
   function load() {
     getEmployee(employeeId!)
@@ -50,6 +52,7 @@ export function EmployeeDetailPage() {
       });
       setSalary(0);
       load();
+      toast.success("Compensation revised.");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Salary could not be revised.");
     }
@@ -62,6 +65,7 @@ export function EmployeeDetailPage() {
       await uploadEmployeeDocument(employeeId!, new FormData(form));
       form.reset();
       load();
+      toast.success("Document uploaded.");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Document could not be uploaded.");
     }
@@ -99,13 +103,7 @@ export function EmployeeDetailPage() {
   return (
     <div className="mx-auto max-w-[1450px] px-6 py-7">
       <div className="mb-7">
-        <Link
-          to="/employees"
-          className="mb-6 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.1em] text-on-surface-variant hover:text-primary"
-        >
-          <Icon className="text-[18px]">arrow_back</Icon>
-          Employees / {employee.fullName}
-        </Link>
+        <Breadcrumb to="/employees" trail={["Employees", employee.fullName]} />
 
         <ProfileHeader employee={employee} />
       </div>

@@ -1,44 +1,29 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button, Icon, Loading } from "../components/atoms";
-import { EmptyState, FilterSelect, SearchInput } from "../components/molecules";
+import { ConfirmDialog, EmptyState, FilterSelect, SearchInput } from "../components/molecules";
+import { FilterToolbar, PageHeader, PayrollSummary, PayrollTable } from "../components/organisms";
+import { useSearchParamState } from "../hooks/useSearchParamState";
 import {
-  FilterToolbar,
-  PageHeader,
-  PayrollEntryFormPanel,
-  PayrollSummary,
-  PayrollTable,
-} from "../components/organisms";
-import type { PayrollFormState } from "../components/organisms/PayrollEntryFormPanel";
-import { listEmployees } from "../lib/api/employees";
-import {
-  createPayrollEntry,
   deletePayrollEntry,
   generatePayroll,
   listPayrollEntries,
   markPayrollPaid,
-  updatePayrollEntry,
 } from "../lib/api/payroll";
-import type { Employee, PayrollEntry } from "../types";
-
-const emptyForm: PayrollFormState = {
-  employeeId: "",
-  baseCompensation: "",
-  adjustment: "0",
-  currency: "PKR",
-  notes: "",
-};
+import { useToast } from "../toast";
+import type { PayrollEntry } from "../types";
 
 export function PayrollPage() {
-  const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
+  const navigate = useNavigate();
+  const [month, setMonth] = useSearchParamState("month", new Date().toISOString().slice(0, 7));
   const [entries, setEntries] = useState<PayrollEntry[]>([]);
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("");
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [form, setForm] = useState<PayrollFormState>(emptyForm);
+  const [search, setSearch] = useSearchParamState("search");
+  const [status, setStatus] = useSearchParamState("status");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [confirmGenerate, setConfirmGenerate] = useState(false);
+  const [confirmDeleteEntry, setConfirmDeleteEntry] = useState<PayrollEntry | null>(null);
+  const toast = useToast();
 
   function load() {
     listPayrollEntries(month)
@@ -48,9 +33,6 @@ export function PayrollPage() {
   }
 
   useEffect(load, [month]);
-  useEffect(() => {
-    listEmployees("").then(setEmployees).catch(() => undefined);
-  }, []);
 
   const visible = useMemo(
     () =>
@@ -85,10 +67,12 @@ export function PayrollPage() {
   );
 
   async function generate() {
+    setConfirmGenerate(false);
     setError("");
     try {
-      await generatePayroll(month);
+      const generated = await generatePayroll(month);
       load();
+      toast.success(`Payroll generated for ${generated.length} employee${generated.length === 1 ? "" : "s"}.`);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Payroll could not be generated.");
     }
@@ -98,60 +82,22 @@ export function PayrollPage() {
     try {
       await markPayrollPaid(entry.id);
       load();
+      toast.success(`Marked ${entry.employeeName} as paid.`);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Payroll entry could not be marked paid.");
     }
   }
 
-  async function deleteEntry(entry: PayrollEntry) {
-    if (!window.confirm("Delete this payroll entry?")) return;
+  async function deleteEntry() {
+    if (!confirmDeleteEntry) return;
+    const entry = confirmDeleteEntry;
+    setConfirmDeleteEntry(null);
     try {
       await deletePayrollEntry(entry.id);
       load();
+      toast.success("Payroll entry deleted.");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Payroll entry could not be deleted.");
-    }
-  }
-
-  function startEdit(entry: PayrollEntry) {
-    setEditingId(entry.id);
-    setForm({
-      employeeId: String(entry.employeeId),
-      baseCompensation: String(entry.baseCompensation / 100),
-      adjustment: String(entry.adjustment / 100),
-      currency: entry.currency,
-      notes: entry.notes ?? "",
-    });
-    setShowForm(true);
-  }
-
-  function resetForm() {
-    setShowForm(false);
-    setEditingId(null);
-    setForm(emptyForm);
-  }
-
-  async function submitEntry(event: React.FormEvent) {
-    event.preventDefault();
-    setError("");
-    const payload = {
-      employeeId: Number(form.employeeId),
-      month,
-      baseCompensation: Math.round(Number(form.baseCompensation || 0) * 100),
-      adjustment: Math.round(Number(form.adjustment || 0) * 100),
-      currency: form.currency,
-      notes: form.notes || null,
-    };
-    try {
-      if (editingId) {
-        await updatePayrollEntry(editingId, payload);
-      } else {
-        await createPayrollEntry(payload);
-      }
-      resetForm();
-      load();
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Payroll entry could not be saved.");
     }
   }
 
@@ -179,28 +125,20 @@ export function PayrollPage() {
                 {monthLabel}
               </span>
             </label>
-            <Button size="lg" onClick={generate}>
+            <Button size="lg" onClick={() => setConfirmGenerate(true)}>
               <Icon className="text-[18px]">add</Icon>
               Generate Payroll
             </Button>
-            <Button size="lg" variant="secondary" onClick={() => (showForm ? resetForm() : setShowForm(true))}>
+            <Link
+              to={`/payroll/new?month=${month}`}
+              className="inline-flex h-10 items-center gap-2 rounded-full bg-surface-container-highest px-5 text-sm font-medium text-on-surface ring-1 ring-outline-variant/40 hover:bg-surface-bright"
+            >
               <Icon className="text-[18px]">add</Icon>
               Add entry
-            </Button>
+            </Link>
           </>
         }
       />
-
-      {showForm && (
-        <PayrollEntryFormPanel
-          form={form}
-          employees={employees}
-          editing={editingId !== null}
-          onChange={setForm}
-          onSubmit={submitEntry}
-          onCancel={resetForm}
-        />
-      )}
 
       <section className="surface-panel mb-6 p-6">
         <PayrollSummary
@@ -244,7 +182,12 @@ export function PayrollPage() {
           </div>
         )}
         {!loading && (
-          <PayrollTable entries={visible} onMarkPaid={markPaid} onEdit={startEdit} onDelete={deleteEntry} />
+          <PayrollTable
+            entries={visible}
+            onMarkPaid={markPaid}
+            onEdit={(entry) => navigate(`/payroll/${entry.id}/edit?month=${month}`)}
+            onDelete={setConfirmDeleteEntry}
+          />
         )}
         {!loading && !entries.length && (
           <EmptyState>No payroll entries for this month. Generate payroll or add an entry.</EmptyState>
@@ -260,6 +203,28 @@ export function PayrollPage() {
         )}
       </section>
       {error && <div className="mt-4 rounded-xl bg-error/10 px-4 py-3 text-sm text-error">{error}</div>}
+
+      <ConfirmDialog
+        open={confirmGenerate}
+        title={`Generate payroll for ${monthLabel}?`}
+        description="This creates a pending payroll entry for every active employee who doesn't already have one this month."
+        confirmLabel="Generate"
+        tone="primary"
+        onConfirm={generate}
+        onCancel={() => setConfirmGenerate(false)}
+      />
+      <ConfirmDialog
+        open={confirmDeleteEntry !== null}
+        title="Delete this payroll entry?"
+        description={
+          confirmDeleteEntry
+            ? `The entry for ${confirmDeleteEntry.employeeName} will be permanently removed.`
+            : undefined
+        }
+        confirmLabel="Delete entry"
+        onConfirm={deleteEntry}
+        onCancel={() => setConfirmDeleteEntry(null)}
+      />
     </div>
   );
 }

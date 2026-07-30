@@ -1,38 +1,19 @@
 import { useCallback, useEffect, useState } from "react";
-import {
-  convertCandidate as convertCandidateRequest,
-  createCandidate as createCandidateRequest,
-  createJob as createJobRequest,
-  deleteCandidate as deleteCandidateRequest,
-  deleteJob as deleteJobRequest,
-  listCandidates,
-  listDesignations,
-  listJobs,
-  updateCandidate as updateCandidateRequest,
-  updateJob as updateJobRequest,
-} from "../lib/api";
-import type {
-  Candidate,
-  CandidatePayload,
-  CandidateStage,
-  ConvertToEmployeePayload,
-  Job,
-  JobPayload,
-  NamedOption,
-} from "../types";
+import { deleteCandidate as deleteCandidateRequest, deleteJob as deleteJobRequest, listCandidates, listJobs } from "../lib/api";
+import type { Candidate, Job } from "../types";
 import { useDebouncedValue } from "./useDebouncedValue";
+import { useSearchParamState } from "./useSearchParamState";
 
 export function useHiringData() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [designations, setDesignations] = useState<NamedOption[]>([]);
   const [loadingJobs, setLoadingJobs] = useState(true);
   const [loadingCandidates, setLoadingCandidates] = useState(true);
   const [error, setError] = useState("");
 
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useSearchParamState("search");
   const debouncedSearch = useDebouncedValue(search, 180);
-  const [stageFilter, setStageFilter] = useState<CandidateStage | "">("");
+  const [stageFilter, setStageFilter] = useSearchParamState("stage");
 
   const loadJobs = useCallback(() => {
     return listJobs()
@@ -55,27 +36,12 @@ export function useHiringData() {
     loadJobs();
   }, [loadJobs]);
   useEffect(() => {
-    listDesignations().then(setDesignations).catch(() => undefined);
-  }, []);
-  useEffect(() => {
     loadCandidates();
   }, [loadCandidates]);
-
-  async function saveJob(payload: JobPayload, editingId: number | null) {
-    if (editingId) await updateJobRequest(editingId, payload);
-    else await createJobRequest(payload);
-    loadJobs();
-  }
 
   async function removeJob(job: Job) {
     await deleteJobRequest(job.id);
     loadJobs();
-    loadCandidates();
-  }
-
-  async function saveCandidate(payload: CandidatePayload, editingId: number | null) {
-    if (editingId) await updateCandidateRequest(editingId, payload);
-    else await createCandidateRequest(payload);
     loadCandidates();
   }
 
@@ -84,18 +50,9 @@ export function useHiringData() {
     loadCandidates();
   }
 
-  async function convertCandidateToEmployee(
-    candidateId: number,
-    payload: ConvertToEmployeePayload,
-  ) {
-    await convertCandidateRequest(candidateId, payload);
-    loadCandidates();
-  }
-
   return {
     jobs,
     candidates,
-    designations,
     loadingJobs,
     loadingCandidates,
     error,
@@ -104,10 +61,7 @@ export function useHiringData() {
     setSearch,
     stageFilter,
     setStageFilter,
-    saveJob,
     removeJob,
-    saveCandidate,
     removeCandidate,
-    convertCandidateToEmployee,
   };
 }
