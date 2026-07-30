@@ -3,11 +3,11 @@ from datetime import date, datetime
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 from app.models import (
-    CompensationType,
+    CandidateStage,
     EmployeeStatus,
     EmployeeType,
-    PaymentStatus,
-    PayrollStatus,
+    JobStatus,
+    PayrollEntryStatus,
     ProjectStatus,
     UserRole,
 )
@@ -78,23 +78,13 @@ class SalaryOut(ApiModel):
 
 class EmployeeBase(ApiModel):
     first_name: str = Field(min_length=1, max_length=80)
-    last_name: str = Field(min_length=1, max_length=80)
-    cnic: str = Field(min_length=5, max_length=32)
-    date_of_birth: date | None = None
+    last_name: str = Field(default="", max_length=80)
     email: EmailStr
-    phone: str = Field(min_length=5, max_length=40)
-    address: str | None = None
-    emergency_contact_name: str | None = None
-    emergency_contact_phone: str | None = None
+    phone: str = Field(default="", max_length=40)
     employee_type: EmployeeType
     status: EmployeeStatus = EmployeeStatus.ACTIVE
-    compensation_type: CompensationType = CompensationType.FIXED
-    department_id: int | None = None
     designation_id: int | None = None
     joining_date: date
-    probation_end_date: date | None = None
-    confirmation_date: date | None = None
-    access_log: str | None = None
 
 
 class EmployeeCreate(EmployeeBase):
@@ -114,7 +104,6 @@ class EmployeeUpdate(EmployeeBase):
 class EmployeeOut(EmployeeBase):
     id: int
     full_name: str
-    department: NamedOption | None = None
     designation: NamedOption | None = None
     current_salary: SalaryOut | None = None
     created_at: datetime
@@ -129,29 +118,28 @@ class SalaryCreate(ApiModel):
 
 class ProjectAssignmentCreate(ApiModel):
     employee_id: int
-    project_role: str = Field(min_length=1, max_length=100)
-    allocation_pct: int = Field(ge=0, le=100)
-    start_date: date | None = None
-    end_date: date | None = None
 
 
-class AssignmentOut(ProjectAssignmentCreate):
+class AssignmentOut(ApiModel):
     id: int
+    employee_id: int
     employee_name: str
 
 
 class ProjectBase(ApiModel):
     name: str = Field(min_length=1, max_length=160)
     client_name: str = Field(min_length=1, max_length=160)
-    status: ProjectStatus = ProjectStatus.PLANNING
+    status: ProjectStatus = ProjectStatus.PLANNED
     start_date: date
     end_date: date | None = None
-    contract_value: int = Field(default=0, ge=0)
-    currency: str = Field(default="PKR", min_length=3, max_length=3)
-    trello_url: str | None = None
+    notes: str | None = None
 
 
 class ProjectCreate(ProjectBase):
+    pass
+
+
+class ProjectUpdate(ProjectBase):
     pass
 
 
@@ -160,52 +148,71 @@ class ProjectOut(ProjectBase):
     assignments: list[AssignmentOut] = []
 
 
-class PayslipOut(ApiModel):
+class PayrollEntryCreate(ApiModel):
+    employee_id: int
+    month: str = Field(min_length=7, max_length=7)
+    base_compensation: int = Field(ge=0)
+    adjustment: int = 0
+    currency: str = Field(default="PKR", min_length=3, max_length=3)
+    notes: str | None = None
+
+    @field_validator("currency")
+    @classmethod
+    def uppercase_currency(cls, value: str) -> str:
+        return value.upper()
+
+
+class PayrollEntryUpdate(ApiModel):
+    base_compensation: int = Field(ge=0)
+    adjustment: int = 0
+    currency: str = Field(default="PKR", min_length=3, max_length=3)
+    notes: str | None = None
+
+    @field_validator("currency")
+    @classmethod
+    def uppercase_currency(cls, value: str) -> str:
+        return value.upper()
+
+
+class PayrollEntryOut(ApiModel):
     id: int
     employee_id: int
     employee_name: str
-    base_amount: int
+    month: str
+    base_compensation: int
+    adjustment: int
+    final_amount: int
     currency: str
-    gross_amount: int
-    tax_amount: int
-    net_amount: int
-    payment_status: PaymentStatus
-    paid_amount: int
+    status: PayrollEntryStatus
+    payment_date: date | None = None
+    notes: str | None = None
 
 
-class PayrollRunOut(ApiModel):
+class PayrollMarkPaid(ApiModel):
+    payment_date: date | None = None
+
+
+class ActivityOut(ApiModel):
     id: int
-    period_month: str
-    status: PayrollStatus
-    payslips: list[PayslipOut]
-
-
-class PaymentUpdate(ApiModel):
-    payment_status: PaymentStatus
-    paid_amount: int = Field(ge=0)
-
-
-class TaxSlabInput(ApiModel):
-    fiscal_year: str = Field(min_length=9, max_length=9)
-    lower_bound: int = Field(ge=0)
-    upper_bound: int | None = Field(default=None, ge=0)
-    fixed_amount: int = Field(default=0, ge=0)
-    rate_bps_over_lower: int = Field(default=0, ge=0, le=10000)
-
-
-class TaxSlabOut(TaxSlabInput):
-    id: int
-
-
-class AuditOut(ApiModel):
-    id: int
-    action: str
-    entity_type: str
+    entity: str
     entity_id: str
-    actor_user_id: int
-    before: dict | None
-    after: dict | None
-    created_at: datetime
+    action: str
+    description: str
+    timestamp: datetime
+
+
+class HomeItem(ApiModel):
+    kind: str
+    title: str
+    description: str
+    event_date: date | None = None
+    href: str
+
+
+class HomeOut(ApiModel):
+    needs_attention: list[HomeItem]
+    upcoming: list[HomeItem]
+    recent_activity: list[ActivityOut]
 
 
 class DocumentOut(ApiModel):
@@ -215,3 +222,60 @@ class DocumentOut(ApiModel):
     mime_type: str
     size_bytes: int
     created_at: datetime
+
+
+class JobBase(ApiModel):
+    title: str = Field(min_length=1, max_length=160)
+    description: str = Field(min_length=1)
+    status: JobStatus = JobStatus.OPEN
+
+
+class JobCreate(JobBase):
+    pass
+
+
+class JobUpdate(JobBase):
+    pass
+
+
+class JobOut(JobBase):
+    id: int
+    created_at: datetime
+
+
+class CandidateBase(ApiModel):
+    full_name: str = Field(min_length=1, max_length=160)
+    email: EmailStr
+    phone: str | None = None
+    job_id: int
+    stage: CandidateStage = CandidateStage.APPLIED
+    resume: str | None = None
+    interview_date: date | None = None
+    notes: str | None = None
+
+
+class CandidateCreate(CandidateBase):
+    pass
+
+
+class CandidateUpdate(CandidateBase):
+    pass
+
+
+class CandidateOut(CandidateBase):
+    id: int
+    job_title: str
+    created_at: datetime
+
+
+class ConvertToEmployeePayload(ApiModel):
+    employee_type: EmployeeType
+    joining_date: date
+    designation_id: int | None = None
+    base_amount: int = Field(ge=0)
+    currency: str = Field(default="PKR", min_length=3, max_length=3)
+
+    @field_validator("currency")
+    @classmethod
+    def uppercase_currency(cls, value: str) -> str:
+        return value.upper()

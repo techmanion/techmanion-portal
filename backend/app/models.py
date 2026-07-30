@@ -2,16 +2,12 @@ from __future__ import annotations
 
 from datetime import UTC, date, datetime
 from enum import Enum
-from typing import Any
-
 from sqlalchemy import (
-    JSON,
     BigInteger,
     Boolean,
     Date,
     DateTime,
     ForeignKey,
-    Integer,
     String,
     Text,
     UniqueConstraint,
@@ -53,27 +49,15 @@ class CompensationType(str, Enum):
 
 
 class ProjectStatus(str, Enum):
-    PLANNING = "PLANNING"
-    IN_PROGRESS = "IN_PROGRESS"
+    PLANNED = "PLANNED"
+    ACTIVE = "ACTIVE"
     ON_HOLD = "ON_HOLD"
     COMPLETED = "COMPLETED"
-    CANCELLED = "CANCELLED"
 
 
-class PayrollStatus(str, Enum):
-    DRAFT = "DRAFT"
-    COMPLETED = "COMPLETED"
-
-
-class PaymentStatus(str, Enum):
+class PayrollEntryStatus(str, Enum):
     PENDING = "PENDING"
     PAID = "PAID"
-    PARTIALLY_PAID = "PARTIALLY_PAID"
-
-
-class LineItemType(str, Enum):
-    EARNING = "EARNING"
-    DEDUCTION = "DEDUCTION"
 
 
 class TimestampMixin:
@@ -108,6 +92,51 @@ class Designation(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(100), unique=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+class JobStatus(str, Enum):
+    OPEN = "OPEN"
+    CLOSED = "CLOSED"
+
+
+class CandidateStage(str, Enum):
+    APPLIED = "APPLIED"
+    SCREENING = "SCREENING"
+    INTERVIEW = "INTERVIEW"
+    OFFER = "OFFER"
+    HIRED = "HIRED"
+    REJECTED = "REJECTED"
+
+
+class Job(TimestampMixin, Base):
+    __tablename__ = "jobs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String(160))
+    description: Mapped[str] = mapped_column(Text)
+    status: Mapped[JobStatus] = mapped_column(SqlEnum(JobStatus), default=JobStatus.OPEN)
+
+    candidates: Mapped[list[Candidate]] = relationship(
+        back_populates="job", cascade="all, delete-orphan"
+    )
+
+
+class Candidate(TimestampMixin, Base):
+    __tablename__ = "candidates"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    full_name: Mapped[str] = mapped_column(String(160))
+    email: Mapped[str] = mapped_column(String(320), index=True)
+    phone: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    job_id: Mapped[int] = mapped_column(ForeignKey("jobs.id", ondelete="CASCADE"))
+    stage: Mapped[CandidateStage] = mapped_column(
+        SqlEnum(CandidateStage), default=CandidateStage.APPLIED
+    )
+    resume: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    interview_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    job: Mapped[Job] = relationship(back_populates="candidates")
 
 
 class Employee(TimestampMixin, Base):
@@ -203,13 +232,11 @@ class Project(TimestampMixin, Base):
     name: Mapped[str] = mapped_column(String(160), unique=True)
     client_name: Mapped[str] = mapped_column(String(160))
     status: Mapped[ProjectStatus] = mapped_column(
-        SqlEnum(ProjectStatus), default=ProjectStatus.PLANNING
+        SqlEnum(ProjectStatus), default=ProjectStatus.PLANNED
     )
     start_date: Mapped[date] = mapped_column(Date)
     end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
-    contract_value: Mapped[int] = mapped_column(BigInteger, default=0)
-    currency: Mapped[str] = mapped_column(String(3), default="PKR")
-    trello_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     assignments: Mapped[list[ProjectAssignment]] = relationship(
         back_populates="project", cascade="all, delete-orphan"
     )
@@ -222,77 +249,29 @@ class ProjectAssignment(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     project_id: Mapped[int] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"))
     employee_id: Mapped[int] = mapped_column(ForeignKey("employees.id"))
-    project_role: Mapped[str] = mapped_column(String(100))
-    allocation_pct: Mapped[int] = mapped_column(Integer)
-    start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
-    end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
 
     project: Mapped[Project] = relationship(back_populates="assignments")
     employee: Mapped[Employee] = relationship()
 
 
-class PayrollRun(TimestampMixin, Base):
-    __tablename__ = "payroll_runs"
+class PayrollEntry(TimestampMixin, Base):
+    __tablename__ = "payroll_entries"
+    __table_args__ = (UniqueConstraint("employee_id", "month"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    period_month: Mapped[str] = mapped_column(String(7), unique=True, index=True)
-    status: Mapped[PayrollStatus] = mapped_column(
-        SqlEnum(PayrollStatus), default=PayrollStatus.DRAFT
-    )
-    created_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
-    payslips: Mapped[list[Payslip]] = relationship(
-        back_populates="payroll_run", cascade="all, delete-orphan"
-    )
-
-
-class Payslip(TimestampMixin, Base):
-    __tablename__ = "payslips"
-    __table_args__ = (UniqueConstraint("payroll_run_id", "employee_id"),)
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    payroll_run_id: Mapped[int] = mapped_column(ForeignKey("payroll_runs.id"))
     employee_id: Mapped[int] = mapped_column(ForeignKey("employees.id"))
-    base_amount: Mapped[int] = mapped_column(BigInteger)
-    currency: Mapped[str] = mapped_column(String(3))
-    gross_amount: Mapped[int] = mapped_column(BigInteger)
-    tax_amount: Mapped[int] = mapped_column(BigInteger)
-    net_amount: Mapped[int] = mapped_column(BigInteger)
-    payment_status: Mapped[PaymentStatus] = mapped_column(
-        SqlEnum(PaymentStatus), default=PaymentStatus.PENDING
+    month: Mapped[str] = mapped_column(String(7), index=True)
+    base_compensation: Mapped[int] = mapped_column(BigInteger)
+    adjustment: Mapped[int] = mapped_column(BigInteger, default=0)
+    final_amount: Mapped[int] = mapped_column(BigInteger)
+    currency: Mapped[str] = mapped_column(String(3), default="PKR")
+    status: Mapped[PayrollEntryStatus] = mapped_column(
+        SqlEnum(PayrollEntryStatus), default=PayrollEntryStatus.PENDING
     )
-    paid_amount: Mapped[int] = mapped_column(BigInteger, default=0)
-    paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    payment_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    payroll_run: Mapped[PayrollRun] = relationship(back_populates="payslips")
     employee: Mapped[Employee] = relationship()
-    line_items: Mapped[list[PayslipLineItem]] = relationship(
-        back_populates="payslip", cascade="all, delete-orphan"
-    )
-
-
-class PayslipLineItem(TimestampMixin, Base):
-    __tablename__ = "payslip_line_items"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    payslip_id: Mapped[int] = mapped_column(ForeignKey("payslips.id", ondelete="CASCADE"))
-    item_type: Mapped[LineItemType] = mapped_column(SqlEnum(LineItemType))
-    category: Mapped[str] = mapped_column(String(32))
-    label: Mapped[str] = mapped_column(String(120))
-    amount: Mapped[int] = mapped_column(BigInteger)
-    currency: Mapped[str] = mapped_column(String(3))
-    payslip: Mapped[Payslip] = relationship(back_populates="line_items")
-
-
-class TaxSlab(TimestampMixin, Base):
-    __tablename__ = "tax_slabs"
-    __table_args__ = (UniqueConstraint("fiscal_year", "lower_bound"),)
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    fiscal_year: Mapped[str] = mapped_column(String(9))
-    lower_bound: Mapped[int] = mapped_column(BigInteger)
-    upper_bound: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
-    fixed_amount: Mapped[int] = mapped_column(BigInteger, default=0)
-    rate_bps_over_lower: Mapped[int] = mapped_column(Integer, default=0)
 
 
 class CompanyProfile(TimestampMixin, Base):
@@ -305,14 +284,12 @@ class CompanyProfile(TimestampMixin, Base):
     logo_text: Mapped[str] = mapped_column(String(80), default="Techmanion")
 
 
-class AuditLog(Base):
-    __tablename__ = "audit_logs"
+class ActivityLog(Base):
+    __tablename__ = "activity_logs"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    actor_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
-    action: Mapped[str] = mapped_column(String(100))
-    entity_type: Mapped[str] = mapped_column(String(100))
+    entity: Mapped[str] = mapped_column(String(100))
     entity_id: Mapped[str] = mapped_column(String(80))
-    before: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
-    after: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    action: Mapped[str] = mapped_column(String(32))
+    description: Mapped[str] = mapped_column(Text)
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
