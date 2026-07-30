@@ -7,21 +7,11 @@ function NavRow({
   to,
   icon,
   label,
-  disabled = false,
 }: {
   to: string;
   icon: string;
   label: string;
-  disabled?: boolean;
 }) {
-  if (disabled) {
-    return (
-      <span className="flex h-10 items-center gap-3 rounded-full px-4 text-sm text-on-surface-variant/60">
-        <Icon className="text-[20px]">{icon}</Icon>
-        {label}
-      </span>
-    );
-  }
   return (
     <NavLink
       to={to}

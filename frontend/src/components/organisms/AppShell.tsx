@@ -1,17 +1,12 @@
 import { useEffect, useState } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import { useAuth } from "../../auth";
 import { AppHeader } from "./AppHeader";
 import { Sidebar } from "./Sidebar";
 
 export function AppShell() {
   const { logout } = useAuth();
-  const { pathname } = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  useEffect(() => {
-    setSidebarOpen(false);
-  }, [pathname]);
 
   useEffect(() => {
     if (!sidebarOpen) return;

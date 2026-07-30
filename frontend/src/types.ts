@@ -1,13 +1,16 @@
 export type UserRole = "ADMIN" | "HR" | "MANAGER" | "EMPLOYEE";
 export type EmployeeStatus = "ACTIVE" | "ON_LEAVE" | "RESIGNED" | "TERMINATED";
 export type EmployeeType = "FULL_TIME" | "PART_TIME" | "CONTRACT";
-export type ProjectStatus =
-  | "PLANNING"
-  | "IN_PROGRESS"
-  | "ON_HOLD"
-  | "COMPLETED"
-  | "CANCELLED";
-export type PaymentStatus = "PENDING" | "PAID" | "PARTIALLY_PAID";
+export type ProjectStatus = "PLANNED" | "ACTIVE" | "ON_HOLD" | "COMPLETED";
+export type PayrollEntryStatus = "PENDING" | "PAID";
+export type JobStatus = "OPEN" | "CLOSED";
+export type CandidateStage =
+  | "APPLIED"
+  | "SCREENING"
+  | "INTERVIEW"
+  | "OFFER"
+  | "HIRED"
+  | "REJECTED";
 
 export interface User {
   id: number;
@@ -37,24 +40,13 @@ export interface Employee {
   firstName: string;
   lastName: string;
   fullName: string;
-  cnic: string;
-  dateOfBirth?: string;
   email: string;
   phone: string;
-  address?: string;
-  emergencyContactName?: string;
-  emergencyContactPhone?: string;
   employeeType: EmployeeType;
   status: EmployeeStatus;
-  compensationType: "FIXED";
-  departmentId?: number;
   designationId?: number;
-  department?: NamedOption;
   designation?: NamedOption;
   joiningDate: string;
-  probationEndDate?: string;
-  confirmationDate?: string;
-  accessLog?: string;
   currentSalary?: Salary;
   createdAt: string;
 }
@@ -67,12 +59,44 @@ export type EmployeePayload = Omit<
   currency?: string;
 };
 
+export interface Job {
+  id: number;
+  title: string;
+  description: string;
+  status: JobStatus;
+  createdAt: string;
+}
+
+export type JobPayload = Omit<Job, "id" | "createdAt">;
+
+export interface Candidate {
+  id: number;
+  fullName: string;
+  email: string;
+  phone?: string;
+  jobId: number;
+  jobTitle: string;
+  stage: CandidateStage;
+  resume?: string;
+  interviewDate?: string;
+  notes?: string;
+  createdAt: string;
+}
+
+export type CandidatePayload = Omit<Candidate, "id" | "jobTitle" | "createdAt">;
+
+export interface ConvertToEmployeePayload {
+  employeeType: EmployeeType;
+  joiningDate: string;
+  designationId?: number;
+  baseAmount: number;
+  currency: string;
+}
+
 export interface Assignment {
   id: number;
   employeeId: number;
   employeeName: string;
-  projectRole: string;
-  allocationPct: number;
 }
 
 export interface Project {
@@ -82,50 +106,45 @@ export interface Project {
   status: ProjectStatus;
   startDate: string;
   endDate?: string;
-  contractValue: number;
-  currency: string;
-  trelloUrl?: string;
+  notes?: string;
   assignments: Assignment[];
 }
 
-export interface Payslip {
+export interface PayrollEntry {
   id: number;
   employeeId: number;
   employeeName: string;
-  baseAmount: number;
+  month: string;
+  baseCompensation: number;
+  adjustment: number;
+  finalAmount: number;
   currency: string;
-  grossAmount: number;
-  taxAmount: number;
-  netAmount: number;
-  paymentStatus: PaymentStatus;
-  paidAmount: number;
+  status: PayrollEntryStatus;
+  paymentDate?: string;
+  notes?: string;
 }
 
-export interface PayrollRun {
+export interface Activity {
   id: number;
-  periodMonth: string;
-  status: "DRAFT" | "COMPLETED";
-  payslips: Payslip[];
-}
-
-export interface TaxSlab {
-  id: number;
-  fiscalYear: string;
-  lowerBound: number;
-  upperBound?: number;
-  fixedAmount: number;
-  rateBpsOverLower: number;
-}
-
-export interface AuditLog {
-  id: number;
-  action: string;
-  entityType: string;
+  entity: string;
   entityId: string;
-  actorUserId: number;
-  before?: Record<string, unknown>;
-  after?: Record<string, unknown>;
-  createdAt: string;
+  action: string;
+  description: string;
+  timestamp: string;
+}
+
+export interface HomeItem {
+  kind: "INTERVIEW" | "JOINING" | "PROJECT_DEADLINE" | "PAYROLL";
+  title: string;
+  description: string;
+  eventDate?: string;
+  href: string;
+}
+
+export interface HomeData {
+  needsAttention: HomeItem[];
+  upcoming: HomeItem[];
+  recentActivity: Activity[];
 }
 
 export interface EmployeeDocument {
