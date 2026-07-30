@@ -8,22 +8,17 @@ import { api, apiBlob } from "../lib/api";
 import { formatDate, formatMoney, label } from "../lib/format";
 import type { Employee, EmployeeDocument } from "../types";
 
-const portrait =
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuAYo5IyKq4X8hfKEl_lkeW-e4U74MqO7VViu1lZQZnpmCvl2hw6iIqQOujI6lxBlLMLvShIJFap-cIWldvcvh0vuvecQLFajBM2vTH3uNSlcCc9ElT5ZdUXIPWWxUPQReCkAL1oNV6ZFctqgdwpPTDlSZuVjOE_rnENYw0NjZ9gbcHu6PIrhwDk1eJLJeyMeHGS1Be8IzuPyj1OW8g25gkrQYHPSHg0kKjY64ZoEHdM7MXmNBA_CcbfbERyHcZYSOOpF9ifdksLr3b5";
-
-const tabs = ["Overview", "Employment", "Compensation", "Documents", "Projects", "Activity"];
+const tabs = ["Overview", "Compensation", "Documents"];
 
 function Definition({
   labelText,
   children,
-  wide = false,
 }: {
   labelText: string;
   children: React.ReactNode;
-  wide?: boolean;
 }) {
   return (
-    <div className={wide ? "md:col-span-2" : ""}>
+    <div>
       <dt className="mb-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-on-surface-variant/70">
         {labelText}
       </dt>
@@ -87,13 +82,17 @@ export function EmployeeDetailPage() {
   }
 
   async function downloadDocument(document: EmployeeDocument) {
-    const blob = await apiBlob(`/documents/${document.id}/download`);
-    const url = URL.createObjectURL(blob);
-    const anchor = window.document.createElement("a");
-    anchor.href = url;
-    anchor.download = document.fileName;
-    anchor.click();
-    URL.revokeObjectURL(url);
+    try {
+      const blob = await apiBlob(`/documents/${document.id}/download`);
+      const url = URL.createObjectURL(blob);
+      const anchor = window.document.createElement("a");
+      anchor.href = url;
+      anchor.download = document.fileName;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Document could not be downloaded.");
+    }
   }
 
   if (!employee && !error) {
@@ -114,7 +113,7 @@ export function EmployeeDetailPage() {
           Employees / {employee.fullName}
         </Link>
 
-        <ProfileHeader employee={employee} portrait={portrait} />
+        <ProfileHeader employee={employee} />
       </div>
 
       <nav className="flex gap-8 overflow-x-auto border-b border-outline-variant/60">
@@ -133,81 +132,20 @@ export function EmployeeDetailPage() {
       </nav>
 
       {activeTab === "Overview" && (
-        <div className="mt-8 grid grid-cols-12 gap-8">
-          <div className="col-span-12 xl:col-span-8">
-            <section className="border-b border-outline-variant/50 pb-9">
-              <SectionHeading className="mb-6">Personal Information</SectionHeading>
-              <dl className="grid grid-cols-1 gap-x-12 gap-y-6 md:grid-cols-2">
-                <Definition labelText="Full name">{employee.fullName}</Definition>
-                <Definition labelText="CNIC / ID number">{employee.cnic}</Definition>
-                <Definition labelText="Date of birth">{formatDate(employee.dateOfBirth)}</Definition>
-                <Definition labelText="Phone">{employee.phone}</Definition>
-                <Definition labelText="Personal email">{employee.email}</Definition>
-                <Definition labelText="Emergency contact">
-                  {employee.emergencyContactName
-                    ? `${employee.emergencyContactName} • ${employee.emergencyContactPhone ?? ""}`
-                    : "—"}
-                </Definition>
-                <Definition labelText="Address" wide>{employee.address || "—"}</Definition>
-              </dl>
-            </section>
-
-            <section className="pt-9">
-              <SectionHeading accent="tertiary" className="mb-6">Employment Information</SectionHeading>
-              <dl className="grid grid-cols-1 gap-x-12 gap-y-6 md:grid-cols-2">
-                <Definition labelText="Department">{employee.department?.name ?? "—"}</Definition>
-                <Definition labelText="Reporting manager">Sarah Jenkins (VP Engineering)</Definition>
-                <Definition labelText="Designation">{employee.designation?.name ?? "—"}</Definition>
-                <Definition labelText="Employment type">{label(employee.employeeType)}</Definition>
-                <Definition labelText="Joining date">{formatDate(employee.joiningDate)}</Definition>
-                <Definition labelText="Current status">
-                  <span className="inline-flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-green-500" />On-duty</span>
-                </Definition>
-              </dl>
-            </section>
-          </div>
-
-          <aside className="col-span-12 xl:col-span-4">
-            <div className="surface-panel p-6">
-              <div className="mb-6 flex items-center justify-between">
-                <h2 className="text-heading font-medium">Project Allocation</h2>
-                <span className="text-sm font-medium text-primary">100%</span>
-              </div>
-              <div className="space-y-6">
-                <div>
-                  <div className="mb-2 flex justify-between text-sm">
-                    <div><strong className="block">Project Atlas</strong><span className="text-xs text-on-surface-variant">Backend Engineer</span></div>
-                    <span>70%</span>
-                  </div>
-                  <div className="h-1.5 rounded-full bg-surface-container-highest"><div className="h-1.5 w-[70%] rounded-full bg-primary" /></div>
-                </div>
-                <div>
-                  <div className="mb-2 flex justify-between text-sm">
-                    <div><strong className="block">Internal Platform</strong><span className="text-xs text-on-surface-variant">Technical Advisor</span></div>
-                    <span>30%</span>
-                  </div>
-                  <div className="h-1.5 rounded-full bg-surface-container-highest"><div className="h-1.5 w-[30%] rounded-full bg-tertiary" /></div>
-                </div>
-              </div>
-              <div className="mt-8 flex gap-3 rounded-2xl bg-surface-container-high p-4 text-xs leading-6 text-on-surface-variant">
-                <Icon className="shrink-0 text-[18px] text-primary">info</Icon>
-                {employee.firstName} is currently contributing across active company projects.
-              </div>
-            </div>
-            <div className="mt-6 grid grid-cols-2 gap-4">
-              <div className="surface-panel p-5">
-                <Icon className="text-[22px]">timer</Icon>
-                <strong className="mt-4 block text-xl">98%</strong>
-                <span className="mt-1.5 block text-[11px] uppercase tracking-wider text-on-surface-variant">Attendance</span>
-              </div>
-              <div className="surface-panel p-5">
-                <Icon className="text-[22px]">star</Icon>
-                <strong className="mt-4 block text-xl">4.9</strong>
-                <span className="mt-1.5 block text-[11px] uppercase tracking-wider text-on-surface-variant">Performance</span>
-              </div>
-            </div>
-          </aside>
-        </div>
+        <section className="surface-panel mt-8 max-w-5xl p-6">
+          <SectionHeading className="mb-6">Employee Information</SectionHeading>
+          <dl className="grid grid-cols-1 gap-x-12 gap-y-6 md:grid-cols-2">
+            <Definition labelText="Full name">{employee.fullName}</Definition>
+            <Definition labelText="Email">{employee.email}</Definition>
+            <Definition labelText="Phone">{employee.phone}</Definition>
+            <Definition labelText="Job title">{employee.designation?.name ?? "—"}</Definition>
+            <Definition labelText="Employment type">{label(employee.employeeType)}</Definition>
+            <Definition labelText="Status">
+              <span className="inline-flex items-center gap-1.5"><span className="size-1.5 rounded-full bg-green-500" />{label(employee.status)}</span>
+            </Definition>
+            <Definition labelText="Joining date">{formatDate(employee.joiningDate)}</Definition>
+          </dl>
+        </section>
       )}
 
       {activeTab === "Compensation" && (
@@ -254,10 +192,6 @@ export function EmployeeDetailPage() {
             <Button type="submit"><Icon className="text-[16px]">upload</Icon>Upload</Button>
           </form>
         </div>
-      )}
-
-      {!["Overview", "Compensation", "Documents"].includes(activeTab) && (
-        <div className="surface-panel mt-8"><EmptyState>{activeTab} details will appear here.</EmptyState></div>
       )}
       {error && <div className="mt-6 rounded-xl bg-error/10 px-4 py-3 text-sm text-error">{error}</div>}
     </div>

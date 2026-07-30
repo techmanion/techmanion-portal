@@ -1,14 +1,5 @@
-import { MockApiError, mockRequest } from "./mockApi";
-
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000/api/v1";
 const TOKEN_KEY = "techmanion_access_token";
-
-/**
- * Payroll is not wired to the real backend yet — those requests are served
- * from the in-memory fixture in mockApi.ts. Every other resource hits the
- * live API.
- */
-const MOCKED_PATH = /^\/(payroll|payslips)(\/|\?|$)/;
 
 export class ApiError extends Error {
   constructor(
@@ -17,12 +8,6 @@ export class ApiError extends Error {
   ) {
     super(message);
   }
-}
-
-function toApiError(reason: unknown): ApiError {
-  if (reason instanceof MockApiError) return new ApiError(reason.message, reason.status);
-  if (reason instanceof ApiError) return reason;
-  return new ApiError(reason instanceof Error ? reason.message : "Something went wrong. Try again.", 500);
 }
 
 export function getToken(): string | null {
@@ -35,14 +20,6 @@ export function setToken(token: string | null): void {
 }
 
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
-  if (MOCKED_PATH.test(path)) {
-    try {
-      return (await mockRequest(path, init)) as T;
-    } catch (reason) {
-      throw toApiError(reason);
-    }
-  }
-
   const token = getToken();
   const headers = new Headers(init.headers);
   if (token) headers.set("Authorization", `Bearer ${token}`);

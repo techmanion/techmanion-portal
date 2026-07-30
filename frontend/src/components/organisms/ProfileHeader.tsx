@@ -2,16 +2,15 @@ import { Link } from "react-router-dom";
 import { Avatar } from "../atoms/Avatar";
 import { StatusChip } from "../atoms/Badge";
 import { Icon } from "../atoms/Icon";
-import { IconButton } from "../atoms/IconButton";
 import { formatDate, label } from "../../lib/format";
 import type { Employee } from "../../types";
 
-export function ProfileHeader({ employee, portrait }: { employee: Employee; portrait: string }) {
+export function ProfileHeader({ employee }: { employee: Employee }) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-6">
       <div className="flex items-center gap-5">
         <div className="relative">
-          <Avatar src={portrait} size="xl" />
+          <Avatar alt={employee.fullName} size="xl" />
           <span className="absolute bottom-0.5 right-0.5 size-4 rounded-full border-[3px] border-background bg-green-500" />
         </div>
         <div>
@@ -21,8 +20,6 @@ export function ProfileHeader({ employee, portrait }: { employee: Employee; port
           </div>
           <p className="mt-1.5 flex flex-wrap items-center gap-2 text-sm text-on-surface-variant">
             <span>{employee.designation?.name ?? "No designation"}</span>
-            <span className="size-1 rounded-full bg-outline-variant" />
-            <span>{employee.department?.name ?? "No department"}</span>
             <span className="size-1 rounded-full bg-outline-variant" />
             <span>{label(employee.employeeType)}</span>
           </p>
@@ -50,9 +47,6 @@ export function ProfileHeader({ employee, portrait }: { employee: Employee; port
           <Icon className="text-[16px]">edit</Icon>
           Edit Employee
         </Link>
-        <IconButton aria-label="More actions">
-          <Icon>more_vert</Icon>
-        </IconButton>
       </div>
     </div>
   );

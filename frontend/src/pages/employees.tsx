@@ -1,26 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Button, Icon, IconButton } from "../components/atoms";
-import { EmptyState, FilterSelect, PaginationControls, SearchInput } from "../components/molecules";
+import { Button, Icon, Loading } from "../components/atoms";
+import { EmptyState, FilterSelect, SearchInput } from "../components/molecules";
 import { EmployeeTable, FilterToolbar, PageHeader } from "../components/organisms";
 import { api } from "../lib/api";
 import { label } from "../lib/format";
 import type { Employee, EmployeeStatus, NamedOption } from "../types";
 
-const portraits = [
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuAYo5IyKq4X8hfKEl_lkeW-e4U74MqO7VViu1lZQZnpmCvl2hw6iIqQOujI6lxBlLMLvShIJFap-cIWldvcvh0vuvecQLFajBM2vTH3uNSlcCc9ElT5ZdUXIPWWxUPQReCkAL1oNV6ZFctqgdwpPTDlSZuVjOE_rnENYw0NjZ9gbcHu6PIrhwDk1eJLJeyMeHGS1Be8IzuPyj1OW8g25gkrQYHPSHg0kKjY64ZoEHdM7MXmNBA_CcbfbERyHcZYSOOpF9ifdksLr3b5",
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuA5kkZZPNaNIENoWampmaw5bVKcAoszuU2mM9jTeelTnyh0JyOlPNed4z_8e71zgl6zk5w5zbMbQFZqX2cg3oLaC_TOS3USozLEff6eNucwUCXIVgiNxHGmapwbJGIpsVQzwpPqHH42smFmPEdX-bhFTluPvxhFpfb8ffrdmmcjXOInfE1oLR8GuIz_CTBJ5r9kWKzEe0Upzh9qMGYF2kHggSTXoMYhCs4ks_vaf3espYNyuutN1LPHK1uSwBVsFFh88ZjUT8lyVJvA",
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuCM-HRB1vIIG-UWgEuoyBr984uaTy_mokXHIQnvr2nR6yv6FTizlvF8tbhmUWoBdPnAv7kpf-F_73sFLHEgKvagMYEoAbfVC8lF3rVQXGbZ3oRRSjW3YLl5d_8n8_PCZc0pTP34n67e2F5g8LyqXeQgUmjQqcWJfvcgyM_LMZEkKmll1k3QnGzNCN544E5NuMGk0MtAb7_e9H2dc245yxj76kmpuEvpyuNNFONVnfHlo0-qdTCdulIQZg0RkDIZCgRdDwnIOLdXHBzB",
-];
-
 export function EmployeesPage() {
   const navigate = useNavigate();
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [departments, setDepartments] = useState<NamedOption[]>([]);
   const [designations, setDesignations] = useState<NamedOption[]>([]);
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<EmployeeStatus | "">("");
-  const [department, setDepartment] = useState("");
   const [designation, setDesignation] = useState("");
   const [employeeType, setEmployeeType] = useState("");
   const [loading, setLoading] = useState(true);
@@ -31,7 +23,6 @@ export function EmployeesPage() {
       const params = new URLSearchParams();
       if (search) params.set("search", search);
       if (status) params.set("status_filter", status);
-      if (department) params.set("department_id", department);
       if (designation) params.set("designation_id", designation);
       setLoading(true);
       api<Employee[]>(`/employees?${params}`)
@@ -40,18 +31,10 @@ export function EmployeesPage() {
         .finally(() => setLoading(false));
     }, 180);
     return () => window.clearTimeout(timer);
-  }, [search, status, department, designation]);
+  }, [search, status, designation]);
 
   useEffect(() => {
-    Promise.all([
-      api<NamedOption[]>("/settings/departments"),
-      api<NamedOption[]>("/settings/designations"),
-    ])
-      .then(([departmentRows, designationRows]) => {
-        setDepartments(departmentRows);
-        setDesignations(designationRows);
-      })
-      .catch(() => undefined);
+    api<NamedOption[]>("/settings/designations").then(setDesignations).catch(() => undefined);
   }, []);
 
   const visibleEmployees = useMemo(
@@ -59,11 +42,10 @@ export function EmployeesPage() {
     [employees, employeeType],
   );
 
-  const hasActiveFilters = Boolean(search || status || department || designation || employeeType);
+  const hasActiveFilters = Boolean(search || status || designation || employeeType);
   function clearFilters() {
     setSearch("");
     setStatus("");
-    setDepartment("");
     setDesignation("");
     setEmployeeType("");
   }
@@ -95,12 +77,8 @@ export function EmployeesPage() {
           <FilterToolbar>
             <SearchInput value={search} onChange={setSearch} placeholder="Search employees..." className="lg:max-w-[380px]" />
             <div className="mx-2 hidden h-8 w-px bg-outline-variant/50 xl:block" />
-            <FilterSelect value={department} onChange={setDepartment} labelText="Department">
-              <option value="">Department</option>
-              {departments.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-            </FilterSelect>
-            <FilterSelect value={designation} onChange={setDesignation} labelText="Designation">
-              <option value="">Designation</option>
+            <FilterSelect value={designation} onChange={setDesignation} labelText="Job Title">
+              <option value="">Job Title</option>
               {designations.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
             </FilterSelect>
             <FilterSelect value={employeeType} onChange={setEmployeeType} labelText="Employment type">
@@ -122,26 +100,23 @@ export function EmployeesPage() {
                   Clear filters
                 </Button>
               )}
-              <IconButton aria-label="Filter list">
-                <Icon>filter_list</Icon>
-              </IconButton>
             </div>
           </FilterToolbar>
         </div>
 
-        <EmployeeTable employees={visibleEmployees} avatars={portraits} onRowClick={(employee) => navigate(`/employees/${employee.id}`)} />
+        {loading ? (
+          <div className="grid min-h-40 place-items-center"><Loading /></div>
+        ) : (
+          <EmployeeTable employees={visibleEmployees} onRowClick={(employee) => navigate(`/employees/${employee.id}`)} />
+        )}
         {!loading && !error && visibleEmployees.length === 0 && (
           <EmptyState>No employees match the selected filters.</EmptyState>
         )}
         {error && <EmptyState>{error}</EmptyState>}
 
-        <footer className="flex flex-wrap items-center justify-between gap-4 border-t border-outline-variant/30 bg-surface-container-highest/20 px-6 py-3.5 text-sm text-on-surface-variant">
-          <div className="flex items-center gap-5">
-            <span>Showing {visibleEmployees.length ? `1–${visibleEmployees.length}` : "0"} of {employees.length}</span>
-            <span>Rows per page: <strong className="ml-1.5 text-on-surface">10⌄</strong></span>
-          </div>
-          <PaginationControls page={1} pageCount={3} showEdges={false} />
-        </footer>
+        {!loading && <footer className="flex flex-wrap items-center justify-between gap-4 border-t border-outline-variant/30 bg-surface-container-highest/20 px-6 py-3.5 text-sm text-on-surface-variant">
+          <span>Showing {visibleEmployees.length} of {employees.length} employees</span>
+        </footer>}
       </section>
     </div>
   );

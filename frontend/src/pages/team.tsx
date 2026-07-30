@@ -27,7 +27,12 @@ export function TeamPage() {
       .finally(() => setLoading(false));
   }
 
-  useEffect(load, []);
+  useEffect(() => {
+    api<User[]>("/users")
+      .then(setMembers)
+      .catch((reason: Error) => setError(reason.message))
+      .finally(() => setLoading(false));
+  }, []);
 
   async function createMember(event: React.FormEvent) {
     event.preventDefault();

@@ -18,7 +18,7 @@ export function LoginPage() {
     setSubmitting(true);
     try {
       await login(email, password);
-      navigate("/employees");
+      navigate("/home");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Unable to sign in.");
     } finally {
@@ -40,8 +40,6 @@ export function LoginPage() {
         </div>
         <div className="flex gap-5 text-xs text-on-surface-variant">
           <span>© 2026 TECHMANION</span>
-          <a className="hover:text-primary" href="#">Privacy</a>
-          <a className="hover:text-primary" href="#">Terms</a>
         </div>
       </section>
 
@@ -93,8 +91,7 @@ export function LoginPage() {
                     </button>
                   </div>
                 </label>
-                <div className="flex justify-between px-1 mt-4">
-                  <a className="text-xs font-medium text-primary hover:underline" href="#">Forgot password?</a>
+                <div className="mt-4 flex justify-end px-1">
                   <Button size="lg" className="min-w-32" type="submit" disabled={submitting}>
                     {submitting ? "Signing in…" : "Sign in"}
                     <Icon className="text-[16px]">arrow_forward</Icon>
@@ -102,7 +99,7 @@ export function LoginPage() {
                 </div>
               </form>
               <div className="mt-8 border-t border-outline-variant/30 pt-5 text-xs text-on-surface-variant">
-                Having trouble signing in? <a className="text-primary hover:underline" href="#">Contact your administrator</a>
+                Having trouble signing in? Contact your administrator.
               </div>
             </div>
           </div>
