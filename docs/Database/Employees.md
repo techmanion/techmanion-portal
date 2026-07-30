@@ -4,9 +4,11 @@ tags: [database]
 
 # Database: Employees
 
-Source: `backend/app/models.py`. Covers the employee record itself, its salary history,
-documents, and the configurable department/designation lists. For hiring-side data (jobs,
-candidates) see [[Database/Hiring|Hiring]].
+Source: `backend/app/models/employees.py` (Employee, SalaryRevision, BankDetail,
+EmployeeDocument) and `backend/app/models/organization.py` (Department, Designation). Covers
+the employee record itself, its salary history, documents, and the configurable
+department/designation lists. For hiring-side data (jobs, candidates) see
+[[Database/Hiring|Hiring]].
 
 ## `Employee`
 
@@ -43,8 +45,8 @@ Effective-dated pay history. Table `salary_revisions`, FK `employee_id` (cascade
 | `reason` | free string, default `"HIRE"` (also set to `"RATE_CHANGE"` by the salary-revision form) |
 | `created_by_user_id` | FK → `users.id` |
 
-**Current salary resolution:** `app/services.py: employee_current_salary(employee, on_date)`
-returns the revision with the latest `effective_date <= on_date` (defaults to today). There is
+**Current salary resolution:** `app/services/employees.py: employee_current_salary(employee,
+on_date)` returns the revision with the latest `effective_date <= on_date` (defaults to today). There is
 no dedicated "current salary" column — it is always derived. Used by employee serialization
 and by [[Database/Payroll|Payroll]] generation.
 
@@ -59,7 +61,7 @@ Table `bank_details`, 1:1 with `Employee` (`uselist=False`, cascade delete). Fie
 `BANK_TRANSFER`).
 
 > [!warning] No API
-> `api.py` has no endpoint that reads or writes `BankDetail`. The model and relationship exist
+> No route in `api/routes/` reads or writes `BankDetail`. The model and relationship exist
 > and the table is created by migrations, but nothing in the product creates, edits, or
 > displays a bank detail today. See [[Known Limitations]].
 

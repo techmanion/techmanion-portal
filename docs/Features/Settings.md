@@ -7,7 +7,7 @@ tags: [feature]
 Two admin-only pages, both reachable from the sidebar's "Organization" group
 ([[Frontend/Routing|Routing]]):
 
-- **`/settings`** (`settings.tsx`) — "Organization": departments, designations, audit log
+- **`/settings`** (`settings.tsx`) — "Organization": departments, designations
 - **`/team`** (`team.tsx`) — "Team Members": portal login account management
 
 Both are wrapped in `RequireAdmin` — see [[Backend/Authentication|Backend Authentication]] for
@@ -21,9 +21,10 @@ the (server-side) reason this is safe to gate.
   > [!warning] Add-only
   > There is no way to rename, deactivate, or delete a department/designation from the UI or
   > API — see [[Known Limitations]].
-- **Audit log**: a read-only table (admin-only, `GET /audit`) of the most recent 200
-  [[Backend/Services|audit]] entries — action, entity type + id, actor user id, timestamp.
-  `before`/`after` JSON snapshots exist on each row but are **not rendered** in this table.
+
+There is no audit/activity log page — recent activity is only surfaced on the
+[[Features/Home|Home]] page's "Recent Activity" panel (`GET /home`), not on a dedicated
+admin screen. See [[Backend/Services|Backend Services]].
 
 ## Team Members (`/team`)
 

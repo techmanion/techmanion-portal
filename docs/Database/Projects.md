@@ -4,7 +4,7 @@ tags: [database]
 
 # Database: Projects
 
-Source: `backend/app/models.py`. Simplified by migration
+Source: `backend/app/models/projects.py`. Simplified by migration
 `20260730_03_simplify_projects_payroll` — see [[Phase 1]] for what was removed and why.
 
 ## `Project`

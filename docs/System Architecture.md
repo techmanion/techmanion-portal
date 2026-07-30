@@ -18,16 +18,18 @@ flowchart LR
         SPA["React 19 SPA<br/>(Vite build)"]
     end
     subgraph API["FastAPI service (backend/app)"]
-        Router["api.py router<br/>/api/v1/*"]
-        Deps["dependencies.py<br/>JWT + RBAC"]
-        Models["models.py<br/>SQLAlchemy ORM"]
+        Router["api/routes/*.py<br/>/api/v1/*"]
+        Deps["api/dependencies.py<br/>JWT + RBAC"]
+        Services["services/*.py<br/>business logic"]
+        Models["models/*.py<br/>SQLAlchemy ORM"]
     end
     DB[(PostgreSQL)]
     Disk[["Local disk<br/>uploads/"]]
 
     SPA -- "fetch() + Bearer JWT" --> Router
     Router --> Deps
-    Deps --> Models
+    Router --> Services
+    Services --> Models
     Models --> DB
     Router -- "employee documents" --> Disk
 ```
@@ -43,8 +45,9 @@ flowchart LR
 ```mermaid
 sequenceDiagram
     participant U as Browser (React)
-    participant A as FastAPI (api.py)
-    participant D as Dependencies (dependencies.py)
+    participant A as Route (api/routes/*.py)
+    participant D as Dependencies (api/dependencies.py)
+    participant Svc as Service (services/*.py)
     participant S as SQLAlchemy Session
     participant P as PostgreSQL
 
@@ -55,11 +58,12 @@ sequenceDiagram
     S->>P: SELECT
     P-->>S: row
     D-->>A: CurrentUser (or 401)
-    A->>A: Pydantic validates request body (schemas.py)
-    A->>S: SQLAlchemy query/insert/update
+    A->>A: Pydantic validates request body (schemas/*.py)
+    A->>Svc: call one service function
+    Svc->>S: SQLAlchemy query/insert/update + log_activity()
     S->>P: SQL
     P-->>S: result
-    A->>S: audit(db, user, action, ...) (same transaction)
+    Svc->>S: db.commit() (one transaction)
     A-->>U: Pydantic response model (camelCase JSON)
 ```
 
@@ -70,12 +74,13 @@ Full detail: [[Backend/Architecture|Backend Architecture]].
 | Layer | Location | Responsibility |
 |---|---|---|
 | Presentation | `frontend/src/pages/*`, `frontend/src/components/*` | Screens and reusable UI atoms/molecules/organisms |
-| Client data access | `frontend/src/lib/api.ts` | Single `fetch` wrapper: attaches JWT, maps errors |
-| API surface | `backend/app/api.py` | All REST endpoints, request→response orchestration |
-| Validation contracts | `backend/app/schemas.py` | Pydantic request/response models, camelCase aliasing |
-| Authorization | `backend/app/dependencies.py` | `CurrentUser` / `AdminUser` FastAPI dependencies |
-| Domain logic | `backend/app/services.py` | Small shared helpers (current salary lookup, audit writes) |
-| Persistence | `backend/app/models.py`, `backend/app/database.py` | SQLAlchemy ORM models, engine/session |
+| Client data access | `frontend/src/lib/api/*.ts` | One thin wrapper module per domain around `lib/api/client.ts: api()`, which attaches the JWT and maps errors |
+| API surface | `backend/app/api/routes/*.py` | REST endpoints, one router per domain, request→response orchestration |
+| Validation contracts | `backend/app/schemas/*.py` | Pydantic request/response models, camelCase aliasing |
+| Authorization | `backend/app/api/dependencies.py` | `CurrentUser` / `AdminUser` FastAPI dependencies |
+| Domain logic | `backend/app/services/*.py` | Business rules: hiring conversion, payroll generation, project assignment, Home feed, activity logging |
+| Data access helpers | `backend/app/repositories/*.py` | The handful of repeated eager-loaded query shapes |
+| Persistence | `backend/app/models/*.py`, `backend/app/database.py` | SQLAlchemy ORM models, engine/session |
 | Migrations | `backend/alembic/versions/*` | Versioned schema changes |
 
 See [[Folder Structure]] for the full file tree.
@@ -116,4 +121,5 @@ See [[Folder Structure]] for the full file tree.
 ## Related
 
 [[Tech Stack]] · [[Folder Structure]] · [[Backend/Architecture|Backend Architecture]] ·
-[[Frontend/UI Architecture|Frontend UI Architecture]] · [[Database/Relationships|Database Relationships]]
+[[Frontend/UI Architecture|Frontend UI Architecture]] · [[Database/Relationships|Database Relationships]] ·
+[[AI Coding Conventions]]

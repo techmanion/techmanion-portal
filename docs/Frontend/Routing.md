@@ -74,15 +74,15 @@ function RequireAdmin({ children }) {
 label (`AppHeader.tsx`):
 
 ```ts
-NAV_ITEMS = [Home, Hiring, Employees, Projects, Payroll]           // everyone
-ADMIN_NAV_ITEMS = [Team Members, Organization, Audit History]      // ADMIN only, shown after a divider
+NAV_ITEMS = [Home, Hiring, Employees, Projects, Payroll]  // everyone
+ADMIN_NAV_ITEMS = [Team Members, Organization]            // ADMIN only, shown after a divider
 ```
 
-Note `Organization` and `Audit History` both point to the **same** route (`/settings`) — they
-are two labeled entry points into one page ([[Features/Settings|Settings feature]]), not two
-routes.
+`Organization` points to `/settings` (departments/designations) and `Team Members` to `/team`
+— two distinct admin-only routes. See [[Features/Settings|Settings feature]].
 
 ## Related
 
 [[Frontend/Pages|Frontend Pages]] · [[Frontend/State Management|Frontend State Management]] ·
-[[Backend/Authentication|Backend Authentication]] · [[Frontend/UI Architecture|Frontend UI Architecture]]
+[[Backend/Authentication|Backend Authentication]] · [[Frontend/UI Architecture|Frontend UI Architecture]] ·
+[[AI Coding Conventions]]

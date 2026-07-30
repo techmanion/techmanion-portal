@@ -19,12 +19,12 @@ Cross-cutting foreign-key, cascade, and integrity behavior across every table in
 | `ProjectAssignment.employee_id` | `Employee.id` | *(no explicit ondelete)* | |
 | `PayrollEntry.employee_id` | `Employee.id` | *(no explicit ondelete)* | |
 | `Employee.department_id` / `designation_id` | `Department`/`Designation.id` | *(no explicit ondelete)* | nullable — employee survives if the FK target is later "removed" (moot, see below) |
-| `SalaryRevision.created_by_user_id`, `EmployeeDocument.uploaded_by_user_id`, `AuditLog.actor_user_id` | `User.id` | *(no explicit ondelete)* | |
+| `SalaryRevision.created_by_user_id`, `EmployeeDocument.uploaded_by_user_id` | `User.id` | *(no explicit ondelete)* | |
 
 ## No hard deletes for the core entities
 
-There is **no `DELETE` endpoint** for `Employee`, `User`, `Department`, or `Designation` in
-`backend/app/api.py`. In practice:
+There is **no `DELETE` endpoint** for `Employee`, `User`, `Department`, or `Designation`
+anywhere in `backend/app/api/routes/`. In practice:
 
 - An employee is deactivated by changing `status` to `RESIGNED`/`TERMINATED`, never deleted.
 - A portal user is deactivated via `PATCH /users/{id} { isActive: false }`, never deleted.
@@ -59,12 +59,14 @@ Entities that **do** have delete endpoints: `Job` (cascades to `Candidate`), `Ca
 - **`Project` ⇎ `PayrollEntry`** — payroll has no concept of project cost allocation; a
   `PayrollEntry` only ever references an `Employee`.
 
-## Audit trail relationship
+## Activity log relationship
 
-`AuditLog` rows are **polymorphic** — `entity_type` (string, e.g. `"Employee"`, `"Project"`,
+`ActivityLog` rows are **polymorphic** — `entity` (string, e.g. `"Employee"`, `"Project"`,
 `"PayrollEntry"`) + `entity_id` (string) reference a row in another table without an actual FK
-constraint. This lets one log table cover every entity type. See [[Backend/Services|Services]]
-for the `audit()` helper and the full list of actions it's called for.
+constraint, and there is no `actor` column at all (unlike the earlier `AuditLog` design — see
+[[Phase 1]]). This lets one log table cover every entity type for the Home page's "Recent
+Activity" feed. See [[Backend/Services|Services]] for the `log_activity()` helper and the full
+list of actions it's called for.
 
 ## Related
 

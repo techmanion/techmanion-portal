@@ -75,12 +75,16 @@ Every list page (`employees`, `projects`, `payroll`, `hiring`) follows the same 
 flowchart TD
     Header["PageHeader: title + description + primary action button"]
     Filters["FilterToolbar: SearchInput + FilterSelect(s)"]
-    Table["DataTable / EmployeeTable"]
+    Table["DataTable-based organism (EmployeeTable / ProjectsTable / PayrollTable / ...)"]
     Empty["EmptyState (if no rows)"]
-    Footer["Count + PaginationControls (decorative, see Known Limitations)"]
+    Footer["Count footer (e.g. 'Showing N of M')"]
     Header --> Filters --> Table --> Empty
     Table --> Footer
 ```
+
+There is no pagination UI — every list endpoint returns its entire result set and the frontend
+renders all of it, scrolling the table horizontally on small screens rather than paging. See
+[[Decisions/Known Limitations|Known Limitations]].
 
 ## Responsiveness
 
@@ -91,4 +95,5 @@ table min-widths; wide tables (`DataTable`) scroll horizontally on small screens
 ## Related
 
 [[Frontend/Components|Frontend Components]] · [[Frontend/Pages|Frontend Pages]] ·
-[[Frontend/State Management|Frontend State Management]] · [[Tech Stack]]
+[[Frontend/State Management|Frontend State Management]] · [[Tech Stack]] ·
+[[AI Coding Conventions]]

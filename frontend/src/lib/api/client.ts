@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000/api/v1";
+export const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000/api/v1";
 const TOKEN_KEY = "techmanion_access_token";
 
 export class ApiError extends Error {
@@ -48,18 +48,4 @@ export async function apiBlob(path: string): Promise<Blob> {
   });
   if (!response.ok) throw new ApiError("File could not be downloaded.", response.status);
   return response.blob();
-}
-
-export async function login(email: string, password: string) {
-  const form = new URLSearchParams({ username: email, password });
-  const response = await fetch(`${API_URL}/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: form,
-  });
-  if (!response.ok) {
-    const body = (await response.json()) as { detail?: string };
-    throw new ApiError(body.detail ?? "Email or password is incorrect.", response.status);
-  }
-  return response.json() as Promise<{ accessToken: string; user: import("../types").User }>;
 }

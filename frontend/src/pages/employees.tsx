@@ -3,8 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button, Icon, Loading } from "../components/atoms";
 import { EmptyState, FilterSelect, SearchInput } from "../components/molecules";
 import { EmployeeTable, FilterToolbar, PageHeader } from "../components/organisms";
-import { api } from "../lib/api";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
+import { listEmployees } from "../lib/api/employees";
+import { listDesignations } from "../lib/api/settings";
 import { label } from "../lib/format";
+import { EMPLOYEE_STATUSES, EMPLOYEE_TYPES } from "../lib/options";
 import type { Employee, EmployeeStatus, NamedOption } from "../types";
 
 export function EmployeesPage() {
@@ -12,6 +15,7 @@ export function EmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [designations, setDesignations] = useState<NamedOption[]>([]);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search, 180);
   const [status, setStatus] = useState<EmployeeStatus | "">("");
   const [designation, setDesignation] = useState("");
   const [employeeType, setEmployeeType] = useState("");
@@ -19,22 +23,22 @@ export function EmployeesPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
+    function load() {
       const params = new URLSearchParams();
-      if (search) params.set("search", search);
+      if (debouncedSearch) params.set("search", debouncedSearch);
       if (status) params.set("status_filter", status);
       if (designation) params.set("designation_id", designation);
       setLoading(true);
-      api<Employee[]>(`/employees?${params}`)
+      listEmployees(params.toString())
         .then(setEmployees)
         .catch((reason: Error) => setError(reason.message))
         .finally(() => setLoading(false));
-    }, 180);
-    return () => window.clearTimeout(timer);
-  }, [search, status, designation]);
+    }
+    load();
+  }, [debouncedSearch, status, designation]);
 
   useEffect(() => {
-    api<NamedOption[]>("/settings/designations").then(setDesignations).catch(() => undefined);
+    listDesignations().then(setDesignations).catch(() => undefined);
   }, []);
 
   const visibleEmployees = useMemo(
@@ -75,22 +79,39 @@ export function EmployeesPage() {
       <section className="surface-panel overflow-hidden">
         <div className="bg-surface-container-high/30 px-6 py-4">
           <FilterToolbar>
-            <SearchInput value={search} onChange={setSearch} placeholder="Search employees..." className="lg:max-w-[380px]" />
+            <SearchInput
+              value={search}
+              onChange={setSearch}
+              placeholder="Search employees..."
+              className="lg:max-w-[380px]"
+            />
             <div className="mx-2 hidden h-8 w-px bg-outline-variant/50 xl:block" />
             <FilterSelect value={designation} onChange={setDesignation} labelText="Job Title">
               <option value="">Job Title</option>
-              {designations.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+              {designations.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
             </FilterSelect>
             <FilterSelect value={employeeType} onChange={setEmployeeType} labelText="Employment type">
               <option value="">Employment Type</option>
-              {["FULL_TIME", "PART_TIME", "CONTRACT"].map((value) => (
-                <option key={value} value={value}>{label(value)}</option>
+              {EMPLOYEE_TYPES.map((value) => (
+                <option key={value} value={value}>
+                  {label(value)}
+                </option>
               ))}
             </FilterSelect>
-            <FilterSelect value={status} onChange={(value) => setStatus(value as EmployeeStatus | "")} labelText="Status">
+            <FilterSelect
+              value={status}
+              onChange={(value) => setStatus(value as EmployeeStatus | "")}
+              labelText="Status"
+            >
               <option value="">Status</option>
-              {["ACTIVE", "ON_LEAVE", "RESIGNED", "TERMINATED"].map((value) => (
-                <option key={value} value={value}>{label(value)}</option>
+              {EMPLOYEE_STATUSES.map((value) => (
+                <option key={value} value={value}>
+                  {label(value)}
+                </option>
               ))}
             </FilterSelect>
             <div className="ml-auto flex items-center gap-1.5">
@@ -105,18 +126,27 @@ export function EmployeesPage() {
         </div>
 
         {loading ? (
-          <div className="grid min-h-40 place-items-center"><Loading /></div>
+          <div className="grid min-h-40 place-items-center">
+            <Loading />
+          </div>
         ) : (
-          <EmployeeTable employees={visibleEmployees} onRowClick={(employee) => navigate(`/employees/${employee.id}`)} />
+          <EmployeeTable
+            employees={visibleEmployees}
+            onRowClick={(employee) => navigate(`/employees/${employee.id}`)}
+          />
         )}
         {!loading && !error && visibleEmployees.length === 0 && (
           <EmptyState>No employees match the selected filters.</EmptyState>
         )}
         {error && <EmptyState>{error}</EmptyState>}
 
-        {!loading && <footer className="flex flex-wrap items-center justify-between gap-4 border-t border-outline-variant/30 bg-surface-container-highest/20 px-6 py-3.5 text-sm text-on-surface-variant">
-          <span>Showing {visibleEmployees.length} of {employees.length} employees</span>
-        </footer>}
+        {!loading && (
+          <footer className="flex flex-wrap items-center justify-between gap-4 border-t border-outline-variant/30 bg-surface-container-highest/20 px-6 py-3.5 text-sm text-on-surface-variant">
+            <span>
+              Showing {visibleEmployees.length} of {employees.length} employees
+            </span>
+          </footer>
+        )}
       </section>
     </div>
   );

@@ -18,7 +18,7 @@ Read by `backend/app/config.py: Settings` (pydantic-settings). All are optional 
 | `JWT_SECRET` | `"development-only-secret-change-me"` | `security.py` — signs/verifies access tokens. **Must** be overridden outside local dev. |
 | `ACCESS_TOKEN_MINUTES` | `480` (8 hours) | `security.py: create_access_token()` — token lifetime |
 | `FRONTEND_URL` | `"http://localhost:5173"` | `main.py` CORS `allow_origins` — must exactly match where the SPA is served from |
-| `UPLOAD_DIR` | `"uploads"` | `api.py` document upload/download — relative path, created on startup |
+| `UPLOAD_DIR` | `"uploads"` | `api/routes/employees.py` document upload/download — relative path, created on startup |
 | `INITIAL_ADMIN_EMAIL` | `"admin@techmanion.com"` | `main.py: seed_defaults()` |
 | `INITIAL_ADMIN_PASSWORD` | `"ChangeMe123!"` | `main.py: seed_defaults()` |
 
@@ -31,7 +31,7 @@ Read by Vite at build/dev time (`import.meta.env`).
 
 | Variable | Default (if unset in code) | Used by |
 |---|---|---|
-| `VITE_API_URL` | `"http://localhost:8000/api/v1"` | `lib/api.ts` — base URL for every API call, including the special form-encoded login request |
+| `VITE_API_URL` | `"http://localhost:8000/api/v1"` | `lib/api/client.ts` — base URL for every API call, including the special form-encoded login request in `lib/api/auth.ts` |
 
 ## Consistency rule
 

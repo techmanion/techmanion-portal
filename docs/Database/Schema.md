@@ -4,10 +4,11 @@ tags: [database]
 
 # Database Schema
 
-All tables are defined as SQLAlchemy models in `backend/app/models.py` and created/altered by
-Alembic migrations in `backend/alembic/versions/`. Database: **PostgreSQL**.
+All tables are defined as SQLAlchemy models in `backend/app/models/` (one module per domain —
+see [[Backend/Models|Backend Models]]) and created/altered by Alembic migrations in
+`backend/alembic/versions/`. Database: **PostgreSQL**.
 
-Every table (except `audit_logs`) mixes in `TimestampMixin` → `created_at`, `updated_at`
+Every table (except `activity_logs`) mixes in `TimestampMixin` → `created_at`, `updated_at`
 (timezone-aware, server-set in Python via `utc_now()`).
 
 ## Entity-relationship diagram
@@ -16,7 +17,6 @@ Every table (except `audit_logs`) mixes in `TimestampMixin` → `created_at`, `u
 erDiagram
     USER ||--o{ SALARY_REVISION : "created_by_user_id"
     USER ||--o{ EMPLOYEE_DOCUMENT : "uploaded_by_user_id"
-    USER ||--o{ AUDIT_LOG : "actor_user_id"
 
     DEPARTMENT ||--o{ EMPLOYEE : "department_id"
     DESIGNATION ||--o{ EMPLOYEE : "designation_id"
@@ -119,14 +119,13 @@ erDiagram
         string name
         string default_currency
     }
-    AUDIT_LOG {
+    ACTIVITY_LOG {
         int id PK
-        int actor_user_id FK
-        string action
-        string entity_type
+        string entity
         string entity_id
-        json before
-        json after
+        string action
+        string description
+        datetime timestamp
     }
 ```
 
@@ -150,7 +149,7 @@ erDiagram
 | `project_assignments` | `ProjectAssignment` | Employee ⇄ project join | [[Database/Projects\|Projects]] |
 | `payroll_entries` | `PayrollEntry` | One payroll line per employee per month | [[Database/Payroll\|Payroll]] |
 | `company_profiles` | `CompanyProfile` | Single-row company info — **modeled, no API** | [[Known Limitations]] |
-| `audit_logs` | `AuditLog` | Append-only action log | [[Backend/Services\|Services]] |
+| `activity_logs` | `ActivityLog` | Append-only activity feed, surfaced via `GET /home` | [[Backend/Services\|Services]] |
 
 ## Enums
 
@@ -183,10 +182,11 @@ the schema.
 |---|---|
 | `20260725_01_initial` | Base schema via `Base.metadata.create_all` |
 | `20260730_02_hiring` | Adds `jobs`, `candidates` |
-| `20260730_03_simplify_projects_payroll` | Drops legacy `payroll_runs`/`payslips`/`payslip_line_items`/`tax_slabs` tables and their enum types, trims `projects`/`project_assignments` columns, creates `payroll_entries` | 
+| `20260730_03_simplify_projects_payroll` | Drops legacy `payroll_runs`/`payslips`/`payslip_line_items`/`tax_slabs` tables and their enum types, trims `projects`/`project_assignments` columns, creates `payroll_entries` |
+| `20260730_04_activity_log` | Drops `audit_logs`, creates `activity_logs` |
 
-See [[Phase 1]] for why the third migration exists (a deliberate simplification of the
-original payroll/project design).
+See [[Phase 1]] for why the third and fourth migrations exist (a deliberate simplification of
+the original payroll/project design and audit-log mechanism).
 
 ## Related
 

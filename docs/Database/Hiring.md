@@ -4,8 +4,8 @@ tags: [database]
 
 # Database: Hiring
 
-Source: `backend/app/models.py`. Added by migration `20260730_02_hiring`. Two tables: `jobs`
-and `candidates`.
+Source: `backend/app/models/hiring.py`. Added by migration `20260730_02_hiring`. Two tables:
+`jobs` and `candidates`.
 
 ## `Job`
 
@@ -53,7 +53,8 @@ below, never chosen directly by a recruiter in the normal flow (though nothing s
 
 ## Candidate → Employee conversion
 
-`POST /candidates/{id}/convert` (`backend/app/api.py`) is the only place a `Candidate` becomes
+`POST /candidates/{id}/convert` (`api/routes/hiring.py`, business logic in
+`services/hiring.py: convert_candidate_to_employee()`) is the only place a `Candidate` becomes
 an `Employee`:
 
 ```mermaid

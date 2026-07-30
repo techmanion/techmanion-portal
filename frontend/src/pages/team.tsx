@@ -3,14 +3,16 @@ import { useAuth } from "../auth";
 import { Button, Icon, IconButton, Input, Select, StatusChip } from "../components/atoms";
 import { EmployeeCell, EmptyState, FormField } from "../components/molecules";
 import { DataTable, PageHeader, TableHeadRow, TableRow } from "../components/organisms";
-import { api, ApiError } from "../lib/api";
+import { ApiError } from "../lib/api";
+import { createUser, listUsers, updateUser as updateUserRequest } from "../lib/api/users";
 import { formatDate, roleLabel } from "../lib/format";
+import { USER_ROLES } from "../lib/options";
 import type { User, UserRole } from "../types";
 
-const roles: UserRole[] = ["ADMIN", "HR", "MANAGER", "EMPLOYEE"];
+const roles = USER_ROLES;
 
 export function TeamPage() {
-  const { user: currentUser, updateUser } = useAuth();
+  const { user: currentUser, updateUser: setCurrentUser } = useAuth();
   const [members, setMembers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -21,14 +23,14 @@ export function TeamPage() {
 
   function load() {
     setLoading(true);
-    api<User[]>("/users")
+    listUsers()
       .then(setMembers)
       .catch((reason: Error) => setError(reason.message))
       .finally(() => setLoading(false));
   }
 
   useEffect(() => {
-    api<User[]>("/users")
+    listUsers()
       .then(setMembers)
       .catch((reason: Error) => setError(reason.message))
       .finally(() => setLoading(false));
@@ -39,7 +41,7 @@ export function TeamPage() {
     setFormError("");
     setSubmitting(true);
     try {
-      await api<User>("/users", { method: "POST", body: JSON.stringify(form) });
+      await createUser(form);
       setForm({ name: "", email: "", password: "", role: "HR" });
       setShowForm(false);
       load();
@@ -53,10 +55,7 @@ export function TeamPage() {
   async function toggleActive(member: User) {
     setError("");
     try {
-      const updated = await api<User>(`/users/${member.id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ isActive: !member.isActive }),
-      });
+      const updated = await updateUserRequest(member.id, { isActive: !member.isActive });
       setMembers((current) => current.map((row) => (row.id === updated.id ? updated : row)));
     } catch (reason) {
       setError(reason instanceof ApiError ? reason.message : "Could not update this member.");
@@ -66,12 +65,9 @@ export function TeamPage() {
   async function changeRole(member: User, role: UserRole) {
     setError("");
     try {
-      const updated = await api<User>(`/users/${member.id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ role }),
-      });
+      const updated = await updateUserRequest(member.id, { role });
       setMembers((current) => current.map((row) => (row.id === updated.id ? updated : row)));
-      if (currentUser?.id === updated.id) updateUser(updated);
+      if (currentUser?.id === updated.id) setCurrentUser(updated);
     } catch (reason) {
       setError(reason instanceof ApiError ? reason.message : "Could not update this member.");
     }

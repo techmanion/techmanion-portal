@@ -16,7 +16,7 @@ function NavRow({
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `flex h-10 items-center gap-3 rounded-full px-4 text-sm transition ${
+        `flex h-10 items-center gap-3 rounded-l-full px-4 text-sm transition ${
           isActive
             ? "bg-secondary-container font-medium text-on-surface"
             : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"

@@ -4,26 +4,59 @@ tags: [backend]
 
 # Backend Architecture
 
-The backend is a single FastAPI application, `backend/app/`. There is one router, one
+The backend is a single FastAPI application, `backend/app/`. There is one router tree, one
 database, and no background workers — every request is handled synchronously start to finish.
+Routes, business logic, and data access are split into three layers (routes → services →
+repositories/ORM) — see [[AI Coding Conventions]] §4 for the exact boundary between them.
 
-## File responsibilities
+## Package layout
 
-| File | Responsibility |
+```text
+backend/app/
+  main.py            FastAPI app, CORS, lifespan seed, /health
+  config.py           pydantic-settings Settings
+  database.py          SQLAlchemy engine, SessionLocal, get_db()
+  security.py           bcrypt hashing, JWT create/decode
+  core/
+    errors.py            get_or_404() — shared "fetch row or 404" helper
+  api/
+    __init__.py           exposes `router` (re-exported from router.py)
+    router.py             aggregates every domain APIRouter
+    dependencies.py        CurrentUser / AdminUser / DbSession
+    routes/
+      auth.py               /auth/*, /users/*
+      employees.py           /employees/*, /documents/*
+      hiring.py               /jobs/*, /candidates/*
+      projects.py              /projects/*
+      payroll.py                /payroll/*
+      home.py                     /home
+      settings.py                  /settings/*
+  models/               one module per domain, __init__.py re-exports every class
+  schemas/              one module per domain, __init__.py re-exports every schema
+  services/             one module per domain, __init__.py re-exports the public API
+  repositories/         one module per domain — only genuinely-repeated eager-loaded queries
+```
+
+## File/package responsibilities
+
+| Path | Responsibility |
 |---|---|
-| `main.py` | Creates the `FastAPI` app, configures CORS, mounts the router at `settings.api_prefix`, runs `seed_defaults()` on startup, exposes `/health` |
+| `main.py` | Creates the `FastAPI` app, configures CORS, mounts `api.router` at `settings.api_prefix`, runs `seed_defaults()` on startup, exposes `/health` |
 | `config.py` | `Settings` (pydantic-settings) — typed env-var configuration, see [[Environment]] |
 | `database.py` | SQLAlchemy `engine`, `SessionLocal`, `get_db()` request-scoped session generator |
-| `dependencies.py` | `CurrentUser` / `AdminUser` — FastAPI `Depends()` chains for auth + RBAC, see [[Backend/Authentication\|Authentication]] |
+| `core/errors.py` | `get_or_404(db, Model, id, detail)` — the one shared "fetch by primary key or raise 404" helper, used by every route that needs it |
+| `api/dependencies.py` | `CurrentUser` / `AdminUser` — FastAPI `Depends()` chains for auth + RBAC, see [[Backend/Authentication\|Authentication]] |
+| `api/routes/*.py` | One `APIRouter()` per domain. A route parses the request, resolves dependencies, calls a service/repository function, and returns a response (via a small `serialize_x()` mapper defined in the same file) — see [[Backend/API\|API]] |
+| `api/router.py` | Aggregates every domain router with `include_router()` |
+| `models/*.py` | SQLAlchemy ORM models and enums, split by domain — see [[Backend/Models\|Models]] |
+| `schemas/*.py` | Pydantic request/response models, split by domain — see [[Backend/API\|API]] |
+| `services/*.py` | Business rules: candidate→employee conversion, payroll generation, project assignment, the Home feed, activity logging — see [[Backend/Services\|Services]] |
+| `repositories/*.py` | The handful of `select(...)` + `.options(selectinload(...))` query shapes reused across 3+ routes for one entity |
 | `security.py` | Password hashing (bcrypt via passlib) and JWT create/decode (PyJWT) |
-| `models.py` | Every SQLAlchemy ORM model and enum — see [[Backend/Models\|Models]] |
-| `schemas.py` | Every Pydantic request/response model — see [[Backend/API\|API]] |
-| `api.py` | Every endpoint, on one `APIRouter` — see [[Backend/API\|API]] |
-| `services.py` | Small shared helpers used by endpoints — see [[Backend/Services\|Services]] |
 
-There are no sub-routers, no service classes, and no repository layer — `api.py` functions
-call SQLAlchemy directly and return Pydantic models built by hand or via
-`Model.model_validate()`.
+Routes never contain multi-step business logic, and they never duplicate the same eager-loaded
+query 3+ times — that logic lives in `services/` and `repositories/` respectively. See
+[[AI Coding Conventions]] for the binding version of this rule.
 
 ## App startup (`main.py`)
 
@@ -53,26 +86,25 @@ allowed, all methods/headers) — see [[Environment]].
 
 ```mermaid
 sequenceDiagram
-    participant FE as Frontend (lib/api.ts)
-    participant API as api.py handler
-    participant Dep as dependencies.py
-    participant Sec as security.py
-    participant ORM as models.py (SQLAlchemy)
+    participant FE as Frontend (lib/api/*.ts)
+    participant Route as api/routes/*.py
+    participant Dep as api/dependencies.py
+    participant Svc as services/*.py
+    participant Repo as repositories/*.py
     participant DB as PostgreSQL
 
-    FE->>API: HTTP request + Authorization: Bearer <jwt>
-    API->>Dep: Depends(get_current_user)
-    Dep->>Sec: decode_access_token(token)
-    Sec-->>Dep: user_id or None
+    FE->>Route: HTTP request + Authorization: Bearer <jwt>
+    Route->>Dep: Depends(get_current_user)
     Dep->>DB: db.get(User, user_id)
     DB-->>Dep: User row
-    Dep-->>API: CurrentUser (401 raised if missing/inactive)
-    API->>API: Pydantic validates request body (schemas.py)
-    API->>ORM: build/query model instances
-    ORM->>DB: SQL (SELECT/INSERT/UPDATE/DELETE)
-    API->>ORM: audit(db, user, action, ...) — same session, same transaction
-    API->>DB: db.commit()
-    API-->>FE: Pydantic response model → JSON (camelCase)
+    Dep-->>Route: CurrentUser (401 raised if missing/inactive)
+    Route->>Route: Pydantic validates request body (schemas/*.py)
+    Route->>Svc: call one service function for the business operation
+    Svc->>Repo: (or the route calls a repository directly for a plain fetch)
+    Repo->>DB: SELECT with eager-loaded relations
+    Svc->>DB: INSERT/UPDATE/DELETE + log_activity() in the same transaction
+    Svc->>DB: db.commit()
+    Route-->>FE: Pydantic response model → JSON (camelCase)
 ```
 
 Every `DbSession` (`Annotated[Session, Depends(get_db)]`) is opened per-request by
@@ -81,13 +113,15 @@ Every `DbSession` (`Annotated[Session, Depends(get_db)]`) is opened per-request 
 
 ## Error handling pattern
 
-- `HTTPException(status_code=404, detail="... was not found.")` for missing rows.
-- `IntegrityError` (unique constraint violations) is caught around `db.commit()`/`db.flush()`,
-  the transaction is rolled back, and re-raised as `HTTPException(409, ...)` with a
-  human-readable message. This pattern repeats in every create/update endpoint that touches a
-  unique column (`api.py`).
+- `HTTPException(status_code=404, detail="... was not found.")` for a missing row — via
+  `core.errors.get_or_404()` for the simple by-id case, or an inline check when the row was
+  already fetched through a repository function with extra `.options(...)`.
+- `IntegrityError` (unique constraint violations) is caught around `db.commit()`/`db.flush()`
+  inside the relevant `services/*.py` function, the transaction is rolled back, and re-raised
+  as `HTTPException(409, ...)` with a human-readable message. This pattern repeats in every
+  create/update service function that touches a unique column.
 - Validation errors (wrong types, missing required fields, out-of-range values) are handled
-  automatically by FastAPI/Pydantic and return `422` before the handler body ever runs.
+  automatically by FastAPI/Pydantic and return `422` before the route body ever runs.
 
 ## OpenAPI / interactive docs
 
@@ -97,12 +131,12 @@ FastAPI auto-generates docs from the type hints and Pydantic schemas:
 - ReDoc at `/redoc`
 - Raw schema at `/openapi.json`
 
-These reflect `api.py`/`schemas.py` live — they are the most up-to-date endpoint reference
-short of reading the code; [[Backend/API|API]] in this vault mirrors them as static
+These reflect `api/routes/*.py`/`schemas/*.py` live — they are the most up-to-date endpoint
+reference short of reading the code; [[Backend/API|API]] in this vault mirrors them as static
 documentation.
 
 ## Related
 
 [[System Architecture]] · [[Backend/API|Backend API]] · [[Backend/Models|Backend Models]] ·
 [[Backend/Authentication|Backend Authentication]] · [[Backend/Services|Backend Services]] ·
-[[Environment]]
+[[AI Coding Conventions]] · [[Environment]]

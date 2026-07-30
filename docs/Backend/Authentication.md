@@ -4,14 +4,14 @@ tags: [backend]
 
 # Authentication & Authorization
 
-Sources: `backend/app/security.py`, `backend/app/dependencies.py`, plus the auth endpoints in
-`backend/app/api.py`.
+Sources: `backend/app/security.py`, `backend/app/api/dependencies.py`, plus the auth endpoints
+in `backend/app/api/routes/auth.py`.
 
 ## Login flow
 
 ```mermaid
 sequenceDiagram
-    participant FE as Browser (lib/api.ts: login())
+    participant FE as Browser (lib/api/auth.ts: login())
     participant API as POST /api/v1/auth/login
     participant DB as PostgreSQL
 
@@ -30,7 +30,8 @@ sequenceDiagram
 
 - The login endpoint uses FastAPI's `OAuth2PasswordRequestForm` — the request body is
   `application/x-www-form-urlencoded` (`username`/`password`), **not** JSON, unlike every
-  other endpoint. `frontend/src/lib/api.ts: login()` builds this specially.
+  other endpoint. `frontend/src/lib/api/auth.ts: login()` builds this specially (it can't go
+  through the shared `lib/api/client.ts: api()` helper, which always sends JSON).
 - Email lookup is case-insensitive (`form.username.lower()` compared against a
   lowercase-stored `email`).
 
@@ -97,8 +98,9 @@ today. This matches the original two-role (Admin/HR) design intent recorded in t
 
 ## Frontend integration
 
-- `frontend/src/lib/api.ts` attaches `Authorization: Bearer <token>` to every request when a
-  token is present in `localStorage` (key `techmanion_access_token`).
+- `frontend/src/lib/api/client.ts: api()` attaches `Authorization: Bearer <token>` to every
+  request when a token is present in `localStorage` (key `techmanion_access_token`). Every
+  domain module in `lib/api/` (`employees.ts`, `projects.ts`, ...) is a thin wrapper around it.
 - A `401` response anywhere clears the stored token (`setToken(null)`) — the next render of
   `AuthProvider` (which re-checks `getToken()`) then redirects to `/login` because `user` stays
   `null`. See [[Frontend/State Management|State Management]].
@@ -121,4 +123,5 @@ Admin via `POST /users` (Team Members page).
 ## Related
 
 [[Backend/API|Backend API]] · [[Backend/Architecture|Backend Architecture]] ·
-[[Features/Settings|Settings feature]] · [[Environment]] · [[Known Limitations]]
+[[Features/Settings|Settings feature]] · [[Environment]] · [[Known Limitations]] ·
+[[AI Coding Conventions]]

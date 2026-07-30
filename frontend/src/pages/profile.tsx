@@ -4,9 +4,9 @@ import { Avatar, Button, Icon, Input } from "../components/atoms";
 import { SectionHeading } from "../components/atoms/Typography";
 import { FormField } from "../components/molecules";
 import { PageHeader } from "../components/organisms";
-import { api, ApiError } from "../lib/api";
+import { ApiError } from "../lib/api";
+import { changePassword, updateProfile } from "../lib/api/auth";
 import { formatDate, roleLabel } from "../lib/format";
-import type { User } from "../types";
 
 export function ProfilePage() {
   const { user, updateUser } = useAuth();
@@ -31,10 +31,7 @@ export function ProfilePage() {
     setNameSaved(false);
     setSavingName(true);
     try {
-      const updated = await api<User>("/auth/me", {
-        method: "PATCH",
-        body: JSON.stringify({ name: name.trim() }),
-      });
+      const updated = await updateProfile(name.trim());
       updateUser(updated);
       setNameSaved(true);
       window.setTimeout(() => setNameSaved(false), 3000);
@@ -59,10 +56,7 @@ export function ProfilePage() {
     }
     setSavingPassword(true);
     try {
-      await api<void>("/auth/change-password", {
-        method: "POST",
-        body: JSON.stringify({ currentPassword, newPassword }),
-      });
+      await changePassword({ currentPassword, newPassword });
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");

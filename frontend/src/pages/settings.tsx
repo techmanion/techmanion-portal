@@ -4,7 +4,7 @@ import { Button, Icon, Input } from "../components/atoms";
 import { SectionHeading } from "../components/atoms/Typography";
 import { FormField } from "../components/molecules";
 import { PageHeader } from "../components/organisms";
-import { api } from "../lib/api";
+import { addDepartment, addDesignation, listDepartments, listDesignations } from "../lib/api/settings";
 import type { NamedOption } from "../types";
 
 export function SettingsPage() {
@@ -16,12 +16,10 @@ export function SettingsPage() {
   const [error, setError] = useState("");
 
   function load() {
-    Promise.all([
-      api<NamedOption[]>("/settings/departments"),
-      api<NamedOption[]>("/settings/designations"),
-    ])
+    Promise.all([listDepartments(), listDesignations()])
       .then(([departmentRows, designationRows]) => {
-        setDepartments(departmentRows); setDesignations(designationRows);
+        setDepartments(departmentRows);
+        setDesignations(designationRows);
       })
       .catch(() => undefined);
   }
@@ -29,8 +27,13 @@ export function SettingsPage() {
 
   async function add(kind: "departments" | "designations", name: string) {
     try {
-      await api(`/settings/${kind}?name=${encodeURIComponent(name)}`, { method: "POST" });
-      if (kind === "departments") setDepartment(""); else setDesignation("");
+      if (kind === "departments") {
+        await addDepartment(name);
+        setDepartment("");
+      } else {
+        await addDesignation(name);
+        setDesignation("");
+      }
       load();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Organization list could not be updated.");

@@ -110,6 +110,8 @@ export interface Project {
   assignments: Assignment[];
 }
 
+export type ProjectPayload = Omit<Project, "id" | "assignments">;
+
 export interface PayrollEntry {
   id: number;
   employeeId: number;

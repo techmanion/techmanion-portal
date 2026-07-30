@@ -15,6 +15,11 @@ implemented today**. Anything not yet built is explicitly marked **Planned**.
 > [[design-doc]], [[planning-doc]], [[architecture]], [[data-model]], [[decisions]]) — see
 > [[Phase 1]] for how the shipped product diverged from that original plan.
 
+> [!warning] For coding agents
+> **Read [[AI Coding Conventions]] before editing any code.** It is the canonical, binding
+> rulebook for Atomic Design boundaries, backend route/service/repository boundaries, file-size
+> guidance, and the completion checklist every change must satisfy.
+
 ## Start here
 
 | If you want to... | Read |
@@ -24,6 +29,7 @@ implemented today**. Anything not yet built is explicitly marked **Planned**.
 | Know the languages/frameworks used | [[Tech Stack]] |
 | Find a file in the repo | [[Folder Structure]] |
 | Set up a local dev environment | [[Getting Started]] |
+| **Follow coding conventions before editing** | **[[AI Coding Conventions]]** |
 
 ## Database
 
@@ -36,7 +42,7 @@ implemented today**. Anything not yet built is explicitly marked **Planned**.
 - [[Backend/Architecture|Backend Architecture]] — process structure, request lifecycle
 - [[Backend/API|API]] — full REST endpoint reference
 - [[Backend/Models|Models]] — SQLAlchemy ORM models
-- [[Backend/Services|Services]] — shared business logic (`app/services.py`)
+- [[Backend/Services|Services]] — business logic (`app/services/`)
 - [[Backend/Authentication|Authentication]] — login, JWT, RBAC
 
 ## Frontend (React + Vite)
@@ -60,4 +66,5 @@ implemented today**. Anything not yet built is explicitly marked **Planned**.
 
 ## Development
 
-- [[Getting Started]] · [[Environment]] · [[Build & Run]] · [[Conventions]]
+- [[AI Coding Conventions]] (start here) · [[Getting Started]] · [[Environment]] ·
+  [[Build & Run]] · [[Conventions]]
