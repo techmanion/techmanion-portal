@@ -1,21 +1,30 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from enum import Enum
 
-from sqlalchemy import BigInteger, Date, ForeignKey, String, Text
+from sqlalchemy import BigInteger, Date, DateTime, ForeignKey, String, Text
 from sqlalchemy import Enum as SqlEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
-from app.models.common import TimestampMixin
+from app.models.common import TimestampMixin, utc_now
 from app.models.organization import Department, Designation
 
 
 class EmployeeType(str, Enum):
-    FULL_TIME = "FULL_TIME"
-    PART_TIME = "PART_TIME"
-    CONTRACT = "CONTRACT"
+    EXECUTIVE = "EXECUTIVE"
+    EMPLOYEE = "EMPLOYEE"
+    CONTRACTOR = "CONTRACTOR"
+    INTERN = "INTERN"
+
+
+EMPLOYEE_ID_FORMATS: dict[EmployeeType, tuple[str, int]] = {
+    EmployeeType.EXECUTIVE: ("EXE", 2),
+    EmployeeType.EMPLOYEE: ("EMP", 5),
+    EmployeeType.CONTRACTOR: ("CTR", 5),
+    EmployeeType.INTERN: ("INT", 5),
+}
 
 
 class EmployeeStatus(str, Enum):
@@ -52,14 +61,14 @@ class Employee(TimestampMixin, Base):
         SqlEnum(CompensationType), default=CompensationType.FIXED
     )
     department_id: Mapped[int | None] = mapped_column(ForeignKey("departments.id"))
-    designation_id: Mapped[int | None] = mapped_column(ForeignKey("designations.id"))
+    designation_id: Mapped[int] = mapped_column(ForeignKey("designations.id"))
     joining_date: Mapped[date] = mapped_column(Date)
     probation_end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     confirmation_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     access_log: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     department: Mapped[Department | None] = relationship()
-    designation: Mapped[Designation | None] = relationship()
+    designation: Mapped[Designation] = relationship()
     salary_revisions: Mapped[list[SalaryRevision]] = relationship(
         back_populates="employee",
         cascade="all, delete-orphan",
@@ -68,10 +77,20 @@ class Employee(TimestampMixin, Base):
     bank_detail: Mapped[BankDetail | None] = relationship(
         back_populates="employee", cascade="all, delete-orphan", uselist=False
     )
+    identifiers: Mapped[list[EmployeeIdentifier]] = relationship(
+        back_populates="employee",
+        cascade="all, delete-orphan",
+        order_by="EmployeeIdentifier.issued_at",
+    )
 
     @property
     def full_name(self) -> str:
         return f"{self.first_name} {self.last_name}".strip()
+
+    @property
+    def current_identifier(self) -> EmployeeIdentifier | None:
+        active = [row for row in self.identifiers if row.retired_at is None]
+        return active[-1] if active else None
 
 
 class SalaryRevision(TimestampMixin, Base):
@@ -115,3 +134,27 @@ class EmployeeDocument(TimestampMixin, Base):
     mime_type: Mapped[str] = mapped_column(String(120))
     size_bytes: Mapped[int] = mapped_column(BigInteger)
     uploaded_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+
+
+class EmployeeIdSequence(Base):
+    """Per-type permanent counter backing TM-XXX-##### employee IDs. Numbers are never reused."""
+
+    __tablename__ = "employee_id_sequences"
+
+    employee_type: Mapped[EmployeeType] = mapped_column(SqlEnum(EmployeeType), primary_key=True)
+    last_number: Mapped[int] = mapped_column(BigInteger, default=0)
+
+
+class EmployeeIdentifier(TimestampMixin, Base):
+    """History of employee IDs. Only one row per employee has retired_at IS NULL (the active ID)."""
+
+    __tablename__ = "employee_identifiers"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    employee_id: Mapped[int] = mapped_column(ForeignKey("employees.id", ondelete="CASCADE"))
+    employee_type: Mapped[EmployeeType] = mapped_column(SqlEnum(EmployeeType))
+    code: Mapped[str] = mapped_column(String(20), unique=True, index=True)
+    issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+    retired_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    employee: Mapped[Employee] = relationship(back_populates="identifiers")

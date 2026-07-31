@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Input, Select, Textarea } from "../components/atoms";
+import { Input, Loading, Select, Textarea } from "../components/atoms";
 import { FormField, FormSection } from "../components/molecules";
 import { FormPage } from "../components/organisms";
 import { createCandidate, getCandidate, listJobs, updateCandidate } from "../lib/api/hiring";
@@ -19,7 +19,6 @@ const emptyCandidate: CandidatePayload = {
   interviewDate: "",
   notes: "",
 };
-const cancelTo = "/hiring?tab=candidates";
 
 export function CandidateFormPage() {
   const { candidateId } = useParams();
@@ -29,7 +28,9 @@ export function CandidateFormPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(isEdit);
   const toast = useToast();
+  const cancelTo = isEdit ? `/hiring/candidates/${candidateId}` : "/hiring?tab=candidates";
 
   useEffect(() => {
     listJobs().then((rows) => {
@@ -56,11 +57,13 @@ export function CandidateFormPage() {
           interviewDate: candidate.interviewDate ?? "",
           notes: candidate.notes ?? "",
         });
-      });
+      }).catch((reason: Error) => setError(reason.message)).finally(() => setLoading(false));
     }
   }, [candidateId]);
 
   const title = useMemo(() => (isEdit ? "Edit candidate" : "Add candidate"), [isEdit]);
+
+  if (loading) return <div className="grid min-h-[70vh] place-items-center"><Loading /></div>;
 
   function set<K extends keyof CandidatePayload>(key: K, value: CandidatePayload[K]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -76,14 +79,11 @@ export function CandidateFormPage() {
         jobId: Number(form.jobId),
         interviewDate: form.interviewDate || undefined,
       };
-      if (isEdit) {
-        await updateCandidate(Number(candidateId), payload);
-        toast.success("Candidate updated.");
-      } else {
-        await createCandidate(payload);
-        toast.success("Candidate added.");
-      }
-      navigate(cancelTo);
+      const saved = isEdit
+        ? await updateCandidate(Number(candidateId), payload)
+        : await createCandidate(payload);
+      toast.success(isEdit ? "Candidate updated." : "Candidate added.");
+      navigate(`/hiring/candidates/${saved.id}`);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Candidate could not be saved.");
     } finally {
@@ -94,9 +94,9 @@ export function CandidateFormPage() {
   return (
     <FormPage
       breadcrumbTo={cancelTo}
-      breadcrumbTrail={["Hiring", title]}
+      breadcrumbTrail={isEdit ? ["Hiring", form.fullName || "Candidate", "Edit"] : ["Hiring", "Add candidate"]}
       title={title}
-      description="Contact details, role, and pipeline stage."
+      description="Contact details, job, interview, and pipeline stage."
       onSubmit={submit}
       submitLabel={isEdit ? "Save changes" : "Add candidate"}
       submitting={submitting}
@@ -124,7 +124,7 @@ export function CandidateFormPage() {
             onChange={(event) => set("jobId", Number(event.target.value))}
             required
           >
-            <option value="" disabled>
+            <option value="" disabled hidden>
               Select job
             </option>
             {jobs.map((job) => (
@@ -137,30 +137,34 @@ export function CandidateFormPage() {
         <FormField label="Stage">
           <Select
             value={form.stage}
+            disabled={form.stage === "HIRED"}
             onChange={(event) => set("stage", event.target.value as CandidateStage)}
           >
-            {CANDIDATE_STAGES.map((value) => (
+            {CANDIDATE_STAGES.filter((value) => value !== "HIRED" || form.stage === "HIRED").map((value) => (
               <option key={value} value={value}>
                 {label(value)}
               </option>
             ))}
           </Select>
         </FormField>
-        <FormField label="Interview date">
+      </FormSection>
+
+      <FormSection heading="Interview and application" accent="tertiary">
+        <FormField label="Interview date" hint="Optional">
           <Input
             type="date"
             value={form.interviewDate ?? ""}
             onChange={(event) => set("interviewDate", event.target.value)}
           />
         </FormField>
-        <FormField label="Resume link" className="md:col-span-2">
-          <Input value={form.resume ?? ""} onChange={(event) => set("resume", event.target.value)} />
+        <FormField label="Resume link">
+          <Input type="url" value={form.resume ?? ""} onChange={(event) => set("resume", event.target.value)} placeholder="https://" />
         </FormField>
       </FormSection>
 
-      <FormSection heading="Notes" accent="tertiary">
+      <FormSection heading="Notes">
         <FormField label="Notes" className="md:col-span-2">
-          <Textarea value={form.notes ?? ""} onChange={(event) => set("notes", event.target.value)} />
+          <Textarea value={form.notes ?? ""} onChange={(event) => set("notes", event.target.value)} placeholder="Interview feedback, follow-ups, and context." />
         </FormField>
       </FormSection>
     </FormPage>

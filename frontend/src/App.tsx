@@ -3,23 +3,26 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "./auth";
 import { AppShell, Loading } from "./components";
 import { CandidateConvertPage } from "./pages/candidate-convert";
+import { CandidateDetailPage } from "./pages/candidate-detail";
 import { CandidateFormPage } from "./pages/candidate-form";
 import { EmployeeDetailPage } from "./pages/employee-detail";
 import { EmployeeFormPage } from "./pages/employee-form";
 import { EmployeesPage } from "./pages/employees";
+import { ExpenseFormPage } from "./pages/expense-form";
+import { FinancePage } from "./pages/finance";
 import { HiringPage } from "./pages/hiring";
+import { AdministrationPage } from "./pages/administration";
 import { HomePage } from "./pages/home";
 import { JobFormPage } from "./pages/job-form";
+import { JobDetailPage } from "./pages/job-detail";
 import { LoginPage } from "./pages/login";
+import { OrganizationPage } from "./pages/organization";
+import { OrganizationFormPage } from "./pages/organization-form";
 import { PayrollEntryFormPage } from "./pages/payroll-entry-form";
-import { PayrollPage } from "./pages/payroll";
 import { ProfilePage } from "./pages/profile";
 import { ProjectDetailPage } from "./pages/project-detail";
 import { ProjectFormPage } from "./pages/project-form";
 import { ProjectsPage } from "./pages/projects";
-import { SettingsPage } from "./pages/settings";
-import { TeamMemberFormPage } from "./pages/team-member-form";
-import { TeamPage } from "./pages/team";
 
 function ProtectedLayout() {
   const { user, loading } = useAuth();
@@ -48,8 +51,10 @@ export function App() {
         <Route path="/home" element={<HomePage />} />
         <Route path="/hiring" element={<HiringPage />} />
         <Route path="/hiring/jobs/new" element={<JobFormPage />} />
+        <Route path="/hiring/jobs/:jobId" element={<JobDetailPage />} />
         <Route path="/hiring/jobs/:jobId/edit" element={<JobFormPage />} />
         <Route path="/hiring/candidates/new" element={<CandidateFormPage />} />
+        <Route path="/hiring/candidates/:candidateId" element={<CandidateDetailPage />} />
         <Route path="/hiring/candidates/:candidateId/edit" element={<CandidateFormPage />} />
         <Route path="/hiring/candidates/:candidateId/convert" element={<CandidateConvertPage />} />
         <Route path="/employees" element={<EmployeesPage />} />
@@ -74,34 +79,37 @@ export function App() {
             </RequireAdmin>
           }
         />
-        <Route path="/payroll" element={<PayrollPage />} />
-        <Route path="/payroll/new" element={<PayrollEntryFormPage />} />
-        <Route path="/payroll/:entryId/edit" element={<PayrollEntryFormPage />} />
+        <Route path="/finance" element={<FinancePage />} />
+        <Route path="/finance/expenses/new" element={<ExpenseFormPage />} />
+        <Route path="/finance/expenses/:expenseId/edit" element={<ExpenseFormPage />} />
+        <Route path="/finance/payroll/new" element={<PayrollEntryFormPage />} />
+        <Route path="/finance/payroll/:entryId/edit" element={<PayrollEntryFormPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route
-          path="/team"
+          path="/organization"
           element={
             <RequireAdmin>
-              <TeamPage />
+              <OrganizationPage />
             </RequireAdmin>
           }
         />
         <Route
-          path="/team/new"
+          path="/organization/edit"
           element={
             <RequireAdmin>
-              <TeamMemberFormPage />
+              <OrganizationFormPage />
             </RequireAdmin>
           }
         />
         <Route
-          path="/settings"
+          path="/administration"
           element={
             <RequireAdmin>
-              <SettingsPage />
+              <AdministrationPage />
             </RequireAdmin>
           }
         />
+        <Route path="/settings" element={<Navigate to="/administration" replace />} />
       </Route>
       <Route path="*" element={<Navigate to="/home" replace />} />
     </Routes>

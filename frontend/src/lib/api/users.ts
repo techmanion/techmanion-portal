@@ -19,3 +19,7 @@ export function createUser(payload: CreateUserPayload) {
 export function updateUser(userId: number, payload: { role?: UserRole; isActive?: boolean }) {
   return api<User>(`/users/${userId}`, { method: "PATCH", body: JSON.stringify(payload) });
 }
+
+export function deleteUser(userId: number) {
+  return api<void>(`/users/${userId}`, { method: "DELETE" });
+}

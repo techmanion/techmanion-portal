@@ -73,15 +73,26 @@ export function UserMenu({ user, onLogout }: { user: User; onLogout: () => void 
               My profile
             </Link>
             {user.role === "ADMIN" && (
-              <Link
-                to="/team"
-                role="menuitem"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-3 rounded-xl px-2.5 py-2 text-sm text-on-surface hover:bg-surface-container-highest"
-              >
-                <Icon className="text-[18px] text-on-surface-variant">group</Icon>
-                Team members
-              </Link>
+              <>
+                <Link
+                  to="/organization"
+                  role="menuitem"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-3 rounded-xl px-2.5 py-2 text-sm text-on-surface hover:bg-surface-container-highest"
+                >
+                  <Icon className="text-[18px] text-on-surface-variant">domain</Icon>
+                  Organization
+                </Link>
+                <Link
+                  to="/administration"
+                  role="menuitem"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-3 rounded-xl px-2.5 py-2 text-sm text-on-surface hover:bg-surface-container-highest"
+                >
+                  <Icon className="text-[18px] text-on-surface-variant">admin_panel_settings</Icon>
+                  Administration
+                </Link>
+              </>
             )}
           </div>
           <div className="border-t border-outline-variant/30 p-1.5">

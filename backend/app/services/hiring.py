@@ -5,8 +5,28 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models import Candidate, CandidateStage, Designation, Employee, SalaryRevision, User
-from app.schemas import ConvertToEmployeePayload
+from app.schemas import CandidateStageUpdate, ConvertToEmployeePayload
 from app.services.activity import log_activity
+from app.services.employees import issue_employee_identifier
+
+
+def update_candidate_stage(
+    db: Session, candidate: Candidate, payload: CandidateStageUpdate
+) -> Candidate:
+    if candidate.stage == CandidateStage.HIRED:
+        raise HTTPException(status_code=400, detail="A hired candidate's stage cannot be changed.")
+    if payload.stage == CandidateStage.HIRED:
+        raise HTTPException(status_code=400, detail="Use employee conversion to mark a candidate hired.")
+    candidate.stage = payload.stage
+    log_activity(
+        db,
+        "Candidate",
+        candidate.id,
+        "UPDATE",
+        f"Moved {candidate.full_name} to {payload.stage.value.lower().replace('_', ' ')}",
+    )
+    db.commit()
+    return candidate
 
 
 def convert_candidate_to_employee(
@@ -14,7 +34,7 @@ def convert_candidate_to_employee(
 ) -> Employee:
     if candidate.stage == CandidateStage.HIRED:
         raise HTTPException(status_code=409, detail="Candidate has already been converted.")
-    if payload.designation_id and not db.get(Designation, payload.designation_id):
+    if not db.get(Designation, payload.designation_id):
         raise HTTPException(status_code=404, detail="Designation was not found.")
 
     name_parts = candidate.full_name.strip().split(" ", 1)
@@ -31,6 +51,7 @@ def convert_candidate_to_employee(
     db.add(employee)
     try:
         db.flush()
+        issue_employee_identifier(db, employee, employee.employee_type)
         db.add(
             SalaryRevision(
                 employee_id=employee.id,

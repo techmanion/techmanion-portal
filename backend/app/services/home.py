@@ -105,7 +105,7 @@ def build_home_feed(db: Session) -> HomeOut:
                 title=f"{pending_payroll} payroll "
                 f"{'entry' if pending_payroll == 1 else 'entries'} pending",
                 description="Review outstanding employee payments.",
-                href="/payroll",
+                href="/finance?tab=payroll",
             )
         )
 
@@ -114,7 +114,7 @@ def build_home_feed(db: Session) -> HomeOut:
             select(ActivityLog)
             .where(
                 ActivityLog.entity.in_(
-                    ["Candidate", "Job", "Employee", "Project", "PayrollEntry"]
+                    ["Candidate", "Job", "Employee", "Project", "PayrollEntry", "Expense"]
                 )
             )
             .order_by(ActivityLog.timestamp.desc())

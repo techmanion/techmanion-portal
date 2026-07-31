@@ -21,7 +21,7 @@ export function QuickActionsPanel() {
       <QuickAction icon="person_add" labelText="Add Candidate" to="/hiring/candidates/new" />
       <QuickAction icon="group_add" labelText="Add Employee" to="/employees/new" />
       <QuickAction icon="add_task" labelText="Add Project" to="/projects/new" />
-      <QuickAction icon="payments" labelText="Open Payroll" to="/payroll" />
+      <QuickAction icon="payments" labelText="Open Finance" to="/finance" />
     </div>
   );
 }

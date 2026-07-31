@@ -8,7 +8,7 @@ import {
   createPayrollEntry,
   getPayrollEntry,
   updatePayrollEntry,
-} from "../lib/api/payroll";
+} from "../lib/api/finance";
 import { useToast } from "../toast";
 import type { Employee } from "../types";
 
@@ -60,7 +60,7 @@ export function PayrollEntryFormPage() {
   }, [entryId, month]);
 
   const title = useMemo(() => (isEdit ? "Edit entry" : "Add entry"), [isEdit]);
-  const cancelTo = `/payroll?month=${month}`;
+  const cancelTo = `/finance?tab=payroll&month=${month}`;
 
   function set<K extends keyof PayrollFormState>(key: K, value: PayrollFormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -101,7 +101,7 @@ export function PayrollEntryFormPage() {
   return (
     <FormPage
       breadcrumbTo={cancelTo}
-      breadcrumbTrail={["Payroll", title]}
+      breadcrumbTrail={["Finance", "Payroll", title]}
       title={title}
       description="Compensation and adjustments for this payroll cycle."
       onSubmit={submit}
@@ -118,7 +118,7 @@ export function PayrollEntryFormPage() {
             disabled={isEdit}
             required
           >
-            <option value="">Select employee</option>
+            <option value="" disabled hidden>Select employee</option>
             {employees.map((employee) => (
               <option key={employee.id} value={employee.id}>
                 {employee.fullName}

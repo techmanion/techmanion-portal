@@ -25,7 +25,7 @@ export function AppShell() {
     <div className="min-h-screen bg-background text-on-surface">
       <AppHeader onLogout={logout} onMenuClick={() => setSidebarOpen((current) => !current)} />
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <main className="portal-main min-h-screen pt-16 pl-55">
+      <main className="portal-main min-h-screen pt-16 lg:pl-55">
         <Outlet />
       </main>
     </div>

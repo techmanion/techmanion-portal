@@ -8,8 +8,20 @@ from app.schemas.common import ApiModel
 
 class JobBase(ApiModel):
     title: str = Field(min_length=1, max_length=160)
+    department: str = Field(min_length=1, max_length=120)
+    location: str = Field(min_length=1, max_length=160)
+    type: str = Field(min_length=1, max_length=80)
+    summary: str = Field(min_length=1)
     description: str = Field(min_length=1)
+    responsibilities: list[str] = Field(default_factory=list)
+    requirements: list[str] = Field(default_factory=list)
+    application_link: str | None = Field(default=None, max_length=500)
     status: JobStatus = JobStatus.OPEN
+
+    @field_validator("responsibilities", "requirements")
+    @classmethod
+    def clean_list_items(cls, value: list[str]) -> list[str]:
+        return [item.strip() for item in value if item.strip()]
 
 
 class JobCreate(JobBase):
@@ -44,6 +56,10 @@ class CandidateUpdate(CandidateBase):
     pass
 
 
+class CandidateStageUpdate(ApiModel):
+    stage: CandidateStage
+
+
 class CandidateOut(CandidateBase):
     id: int
     job_title: str
@@ -53,7 +69,7 @@ class CandidateOut(CandidateBase):
 class ConvertToEmployeePayload(ApiModel):
     employee_type: EmployeeType
     joining_date: date
-    designation_id: int | None = None
+    designation_id: int
     base_amount: int = Field(ge=0)
     currency: str = Field(default="PKR", min_length=3, max_length=3)
 

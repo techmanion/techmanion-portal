@@ -34,11 +34,11 @@ export function LoginPage() {
       <section className="hidden w-1/2 flex-col justify-between px-18 py-8 lg:flex">
         <Logo />
         <div className="-mt-36 flex flex-col gap-6">
-          <p className="scale-y-108 text-5xl leading-[1.15] font-bold tracking-[-0.02rem] text-on-surface">
+          <p className="scale-y-105 text-5xl leading-[1.15] font-bold tracking-[-0.02rem] text-on-surface">
             One workspace for your people, projects, and operations<span className="text-brand-green">.</span>
           </p>
           <p className="max-w-md text-lg leading-6 text-on-surface-variant">
-            Employees, payroll, projects and company operations, organized in one workspace.
+            Employees, finance, projects and company operations, organized in one workspace.
           </p>
         </div>
         <div className="flex gap-5 text-xs text-on-surface-variant">

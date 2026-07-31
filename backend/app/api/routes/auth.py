@@ -2,8 +2,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
 from app.api.dependencies import AdminUser, CurrentUser, DbSession
 from app.core.errors import get_or_404
@@ -19,6 +20,17 @@ from app.schemas import (
 from app.security import create_access_token, hash_password, verify_password
 
 router = APIRouter(tags=["auth"])
+
+
+def _active_admin_count(db: Session) -> int:
+    return (
+        db.scalar(
+            select(func.count())
+            .select_from(User)
+            .where(User.role == UserRole.ADMIN, User.is_active.is_(True))
+        )
+        or 0
+    )
 
 
 @router.post("/auth/login", response_model=TokenOut)
@@ -83,6 +95,20 @@ def update_user(user_id: int, payload: UserAdminUpdate, db: DbSession, admin: Ad
     deactivating_self = target.id == admin.id and payload.is_active is False
     if demoting_self or deactivating_self:
         raise HTTPException(status_code=400, detail="You cannot revoke your own admin access.")
+
+    losing_admin_access = (payload.role is not None and payload.role != UserRole.ADMIN) or (
+        payload.is_active is False
+    )
+    if (
+        target.role == UserRole.ADMIN
+        and target.is_active
+        and losing_admin_access
+        and _active_admin_count(db) <= 1
+    ):
+        raise HTTPException(
+            status_code=400, detail="At least one active administrator must remain."
+        )
+
     if payload.role is not None:
         target.role = payload.role
     if payload.is_active is not None:
@@ -90,3 +116,26 @@ def update_user(user_id: int, payload: UserAdminUpdate, db: DbSession, admin: Ad
     db.commit()
     db.refresh(target)
     return target
+
+
+@router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_user(user_id: int, db: DbSession, admin: AdminUser) -> None:
+    target = get_or_404(db, User, user_id, "User was not found.")
+    if target.id == admin.id:
+        raise HTTPException(status_code=400, detail="You cannot delete your own account.")
+    if target.role == UserRole.ADMIN and target.is_active and _active_admin_count(db) <= 1:
+        raise HTTPException(
+            status_code=400, detail="At least one active administrator must remain."
+        )
+    try:
+        db.delete(target)
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "This account has existing activity (e.g. compensation or document records) "
+                "and cannot be deleted. Deactivate it instead."
+            ),
+        ) from exc

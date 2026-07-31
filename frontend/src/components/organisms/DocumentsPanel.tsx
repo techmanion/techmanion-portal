@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { Button, Icon, Input, Select } from "../atoms";
 import { SectionHeading } from "../atoms/Typography";
-import { EmptyState, FormField } from "../molecules";
+import { EmptyState, FormDialog, FormField } from "../molecules";
 import { label } from "../../lib/format";
 import { DOCUMENT_KINDS } from "../../lib/options";
 import type { EmployeeDocument } from "../../types";
@@ -11,12 +12,33 @@ export function DocumentsPanel({
   onDownload,
 }: {
   documents: EmployeeDocument[];
-  onUpload: (event: React.FormEvent<HTMLFormElement>) => void;
+  onUpload: (formData: FormData) => Promise<void>;
   onDownload: (document: EmployeeDocument) => void;
 }) {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSubmitting(true);
+    setError("");
+    try {
+      await onUpload(new FormData(event.currentTarget));
+      setDialogOpen(false);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Document could not be uploaded.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return (
     <div className="surface-panel mt-8 max-w-5xl p-6">
-      <SectionHeading className="mb-6">Employee Documents</SectionHeading>
+      <div className="mb-6 flex items-center justify-between gap-4">
+        <SectionHeading>Employee Documents</SectionHeading>
+        <Button size="sm" onClick={() => { setError(""); setDialogOpen(true); }}><Icon className="text-[16px]">upload</Icon>Upload document</Button>
+      </div>
       {documents.length ? (
         <ul className="divide-y divide-outline-variant/30">
           {documents.map((document) => (
@@ -41,9 +63,17 @@ export function DocumentsPanel({
       ) : (
         <EmptyState>No documents uploaded.</EmptyState>
       )}
-      <form
-        className="mt-6 grid items-end gap-4 border-t border-outline-variant/30 pt-6 md:grid-cols-[180px_1fr_auto]"
-        onSubmit={onUpload}
+      <FormDialog
+        open={dialogOpen}
+        title="Upload document"
+        description="Add a document to this employee record."
+        icon="upload_file"
+        submitLabel="Upload"
+        submittingLabel="Uploading…"
+        submitting={submitting}
+        error={error}
+        onSubmit={submit}
+        onClose={() => { setDialogOpen(false); setError(""); }}
       >
         <FormField label="Document type">
           <Select name="kind" defaultValue="CV">
@@ -57,10 +87,7 @@ export function DocumentsPanel({
         <FormField label="File">
           <Input name="file" type="file" required />
         </FormField>
-        <Button type="submit">
-          <Icon className="text-[16px]">upload</Icon>Upload
-        </Button>
-      </form>
+      </FormDialog>
     </div>
   );
 }

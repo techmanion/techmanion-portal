@@ -28,6 +28,11 @@ class CompanyProfile(TimestampMixin, Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, default=1)
     name: Mapped[str] = mapped_column(String(160), default="Techmanion")
+    legal_name: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    email: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    phone: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    website: Mapped[str | None] = mapped_column(String(255), nullable=True)
     address: Mapped[str | None] = mapped_column(Text, nullable=True)
     default_currency: Mapped[str] = mapped_column(String(3), default="PKR")
+    timezone: Mapped[str] = mapped_column(String(60), default="UTC")
     logo_text: Mapped[str] = mapped_column(String(80), default="Techmanion")

@@ -5,31 +5,24 @@ import { Button, Icon, Loading } from "../components/atoms";
 import { EmptyState, FilterSelect, SearchInput } from "../components/molecules";
 import { FilterToolbar, PageHeader, ProjectsTable } from "../components/organisms";
 import { useSearchParamState } from "../hooks/useSearchParamState";
-import { listEmployees } from "../lib/api/employees";
-import { assignEmployeeToProject, listProjects } from "../lib/api/projects";
+import { listProjects } from "../lib/api/projects";
 import { label } from "../lib/format";
 import { PROJECT_STATUSES } from "../lib/options";
-import { useToast } from "../toast";
-import type { Employee, Project } from "../types";
+import type { Project } from "../types";
 
 export function ProjectsPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
-  const [employees, setEmployees] = useState<Employee[]>([]);
   const [search, setSearch] = useSearchParamState("search");
   const [status, setStatus] = useSearchParamState("status");
   const [client, setClient] = useSearchParamState("client");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const toast = useToast();
 
   function load() {
-    Promise.all([listProjects(), listEmployees("")])
-      .then(([projectRows, employeeRows]) => {
-        setProjects(projectRows);
-        setEmployees(employeeRows);
-      })
+    listProjects()
+      .then(setProjects)
       .catch((reason: Error) => setError(reason.message))
       .finally(() => setLoading(false));
   }
@@ -59,22 +52,12 @@ export function ProjectsPage() {
     setClient("");
   }
 
-  async function assign(projectId: number, employeeId: number) {
-    try {
-      await assignEmployeeToProject(projectId, employeeId);
-      load();
-      toast.success("Employee assigned.");
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Employee could not be assigned.");
-    }
-  }
-
   return (
     <div className="mx-auto max-w-[1450px] px-6 py-7">
       <PageHeader
         className="mb-8 px-1"
         title="Projects"
-        description="Manage active and historical client projects"
+        description="Manage active and historical client projects."
         actions={
           user?.role === "ADMIN" ? (
             <Link
@@ -97,16 +80,14 @@ export function ProjectsPage() {
               placeholder="Search projects..."
               className="lg:max-w-[380px]"
             />
-            <FilterSelect value={status} onChange={setStatus} labelText="Status">
-              <option value="">Status</option>
+            <FilterSelect value={status} onChange={setStatus} labelText="Status" placeholder="Filter by status">
               {PROJECT_STATUSES.map((value) => (
                 <option key={value} value={value}>
                   {label(value)}
                 </option>
               ))}
             </FilterSelect>
-            <FilterSelect value={client} onChange={setClient} labelText="Client">
-              <option value="">Client</option>
+            <FilterSelect value={client} onChange={setClient} labelText="Client" placeholder="Filter by client">
               {clients.map((value) => (
                 <option key={value}>{value}</option>
               ))}
@@ -130,10 +111,7 @@ export function ProjectsPage() {
         {!loading && (
           <ProjectsTable
             projects={visible}
-            employees={employees}
-            isAdmin={user?.role === "ADMIN"}
             onRowClick={(project) => navigate(`/projects/${project.id}`)}
-            onAssign={assign}
           />
         )}
         {!loading && !visible.length && <EmptyState>No projects match these filters.</EmptyState>}

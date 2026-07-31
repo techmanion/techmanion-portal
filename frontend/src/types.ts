@@ -1,8 +1,18 @@
 export type UserRole = "ADMIN" | "HR" | "MANAGER" | "EMPLOYEE";
 export type EmployeeStatus = "ACTIVE" | "ON_LEAVE" | "RESIGNED" | "TERMINATED";
-export type EmployeeType = "FULL_TIME" | "PART_TIME" | "CONTRACT";
+export type EmployeeType = "EXECUTIVE" | "EMPLOYEE" | "CONTRACTOR" | "INTERN";
 export type ProjectStatus = "PLANNED" | "ACTIVE" | "ON_HOLD" | "COMPLETED";
+export type ProjectType = "MONTHLY_RECURRING" | "FIXED" | "HOURLY";
+export type ProjectPaymentStatus =
+  | "NOT_STARTED"
+  | "IN_PROGRESS"
+  | "PARTIALLY_PAID"
+  | "FULLY_PAID"
+  | "OVERDUE";
+export type MilestoneStatus = "PENDING" | "IN_PROGRESS" | "COMPLETED";
 export type PayrollEntryStatus = "PENDING" | "PAID";
+export type ExpenseType = "ONE_TIME" | "MONTHLY_RECURRING";
+export type ExpenseFrequency = "MONTHLY";
 export type JobStatus = "OPEN" | "CLOSED";
 export type CandidateStage =
   | "APPLIED"
@@ -27,12 +37,44 @@ export interface NamedOption {
   isActive: boolean;
 }
 
+export interface Organization {
+  id: number;
+  name: string;
+  legalName: string | null;
+  email: string | null;
+  phone: string | null;
+  website: string | null;
+  address: string | null;
+  defaultCurrency: string;
+  timezone: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OrganizationPayload {
+  name: string;
+  legalName: string;
+  email: string;
+  phone: string;
+  website: string;
+  address: string;
+  defaultCurrency: string;
+  timezone: string;
+}
+
 export interface Salary {
   id: number;
   baseAmount: number;
   currency: string;
   effectiveDate: string;
   reason: string;
+}
+
+export interface EmployeeIdentifier {
+  code: string;
+  employeeType: EmployeeType;
+  issuedAt: string;
+  retiredAt?: string;
 }
 
 export interface Employee {
@@ -44,16 +86,25 @@ export interface Employee {
   phone: string;
   employeeType: EmployeeType;
   status: EmployeeStatus;
-  designationId?: number;
+  employeeCode?: string;
+  designationId: number;
   designation?: NamedOption;
   joiningDate: string;
   currentSalary?: Salary;
+  identifierHistory: EmployeeIdentifier[];
   createdAt: string;
 }
 
 export type EmployeePayload = Omit<
   Employee,
-  "id" | "fullName" | "department" | "designation" | "currentSalary" | "createdAt"
+  | "id"
+  | "fullName"
+  | "employeeCode"
+  | "department"
+  | "designation"
+  | "currentSalary"
+  | "identifierHistory"
+  | "createdAt"
 > & {
   baseAmount?: number;
   currency?: string;
@@ -62,7 +113,14 @@ export type EmployeePayload = Omit<
 export interface Job {
   id: number;
   title: string;
+  department: string;
+  location: string;
+  type: string;
+  summary: string;
   description: string;
+  responsibilities: string[];
+  requirements: string[];
+  applicationLink: string | null;
   status: JobStatus;
   createdAt: string;
 }
@@ -88,29 +146,60 @@ export type CandidatePayload = Omit<Candidate, "id" | "jobTitle" | "createdAt">;
 export interface ConvertToEmployeePayload {
   employeeType: EmployeeType;
   joiningDate: string;
-  designationId?: number;
+  designationId: number;
   baseAmount: number;
   currency: string;
 }
 
-export interface Assignment {
+export interface ProjectMilestone {
   id: number;
-  employeeId: number;
-  employeeName: string;
+  name: string;
+  amount: number;
+  dueDate: string;
+  status: MilestoneStatus;
+  paidDate: string | null;
+}
+
+export interface ProjectPayment {
+  id: number;
+  amount: number;
+  paymentDate: string;
+  method: string;
+  reference: string | null;
+  notes: string | null;
 }
 
 export interface Project {
   id: number;
   name: string;
   clientName: string;
+  projectType: ProjectType;
   status: ProjectStatus;
   startDate: string;
-  endDate?: string;
-  notes?: string;
-  assignments: Assignment[];
+  endDate: string | null;
+  notes: string | null;
+  monthlyAmount: number | null;
+  billingDay: number | null;
+  autoRenew: boolean | null;
+  contractValue: number | null;
+  hourlyRate: number | null;
+  estimatedHours: number | null;
+  loggedHours: number | null;
+  milestones: ProjectMilestone[];
+  payments: ProjectPayment[];
+  totalReceived: number;
+  outstandingBalance: number;
+  paymentStatus: ProjectPaymentStatus;
 }
 
-export type ProjectPayload = Omit<Project, "id" | "assignments">;
+export type ProjectPayload = Omit<
+  Project,
+  "id" | "payments" | "totalReceived" | "outstandingBalance" | "paymentStatus" | "milestones"
+> & {
+  milestones: Omit<ProjectMilestone, "id">[];
+};
+
+export type ProjectPaymentPayload = Omit<ProjectPayment, "id">;
 
 export interface PayrollEntry {
   id: number;
@@ -124,6 +213,50 @@ export interface PayrollEntry {
   status: PayrollEntryStatus;
   paymentDate?: string;
   notes?: string;
+}
+
+export interface FinanceIncome {
+  id: number;
+  date: string;
+  projectId: number;
+  projectName: string;
+  clientName: string;
+  amount: number;
+  paymentMethod: string;
+  reference: string | null;
+  notes: string | null;
+}
+
+export interface Expense {
+  id: number;
+  title: string;
+  category: string;
+  amount: number;
+  currency: string;
+  expenseType: ExpenseType;
+  frequency: ExpenseFrequency | null;
+  date: string;
+  notes: string | null;
+}
+
+export type ExpensePayload = Omit<Expense, "id">;
+
+export interface FinanceTransaction {
+  id: string;
+  kind: "INCOME" | "EXPENSE" | "PAYROLL";
+  date: string;
+  title: string;
+  description: string;
+  amount: number;
+  currency: string;
+}
+
+export interface FinanceOverview {
+  totalIncome: number;
+  totalExpenses: number;
+  payrollTotal: number;
+  netCashFlow: number;
+  recentTransactions: FinanceTransaction[];
 }
 
 export interface Activity {

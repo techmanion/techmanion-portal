@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import date
 from enum import Enum
 
-from sqlalchemy import Date, ForeignKey, String, Text
+from sqlalchemy import JSON, Date, ForeignKey, String, Text
 from sqlalchemy import Enum as SqlEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -30,7 +30,14 @@ class Job(TimestampMixin, Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(160))
+    department: Mapped[str] = mapped_column(String(120))
+    location: Mapped[str] = mapped_column(String(160))
+    job_type: Mapped[str] = mapped_column(String(80))
+    summary: Mapped[str] = mapped_column(Text)
     description: Mapped[str] = mapped_column(Text)
+    responsibilities: Mapped[list[str]] = mapped_column(JSON, default=list)
+    requirements: Mapped[list[str]] = mapped_column(JSON, default=list)
+    application_link: Mapped[str | None] = mapped_column(String(500), nullable=True)
     status: Mapped[JobStatus] = mapped_column(SqlEnum(JobStatus), default=JobStatus.OPEN)
 
     candidates: Mapped[list[Candidate]] = relationship(

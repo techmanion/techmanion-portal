@@ -1,8 +1,8 @@
 export function StatusChip({ value }: { value: string }) {
   const tone =
-    value === "ACTIVE" || value === "PAID" || value === "COMPLETED"
+    value === "ACTIVE" || value === "PAID" || value === "COMPLETED" || value === "FULLY_PAID"
       ? "bg-primary/10 text-primary"
-      : value === "TERMINATED" || value === "CANCELLED"
+      : value === "TERMINATED" || value === "CANCELLED" || value === "OVERDUE"
         ? "bg-error/10 text-error"
         : value === "PARTIALLY_PAID" || value === "IN_PROGRESS"
           ? "bg-tertiary/10 text-tertiary"

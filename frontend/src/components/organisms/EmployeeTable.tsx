@@ -16,9 +16,9 @@ export function EmployeeTable({
       <thead>
         <TableHeadRow>
           <th className="px-6 py-3 font-medium">Employee</th>
-          <th className="px-4 py-3 font-medium">Job Title</th>
-          <th className="px-4 py-3 font-medium">Employment Type</th>
-          <th className="px-4 py-3 font-medium">Joining Date</th>
+          <th className="px-4 py-3 font-medium">Designation</th>
+          <th className="px-4 py-3 font-medium">Employment type</th>
+          <th className="px-4 py-3 font-medium">Joining date</th>
           <th className="px-5 py-3 font-medium">Status</th>
         </TableHeadRow>
       </thead>

@@ -4,35 +4,34 @@ import { useAuth } from "../auth";
 import { Button, Icon, Loading } from "../components/atoms";
 import { StatusChip } from "../components/atoms/Badge";
 import { Breadcrumb, ConfirmDialog, EmptyState } from "../components/molecules";
-import { ProjectInfoPanel, ProjectTeamPanel } from "../components/organisms";
-import { listEmployees } from "../lib/api/employees";
 import {
-  assignEmployeeToProject,
+  ProjectInfoPanel,
+  ProjectMilestonesPanel,
+  ProjectPaymentsPanel,
+} from "../components/organisms";
+import {
+  addProjectPayment,
   deleteProject,
+  deleteProjectPayment,
   getProject,
-  unassignEmployeeFromProject,
 } from "../lib/api/projects";
 import { useToast } from "../toast";
-import type { Employee, Project } from "../types";
+import type { Project, ProjectPaymentPayload } from "../types";
 
 export function ProjectDetailPage() {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [project, setProject] = useState<Project | null>(null);
-  const [employees, setEmployees] = useState<Employee[]>([]);
   const [error, setError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const toast = useToast();
 
-  function load() {
+  useEffect(() => {
     getProject(projectId!)
       .then(setProject)
       .catch((reason: Error) => setError(reason.message));
-    listEmployees("").then(setEmployees).catch(() => undefined);
-  }
-
-  useEffect(load, [projectId]);
+  }, [projectId]);
 
   const isAdmin = user?.role === "ADMIN";
 
@@ -47,23 +46,25 @@ export function ProjectDetailPage() {
     }
   }
 
-  async function assign(employeeId: number) {
+  async function addPayment(payload: ProjectPaymentPayload) {
     try {
-      await assignEmployeeToProject(projectId!, employeeId);
-      load();
-      toast.success("Employee assigned.");
+      const updated = await addProjectPayment(projectId!, payload);
+      setProject(updated);
+      toast.success("Payment added.");
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Employee could not be assigned.");
+      setError(reason instanceof Error ? reason.message : "Payment could not be added.");
+      throw reason;
     }
   }
 
-  async function unassign(assignmentId: number) {
+  async function removePayment(paymentId: number) {
+    if (!window.confirm("Delete this payment?")) return;
     try {
-      await unassignEmployeeFromProject(projectId!, assignmentId);
-      load();
-      toast.success("Employee removed from project.");
+      const updated = await deleteProjectPayment(projectId!, paymentId);
+      setProject(updated);
+      toast.success("Payment deleted.");
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Employee could not be removed.");
+      setError(reason instanceof Error ? reason.message : "Payment could not be deleted.");
     }
   }
 
@@ -82,10 +83,6 @@ export function ProjectDetailPage() {
     );
   }
 
-  const unassigned = employees.filter(
-    (employee) => !project.assignments.some((row) => row.employeeId === employee.id),
-  );
-
   return (
     <div className="mx-auto max-w-4xl px-6 py-7">
       <Breadcrumb to="/projects" trail={["Projects", project.name]} />
@@ -95,8 +92,9 @@ export function ProjectDetailPage() {
           <h1 className="text-title font-semibold tracking-tight">{project.name}</h1>
           <p className="mt-1.5 text-sm text-on-surface-variant">{project.clientName}</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <StatusChip value={project.status} />
+          <StatusChip value={project.paymentStatus} />
           {isAdmin && (
             <Link
               to={`/projects/${project.id}/edit`}
@@ -125,13 +123,14 @@ export function ProjectDetailPage() {
       />
 
       <ProjectInfoPanel project={project} />
-
-      <ProjectTeamPanel
+      {project.projectType === "FIXED" && (
+        <ProjectMilestonesPanel milestones={project.milestones} />
+      )}
+      <ProjectPaymentsPanel
         project={project}
-        unassignedEmployees={unassigned}
         isAdmin={isAdmin}
-        onAssign={assign}
-        onUnassign={unassign}
+        onAdd={addPayment}
+        onDelete={removePayment}
       />
       {error && <div className="mt-6 rounded-xl bg-error/10 px-4 py-3 text-sm text-error">{error}</div>}
     </div>

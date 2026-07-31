@@ -41,33 +41,28 @@ export function EmployeeDetailPage() {
 
   useEffect(load, [employeeId]);
 
-  async function reviseSalaryEntry(event: React.FormEvent) {
-    event.preventDefault();
-    try {
-      await reviseSalary(employeeId!, {
-        baseAmount: salary,
-        currency: employee?.currentSalary?.currency ?? "PKR",
-        effectiveDate,
-        reason: "RATE_CHANGE",
-      });
-      setSalary(0);
-      load();
-      toast.success("Compensation revised.");
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Salary could not be revised.");
-    }
+  async function reviseSalaryEntry() {
+    await reviseSalary(employeeId!, {
+      baseAmount: salary,
+      currency: employee?.currentSalary?.currency ?? "PKR",
+      effectiveDate,
+      reason: "RATE_CHANGE",
+    });
+    setSalary(0);
+    load();
+    toast.success("Compensation revised.");
   }
 
-  async function uploadDocument(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = event.currentTarget;
+  async function uploadDocument(formData: FormData) {
+    setError("");
     try {
-      await uploadEmployeeDocument(employeeId!, new FormData(form));
-      form.reset();
+      await uploadEmployeeDocument(employeeId!, formData);
       load();
       toast.success("Document uploaded.");
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Document could not be uploaded.");
+      const message = reason instanceof Error ? reason.message : "Document could not be uploaded.";
+      setError(message);
+      throw new Error(message, { cause: reason });
     }
   }
 

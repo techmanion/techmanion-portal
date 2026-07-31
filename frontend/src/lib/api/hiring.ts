@@ -8,8 +8,8 @@ import type {
 } from "../../types";
 import { api } from "./client";
 
-export function listJobs() {
-  return api<Job[]>("/jobs");
+export function listJobs(query = "") {
+  return api<Job[]>(`/jobs${query ? `?${query}` : ""}`);
 }
 
 export function getJob(jobId: string | number) {
@@ -44,6 +44,13 @@ export function updateCandidate(candidateId: number, payload: CandidatePayload) 
   return api<Candidate>(`/candidates/${candidateId}`, {
     method: "PUT",
     body: JSON.stringify(payload),
+  });
+}
+
+export function updateCandidateStage(candidateId: number, stage: Candidate["stage"]) {
+  return api<Candidate>(`/candidates/${candidateId}/stage`, {
+    method: "PATCH",
+    body: JSON.stringify({ stage }),
   });
 }
 

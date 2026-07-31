@@ -87,16 +87,14 @@ export function EmployeesPage() {
               className="lg:max-w-[380px]"
             />
             <div className="mx-2 hidden h-8 w-px bg-outline-variant/50 xl:block" />
-            <FilterSelect value={designation} onChange={setDesignation} labelText="Job Title">
-              <option value="">Job Title</option>
+            <FilterSelect value={designation} onChange={setDesignation} labelText="Designation" placeholder="Filter by designation">
               {designations.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.name}
                 </option>
               ))}
             </FilterSelect>
-            <FilterSelect value={employeeType} onChange={setEmployeeType} labelText="Employment type">
-              <option value="">Employment Type</option>
+            <FilterSelect value={employeeType} onChange={setEmployeeType} labelText="Employment type" placeholder="Filter by employment type">
               {EMPLOYEE_TYPES.map((value) => (
                 <option key={value} value={value}>
                   {label(value)}
@@ -107,8 +105,8 @@ export function EmployeesPage() {
               value={status}
               onChange={(value) => setStatus(value as EmployeeStatus | "")}
               labelText="Status"
+              placeholder="Filter by status"
             >
-              <option value="">Status</option>
               {EMPLOYEE_STATUSES.map((value) => (
                 <option key={value} value={value}>
                   {label(value)}

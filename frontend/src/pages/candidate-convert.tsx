@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Input, Select } from "../components/atoms";
-import { FormField, FormSection, MoneyInput } from "../components/molecules";
+import { Input, Loading, Select } from "../components/atoms";
+import { EmptyState, FormField, FormSection, MoneyInput } from "../components/molecules";
 import { FormPage } from "../components/organisms";
 import { convertCandidate, getCandidate } from "../lib/api/hiring";
 import { listDesignations } from "../lib/api/settings";
@@ -11,13 +11,12 @@ import { useToast } from "../toast";
 import type { Candidate, ConvertToEmployeePayload, NamedOption } from "../types";
 
 const emptyForm: ConvertToEmployeePayload = {
-  employeeType: "FULL_TIME",
+  employeeType: "EMPLOYEE",
   joiningDate: new Date().toISOString().slice(0, 10),
-  designationId: undefined,
+  designationId: 0,
   baseAmount: 0,
   currency: "PKR",
 };
-const cancelTo = "/hiring?tab=candidates";
 
 export function CandidateConvertPage() {
   const { candidateId } = useParams();
@@ -27,11 +26,18 @@ export function CandidateConvertPage() {
   const [form, setForm] = useState<ConvertToEmployeePayload>(emptyForm);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
   const toast = useToast();
+  const cancelTo = `/hiring/candidates/${candidateId}`;
 
   useEffect(() => {
-    getCandidate(candidateId!).then(setCandidate);
-    listDesignations().then(setDesignations);
+    Promise.all([getCandidate(candidateId!), listDesignations()])
+      .then(([candidateRow, designationRows]) => {
+        setCandidate(candidateRow);
+        setDesignations(designationRows);
+      })
+      .catch((reason: Error) => setError(reason.message))
+      .finally(() => setLoading(false));
   }, [candidateId]);
 
   function set<K extends keyof ConvertToEmployeePayload>(key: K, value: ConvertToEmployeePayload[K]) {
@@ -52,6 +58,9 @@ export function CandidateConvertPage() {
       setSubmitting(false);
     }
   }
+
+  if (loading) return <div className="grid min-h-[70vh] place-items-center"><Loading /></div>;
+  if (!candidate) return <div className="p-6"><EmptyState>{error || "Candidate was not found."}</EmptyState></div>;
 
   return (
     <FormPage
@@ -87,12 +96,15 @@ export function CandidateConvertPage() {
             required
           />
         </FormField>
-        <FormField label="Job title">
+        <FormField label="Designation">
           <Select
-            value={form.designationId ?? ""}
-            onChange={(event) => set("designationId", Number(event.target.value) || undefined)}
+            value={form.designationId || ""}
+            onChange={(event) => set("designationId", Number(event.target.value))}
+            required
           >
-            <option value="">Select job title</option>
+            <option value="" disabled hidden>
+              Select designation
+            </option>
             {designations.map((item) => (
               <option key={item.id} value={item.id}>
                 {item.name}

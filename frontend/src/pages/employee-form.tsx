@@ -15,8 +15,9 @@ const emptyEmployee: EmployeePayload = {
   lastName: "",
   email: "",
   phone: "",
-  employeeType: "FULL_TIME",
+  employeeType: "EMPLOYEE",
   status: "ACTIVE",
+  designationId: 0,
   joiningDate: new Date().toISOString().slice(0, 10),
   baseAmount: 0,
   currency: "PKR",
@@ -114,12 +115,15 @@ export function EmployeeFormPage() {
       </FormSection>
 
       <FormSection heading="Employment" accent="tertiary">
-        <FormField label="Job title">
+        <FormField label="Designation">
           <Select
-            value={form.designationId ?? ""}
-            onChange={(event) => set("designationId", Number(event.target.value) || undefined)}
+            value={form.designationId || ""}
+            onChange={(event) => set("designationId", Number(event.target.value))}
+            required
           >
-            <option value="">Select job title</option>
+            <option value="" disabled hidden>
+              Select designation
+            </option>
             {designations.map((item) => (
               <option key={item.id} value={item.id}>
                 {item.name}

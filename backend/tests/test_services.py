@@ -11,7 +11,7 @@ def test_current_salary_uses_latest_effective_revision() -> None:
         cnic="TEST-CNIC",
         email="employee@example.com",
         phone="0000",
-        employee_type="FULL_TIME",
+        employee_type="EMPLOYEE",
         joining_date=date(2025, 1, 1),
     )
     employee.salary_revisions = [

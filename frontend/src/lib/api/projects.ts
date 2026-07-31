@@ -1,4 +1,4 @@
-import type { Project, ProjectPayload } from "../../types";
+import type { Project, ProjectPayload, ProjectPaymentPayload } from "../../types";
 import { api } from "./client";
 
 export function listProjects() {
@@ -21,13 +21,13 @@ export function deleteProject(projectId: string | number) {
   return api<void>(`/projects/${projectId}`, { method: "DELETE" });
 }
 
-export function assignEmployeeToProject(projectId: string | number, employeeId: number) {
-  return api<Project>(`/projects/${projectId}/assignments`, {
+export function addProjectPayment(projectId: string | number, payload: ProjectPaymentPayload) {
+  return api<Project>(`/projects/${projectId}/payments`, {
     method: "POST",
-    body: JSON.stringify({ employeeId }),
+    body: JSON.stringify(payload),
   });
 }
 
-export function unassignEmployeeFromProject(projectId: string | number, assignmentId: number) {
-  return api<Project>(`/projects/${projectId}/assignments/${assignmentId}`, { method: "DELETE" });
+export function deleteProjectPayment(projectId: string | number, paymentId: number) {
+  return api<Project>(`/projects/${projectId}/payments/${paymentId}`, { method: "DELETE" });
 }

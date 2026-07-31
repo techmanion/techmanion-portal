@@ -29,11 +29,14 @@ router = APIRouter(tags=["employees"])
 
 def serialize_employee(employee: Employee) -> EmployeeOut:
     salary = employee_current_salary(employee)
+    current_identifier = employee.current_identifier
     return EmployeeOut(
         **{column.name: getattr(employee, column.name) for column in Employee.__table__.columns},
         full_name=employee.full_name,
+        employee_code=current_identifier.code if current_identifier else None,
         designation=employee.designation,
         current_salary=salary,
+        identifier_history=list(employee.identifiers),
     )
 
 
@@ -50,6 +53,7 @@ def list_employees(
         .options(
             selectinload(Employee.designation),
             selectinload(Employee.salary_revisions),
+            selectinload(Employee.identifiers),
         )
         .order_by(Employee.first_name, Employee.last_name)
     )

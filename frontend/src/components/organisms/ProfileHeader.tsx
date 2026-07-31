@@ -26,7 +26,7 @@ export function ProfileHeader({ employee }: { employee: Employee }) {
           <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1.5 text-xs text-on-surface-variant/80">
             <span className="flex items-center gap-1.5">
               <Icon className="text-[16px]">fingerprint</Icon>
-              EMP-{String(employee.id).padStart(4, "0")}
+              {employee.employeeCode ?? "—"}
             </span>
             <span className="flex items-center gap-1.5">
               <Icon className="text-[16px]">mail</Icon>

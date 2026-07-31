@@ -2,70 +2,39 @@ import { useState } from "react";
 import { useAuth } from "../auth";
 import { Avatar, Button, Icon, Input } from "../components/atoms";
 import { SectionHeading } from "../components/atoms/Typography";
-import { FormField } from "../components/molecules";
+import { ChangePasswordDialog, FormDialog, FormField } from "../components/molecules";
 import { PageHeader } from "../components/organisms";
 import { ApiError } from "../lib/api";
-import { changePassword, updateProfile } from "../lib/api/auth";
+import { updateProfile } from "../lib/api/auth";
 import { formatDate, roleLabel } from "../lib/format";
+import { useToast } from "../toast";
 
 export function ProfilePage() {
   const { user, updateUser } = useAuth();
+  const toast = useToast();
 
   const [name, setName] = useState(user?.name ?? "");
   const [savingName, setSavingName] = useState(false);
-  const [nameSaved, setNameSaved] = useState(false);
   const [nameError, setNameError] = useState("");
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
 
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [savingPassword, setSavingPassword] = useState(false);
-  const [passwordSaved, setPasswordSaved] = useState(false);
-  const [passwordError, setPasswordError] = useState("");
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
 
   if (!user) return null;
 
   async function saveName(event: React.FormEvent) {
     event.preventDefault();
     setNameError("");
-    setNameSaved(false);
     setSavingName(true);
     try {
       const updated = await updateProfile(name.trim());
       updateUser(updated);
-      setNameSaved(true);
-      window.setTimeout(() => setNameSaved(false), 3000);
+      setProfileDialogOpen(false);
+      toast.success("Profile updated.");
     } catch (reason) {
       setNameError(reason instanceof ApiError ? reason.message : "Profile could not be updated.");
     } finally {
       setSavingName(false);
-    }
-  }
-
-  async function savePassword(event: React.FormEvent) {
-    event.preventDefault();
-    setPasswordError("");
-    setPasswordSaved(false);
-    if (newPassword !== confirmPassword) {
-      setPasswordError("New password and confirmation do not match.");
-      return;
-    }
-    if (newPassword.length < 8) {
-      setPasswordError("New password must be at least 8 characters.");
-      return;
-    }
-    setSavingPassword(true);
-    try {
-      await changePassword({ currentPassword, newPassword });
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-      setPasswordSaved(true);
-      window.setTimeout(() => setPasswordSaved(false), 3000);
-    } catch (reason) {
-      setPasswordError(reason instanceof ApiError ? reason.message : "Password could not be changed.");
-    } finally {
-      setSavingPassword(false);
     }
   }
 
@@ -89,81 +58,45 @@ export function ProfilePage() {
 
         <div className="flex flex-col gap-6">
           <section className="surface-panel p-6">
-            <SectionHeading className="mb-5"><Icon className="text-primary">badge</Icon>Account details</SectionHeading>
-            <form onSubmit={saveName} className="flex flex-col gap-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <FormField label="Full name">
-                  <Input value={name} onChange={(event) => setName(event.target.value)} required minLength={1} />
-                </FormField>
-                <FormField label="Work email" hint="Contact an administrator to change your email.">
-                  <Input value={user.email} disabled className="opacity-60" />
-                </FormField>
-              </div>
-              {nameError && <div className="rounded-xl bg-error/10 px-4 py-3 text-sm text-error">{nameError}</div>}
-              <div className="flex items-center gap-3">
-                <Button type="submit" disabled={savingName || !name.trim() || name.trim() === user.name}>
-                  {savingName ? "Saving…" : "Save changes"}
-                </Button>
-                {nameSaved && (
-                  <span className="flex items-center gap-1.5 text-sm text-primary">
-                    <Icon className="text-[16px]">check_circle</Icon>
-                    Saved
-                  </span>
-                )}
-              </div>
-            </form>
+            <div className="mb-5 flex items-center justify-between gap-4">
+              <SectionHeading><Icon className="text-primary">badge</Icon>Account details</SectionHeading>
+              <Button variant="secondary" size="sm" onClick={() => { setName(user.name); setNameError(""); setProfileDialogOpen(true); }}><Icon className="text-[16px]">edit</Icon>Edit</Button>
+            </div>
+            <dl className="grid gap-5 sm:grid-cols-2">
+              <div><dt className="text-xs uppercase tracking-wider text-on-surface-variant">Full name</dt><dd className="mt-1.5 text-sm text-on-surface">{user.name}</dd></div>
+              <div><dt className="text-xs uppercase tracking-wider text-on-surface-variant">Work email</dt><dd className="mt-1.5 text-sm text-on-surface">{user.email}</dd></div>
+            </dl>
           </section>
 
           <section className="surface-panel p-6">
-            <SectionHeading accent="tertiary" className="mb-5"><Icon className="text-tertiary">lock</Icon>Change password</SectionHeading>
-            <form onSubmit={savePassword} className="flex flex-col gap-4">
-              <FormField label="Current password">
-                <Input
-                  type="password"
-                  autoComplete="current-password"
-                  value={currentPassword}
-                  onChange={(event) => setCurrentPassword(event.target.value)}
-                  required
-                />
-              </FormField>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <FormField label="New password" hint="At least 8 characters.">
-                  <Input
-                    type="password"
-                    autoComplete="new-password"
-                    value={newPassword}
-                    onChange={(event) => setNewPassword(event.target.value)}
-                    minLength={8}
-                    required
-                  />
-                </FormField>
-                <FormField label="Confirm new password">
-                  <Input
-                    type="password"
-                    autoComplete="new-password"
-                    value={confirmPassword}
-                    onChange={(event) => setConfirmPassword(event.target.value)}
-                    minLength={8}
-                    required
-                  />
-                </FormField>
-              </div>
-              {passwordError && <div className="rounded-xl bg-error/10 px-4 py-3 text-sm text-error">{passwordError}</div>}
-              <div className="flex items-center gap-3">
-                <Button type="submit" variant="secondary" disabled={savingPassword || !currentPassword || !newPassword}>
-                  {savingPassword ? "Updating…" : "Update password"}
-                </Button>
-                {passwordSaved && (
-                  <span className="flex items-center gap-1.5 text-sm text-primary">
-                    <Icon className="text-[16px]">check_circle</Icon>
-                    Password updated
-                  </span>
-                )}
-              </div>
-            </form>
+            <SectionHeading accent="tertiary" className="mb-5"><Icon className="text-tertiary">lock</Icon>Security</SectionHeading>
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-sm text-on-surface-variant">Update the password used to sign in to the portal.</p>
+              <Button variant="secondary" onClick={() => setPasswordDialogOpen(true)}>
+                <Icon className="text-[16px]">lock_reset</Icon>
+                Change password
+              </Button>
+            </div>
           </section>
         </div>
       </div>
+
+      <ChangePasswordDialog open={passwordDialogOpen} onClose={() => setPasswordDialogOpen(false)} />
+      <FormDialog
+        open={profileDialogOpen}
+        title="Edit profile"
+        description="Update the name shown across the portal."
+        icon="badge"
+        submitLabel="Save changes"
+        submitting={savingName}
+        submitDisabled={!name.trim() || name.trim() === user.name}
+        error={nameError}
+        onSubmit={saveName}
+        onClose={() => { setProfileDialogOpen(false); setName(user.name); setNameError(""); }}
+      >
+        <FormField label="Full name"><Input value={name} onChange={(event) => setName(event.target.value)} required minLength={1} autoFocus /></FormField>
+        <FormField label="Work email" hint="Contact an administrator to change your email."><Input value={user.email} disabled className="opacity-60" /></FormField>
+      </FormDialog>
     </div>
   );
 }

@@ -10,7 +10,8 @@ function activityHref(activity: Activity): string | null {
   if (activity.entity === "Candidate" || activity.entity === "Job") return "/hiring";
   if (activity.entity === "Employee") return `/employees/${activity.entityId}`;
   if (activity.entity === "Project") return `/projects/${activity.entityId}`;
-  if (activity.entity === "PayrollEntry") return "/payroll";
+  if (activity.entity === "PayrollEntry") return "/finance?tab=payroll";
+  if (activity.entity === "Expense") return "/finance?tab=expenses";
   return null;
 }
 
