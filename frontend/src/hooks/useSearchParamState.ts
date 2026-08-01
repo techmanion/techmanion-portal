@@ -22,3 +22,18 @@ export function useSearchParamState(key: string, defaultValue = ""): readonly [s
 
   return [value, setValue] as const;
 }
+
+export function useClearSearchParams() {
+  const [, setSearchParams] = useSearchParams();
+
+  return (keys: readonly string[]) => {
+    setSearchParams(
+      (current) => {
+        const updated = new URLSearchParams(current);
+        keys.forEach((key) => updated.delete(key));
+        return updated;
+      },
+      { replace: true },
+    );
+  };
+}

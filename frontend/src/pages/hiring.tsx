@@ -4,7 +4,7 @@ import { Button, Icon, Loading } from "../components/atoms";
 import { ConfirmDialog, EmptyState, FilterSelect, SearchInput } from "../components/molecules";
 import { CandidatesTable, FilterToolbar, JobsTable, PageHeader } from "../components/organisms";
 import { useHiringData } from "../hooks/useHiringData";
-import { useSearchParamState } from "../hooks/useSearchParamState";
+import { useClearSearchParams, useSearchParamState } from "../hooks/useSearchParamState";
 import { label } from "../lib/format";
 import { CANDIDATE_STAGES, JOB_STATUSES } from "../lib/options";
 import { useToast } from "../toast";
@@ -42,6 +42,7 @@ export function HiringPage() {
   const [location, setLocation] = useSearchParamState("location");
   const [jobType, setJobType] = useSearchParamState("job_type");
   const [jobStatus, setJobStatus] = useSearchParamState("job_status");
+  const clearSearchParams = useClearSearchParams();
   const [confirmDeleteJob, setConfirmDeleteJob] = useState<Job | null>(null);
   const [confirmDeleteCandidate, setConfirmDeleteCandidate] = useState<Candidate | null>(null);
 
@@ -92,7 +93,7 @@ export function HiringPage() {
           <FilterSelect value={stageFilter} onChange={(value) => setStageFilter(value as CandidateStage | "")} labelText="Stage" placeholder="Filter by stage">{CANDIDATE_STAGES.map((value) => <option key={value} value={value}>{label(value)}</option>)}</FilterSelect>
           <FilterSelect value={jobFilter} onChange={setJobFilter} labelText="Job" placeholder="Filter by job">{jobs.map((job) => <option key={job.id} value={job.id}>{job.title}</option>)}</FilterSelect>
           <FilterSelect value={interviewFilter} onChange={setInterviewFilter} labelText="Interview" placeholder="Filter by interview"><option value="upcoming">Upcoming</option><option value="past">Past</option><option value="scheduled">Scheduled</option><option value="unscheduled">Not scheduled</option></FilterSelect>
-          {(search || stageFilter || jobFilter || interviewFilter) && <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setStageFilter(""); setJobFilter(""); setInterviewFilter(""); }}><Icon className="text-[16px]">filter_alt_off</Icon>Clear filters</Button>}
+          {(search || stageFilter || jobFilter || interviewFilter) && <Button variant="ghost" size="sm" onClick={() => clearSearchParams(["search", "stage", "job", "interview"])}><Icon className="text-[16px]">filter_alt_off</Icon>Clear filters</Button>}
         </FilterToolbar></div>
         {loadingCandidates ? <div className="grid min-h-40 place-items-center"><Loading /></div> : candidates.length ? <CandidatesTable candidates={candidates} onOpen={(candidate) => navigate(`/hiring/candidates/${candidate.id}`)} onStageChange={handleStage} onConvert={(candidate) => navigate(`/hiring/candidates/${candidate.id}/convert`)} onEdit={(candidate) => navigate(`/hiring/candidates/${candidate.id}/edit`)} onDelete={setConfirmDeleteCandidate} /> : <EmptyState>No candidates match the selected filters.</EmptyState>}
       </section>}
@@ -104,7 +105,7 @@ export function HiringPage() {
           <FilterSelect value={location} onChange={setLocation} labelText="Location" placeholder="Filter by location">{jobOptions.locations.map((value) => <option key={value}>{value}</option>)}</FilterSelect>
           <FilterSelect value={jobType} onChange={setJobType} labelText="Type" placeholder="Filter by type">{jobOptions.types.map((value) => <option key={value}>{value}</option>)}</FilterSelect>
           <FilterSelect value={jobStatus} onChange={setJobStatus} labelText="Status" placeholder="Filter by status">{JOB_STATUSES.map((value) => <option key={value} value={value}>{label(value)}</option>)}</FilterSelect>
-          {(jobSearch || department || location || jobType || jobStatus) && <Button variant="ghost" size="sm" onClick={() => { setJobSearch(""); setDepartment(""); setLocation(""); setJobType(""); setJobStatus(""); }}><Icon className="text-[16px]">filter_alt_off</Icon>Clear filters</Button>}
+          {(jobSearch || department || location || jobType || jobStatus) && <Button variant="ghost" size="sm" onClick={() => clearSearchParams(["job_search", "department", "location", "job_type", "job_status"])}><Icon className="text-[16px]">filter_alt_off</Icon>Clear filters</Button>}
         </FilterToolbar></div>
         {loadingJobs ? <div className="grid min-h-40 place-items-center"><Loading /></div> : visibleJobs.length ? <JobsTable jobs={visibleJobs} onOpen={(job) => navigate(`/hiring/jobs/${job.id}`)} onEdit={(job) => navigate(`/hiring/jobs/${job.id}/edit`)} onDelete={setConfirmDeleteJob} /> : <EmptyState>{jobs.length ? "No jobs match the selected filters." : "No jobs yet."}</EmptyState>}
       </section>}

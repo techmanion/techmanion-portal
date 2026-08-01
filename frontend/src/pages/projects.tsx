@@ -4,7 +4,7 @@ import { useAuth } from "../auth";
 import { Button, Icon, Loading } from "../components/atoms";
 import { EmptyState, FilterSelect, SearchInput } from "../components/molecules";
 import { FilterToolbar, PageHeader, ProjectsTable } from "../components/organisms";
-import { useSearchParamState } from "../hooks/useSearchParamState";
+import { useClearSearchParams, useSearchParamState } from "../hooks/useSearchParamState";
 import { listProjects } from "../lib/api/projects";
 import { label } from "../lib/format";
 import { PROJECT_STATUSES } from "../lib/options";
@@ -17,6 +17,7 @@ export function ProjectsPage() {
   const [search, setSearch] = useSearchParamState("search");
   const [status, setStatus] = useSearchParamState("status");
   const [client, setClient] = useSearchParamState("client");
+  const clearSearchParams = useClearSearchParams();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -47,9 +48,7 @@ export function ProjectsPage() {
 
   const hasActiveFilters = Boolean(search || status || client);
   function clearFilters() {
-    setSearch("");
-    setStatus("");
-    setClient("");
+    clearSearchParams(["search", "status", "client"]);
   }
 
   return (

@@ -4,7 +4,7 @@ import { Button, Icon, Loading } from "../components/atoms";
 import { EmptyState, FilterSelect, SearchInput } from "../components/molecules";
 import { EmployeeTable, FilterToolbar, PageHeader } from "../components/organisms";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
-import { useSearchParamState } from "../hooks/useSearchParamState";
+import { useClearSearchParams, useSearchParamState } from "../hooks/useSearchParamState";
 import { listEmployees } from "../lib/api/employees";
 import { listDesignations } from "../lib/api/settings";
 import { label } from "../lib/format";
@@ -20,6 +20,7 @@ export function EmployeesPage() {
   const [status, setStatus] = useSearchParamState("status");
   const [designation, setDesignation] = useSearchParamState("designation");
   const [employeeType, setEmployeeType] = useSearchParamState("type");
+  const clearSearchParams = useClearSearchParams();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -49,10 +50,7 @@ export function EmployeesPage() {
 
   const hasActiveFilters = Boolean(search || status || designation || employeeType);
   function clearFilters() {
-    setSearch("");
-    setStatus("");
-    setDesignation("");
-    setEmployeeType("");
+    clearSearchParams(["search", "status", "designation", "type"]);
   }
 
   return (
