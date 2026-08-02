@@ -2,7 +2,7 @@ from app.schemas.auth import (
     PasswordChange,
     ProfileUpdate,
     TokenOut,
-    UserAdminUpdate,
+    UserAccessUpdate,
     UserCreate,
     UserOut,
 )
@@ -103,7 +103,7 @@ __all__ = [
     "SalaryCreate",
     "SalaryOut",
     "TokenOut",
-    "UserAdminUpdate",
+    "UserAccessUpdate",
     "UserCreate",
     "UserOut",
 ]

@@ -9,6 +9,7 @@ from sqlalchemy.orm import selectinload
 from app.api.dependencies import CurrentUser, DbSession
 from app.config import settings
 from app.core.errors import get_or_404
+from app.core.uploads import delete_avatar, store_avatar
 from app.models import Employee, EmployeeDocument, EmployeeStatus
 from app.repositories.employees import get_employee_detailed
 from app.schemas import (
@@ -37,6 +38,7 @@ def serialize_employee(employee: Employee) -> EmployeeOut:
         designation=employee.designation,
         current_salary=salary,
         identifier_history=list(employee.identifiers),
+        avatar_url=employee.avatar_url,
     )
 
 
@@ -93,6 +95,19 @@ def update_employee(
 ) -> EmployeeOut:
     employee = get_or_404(db, Employee, employee_id, "Employee was not found.")
     update_employee_service(db, employee, payload)
+    return serialize_employee(get_employee_detailed(db, employee_id))
+
+
+@router.post("/employees/{employee_id}/avatar", response_model=EmployeeOut)
+async def upload_employee_avatar(
+    employee_id: int, db: DbSession, _: CurrentUser, file: UploadFile = File(...)
+) -> EmployeeOut:
+    employee = get_or_404(db, Employee, employee_id, "Employee was not found.")
+    key = await store_avatar(file)
+    old_key = employee.avatar_key
+    employee.avatar_key = key
+    db.commit()
+    delete_avatar(old_key)
     return serialize_employee(get_employee_detailed(db, employee_id))
 
 

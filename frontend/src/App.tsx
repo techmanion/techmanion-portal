@@ -11,7 +11,7 @@ import { EmployeesPage } from "./pages/employees";
 import { ExpenseFormPage } from "./pages/expense-form";
 import { FinancePage } from "./pages/finance";
 import { HiringPage } from "./pages/hiring";
-import { AdministrationPage } from "./pages/administration";
+import { ManagementPage } from "./pages/management";
 import { HomePage } from "./pages/home";
 import { JobFormPage } from "./pages/job-form";
 import { JobDetailPage } from "./pages/job-detail";
@@ -36,9 +36,9 @@ function ProtectedLayout() {
   return user ? <AppShell /> : <Navigate to="/login" replace />;
 }
 
-function RequireAdmin({ children }: { children: ReactNode }) {
+function RequireExecutive({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  return user?.role === "ADMIN" ? <>{children}</> : <Navigate to="/home" replace />;
+  return user?.role === "EXECUTIVE" ? <>{children}</> : <Navigate to="/home" replace />;
 }
 
 export function App() {
@@ -65,18 +65,18 @@ export function App() {
         <Route
           path="/projects/new"
           element={
-            <RequireAdmin>
+            <RequireExecutive>
               <ProjectFormPage />
-            </RequireAdmin>
+            </RequireExecutive>
           }
         />
         <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
         <Route
           path="/projects/:projectId/edit"
           element={
-            <RequireAdmin>
+            <RequireExecutive>
               <ProjectFormPage />
-            </RequireAdmin>
+            </RequireExecutive>
           }
         />
         <Route path="/finance" element={<FinancePage />} />
@@ -88,28 +88,29 @@ export function App() {
         <Route
           path="/organization"
           element={
-            <RequireAdmin>
+            <RequireExecutive>
               <OrganizationPage />
-            </RequireAdmin>
+            </RequireExecutive>
           }
         />
         <Route
           path="/organization/edit"
           element={
-            <RequireAdmin>
+            <RequireExecutive>
               <OrganizationFormPage />
-            </RequireAdmin>
+            </RequireExecutive>
           }
         />
         <Route
-          path="/administration"
+          path="/management"
           element={
-            <RequireAdmin>
-              <AdministrationPage />
-            </RequireAdmin>
+            <RequireExecutive>
+              <ManagementPage />
+            </RequireExecutive>
           }
         />
-        <Route path="/settings" element={<Navigate to="/administration" replace />} />
+        <Route path="/settings" element={<Navigate to="/management" replace />} />
+        <Route path="/administration" element={<Navigate to="/management" replace />} />
       </Route>
       <Route path="*" element={<Navigate to="/home" replace />} />
     </Routes>

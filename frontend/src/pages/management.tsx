@@ -4,17 +4,17 @@ import { Button, Icon, IconButton, Input, Loading, Select, StatusChip } from "..
 import { SectionHeading } from "../components/atoms/Typography";
 import { ConfirmDialog, EmployeeCell, FormDialog, FormField } from "../components/molecules";
 import { DataTable, PageHeader, TableHeadRow, TableRow } from "../components/organisms";
-import { ApiError } from "../lib/api";
+import { ApiError, avatarSrc } from "../lib/api";
 import { addDepartment, addDesignation, listDepartments, listDesignations } from "../lib/api/settings";
 import { createUser, deleteUser, listUsers, updateUser as updateUserRequest } from "../lib/api/users";
-import { formatDate, roleLabel } from "../lib/format";
+import { formatDate, employeeTypeLabel } from "../lib/format";
 import { USER_ROLES } from "../lib/options";
 import { useToast } from "../toast";
 import type { NamedOption, User, UserRole } from "../types";
 
-const emptyMemberForm = { name: "", email: "", password: "", role: "HR" as UserRole };
+const emptyMemberForm = { name: "", email: "", password: "", role: "EMPLOYEE" as UserRole };
 
-export function AdministrationPage() {
+export function ManagementPage() {
   const { user: currentUser, updateUser: setCurrentUser } = useAuth();
   const [departments, setDepartments] = useState<NamedOption[]>([]);
   const [designations, setDesignations] = useState<NamedOption[]>([]);
@@ -86,7 +86,7 @@ export function AdministrationPage() {
     setMembersError("");
     try {
       await createUser(memberForm);
-      toast.success("Administrator account created.");
+      toast.success("Account created.");
       setMemberForm(emptyMemberForm);
       setShowAddMember(false);
       refreshMembers();
@@ -103,7 +103,7 @@ export function AdministrationPage() {
       const updated = await updateUserRequest(member.id, { role });
       setMembers((current) => current.map((row) => (row.id === updated.id ? updated : row)));
       if (currentUser?.id === updated.id) setCurrentUser(updated);
-      toast.success(`${updated.name}'s role updated to ${roleLabel(updated.role)}.`);
+      toast.success(`${updated.name}'s role updated to ${employeeTypeLabel(updated.role)}.`);
     } catch (reason) {
       setMembersError(reason instanceof ApiError ? reason.message : "Could not update this account.");
     }
@@ -152,19 +152,19 @@ export function AdministrationPage() {
     <div className="mx-auto max-w-[1450px] px-6 py-8">
       <PageHeader
         className="mb-8 px-1"
-        title="Administration"
+        title="Management"
         description="Manage portal access and the departments and designations behind employee records."
       />
 
       <section className="surface-panel mb-6 overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 px-6 pb-4 pt-6">
           <SectionHeading>
-            <Icon className="text-primary">admin_panel_settings</Icon>
-            Administrators
+            <Icon className="text-primary">workspace_premium</Icon>
+            Portal accounts
           </SectionHeading>
           <Button variant="secondary" size="sm" onClick={() => { setMemberForm(emptyMemberForm); setMembersError(""); setShowAddMember(true); }}>
             <Icon className="text-[16px]">person_add</Icon>
-            Add administrator
+            Add member
           </Button>
         </div>
 
@@ -189,7 +189,7 @@ export function AdministrationPage() {
                 return (
                   <TableRow key={member.id}>
                     <td className="px-6">
-                      <EmployeeCell name={member.name} subtitle={member.email} />
+                      <EmployeeCell name={member.name} subtitle={member.email} avatarSrc={avatarSrc(member.avatarUrl)} />
                     </td>
                     <td className="px-4">
                       <Select
@@ -202,7 +202,7 @@ export function AdministrationPage() {
                       >
                         {USER_ROLES.map((role) => (
                           <option key={role} value={role}>
-                            {roleLabel(role)}
+                            {employeeTypeLabel(role)}
                           </option>
                         ))}
                       </Select>
@@ -242,7 +242,7 @@ export function AdministrationPage() {
           </DataTable>
         )}
         {!loadingMembers && !members.length && (
-          <div className="px-6 py-8 text-center text-sm text-on-surface-variant">No administrator accounts yet.</div>
+          <div className="px-6 py-8 text-center text-sm text-on-surface-variant">No portal accounts yet.</div>
         )}
         {membersError && (
           <div className="px-6 py-4">
@@ -255,19 +255,19 @@ export function AdministrationPage() {
         <section className="surface-panel p-6">
           <SectionHeading className="mb-5"><Icon className="text-primary">hub</Icon>Departments</SectionHeading>
           <ul className="mb-6 divide-y divide-outline-variant/30">{departments.map((item) => <li className="py-3 text-sm" key={item.id}>{item.name}</li>)}</ul>
-          {currentUser?.role === "ADMIN" && <Button variant="secondary" size="sm" onClick={() => { setDepartment(""); setError(""); setOptionKind("departments"); }}><Icon className="text-[16px]">add</Icon>Add department</Button>}
+          {currentUser?.role === "EXECUTIVE" && <Button variant="secondary" size="sm" onClick={() => { setDepartment(""); setError(""); setOptionKind("departments"); }}><Icon className="text-[16px]">add</Icon>Add department</Button>}
         </section>
         <section className="surface-panel p-6">
           <SectionHeading accent="tertiary" className="mb-5"><Icon className="text-tertiary">badge</Icon>Designations</SectionHeading>
           <ul className="mb-6 divide-y divide-outline-variant/30">{designations.map((item) => <li className="py-3 text-sm" key={item.id}>{item.name}</li>)}</ul>
-          {currentUser?.role === "ADMIN" && <Button variant="secondary" size="sm" onClick={() => { setDesignation(""); setError(""); setOptionKind("designations"); }}><Icon className="text-[16px]">add</Icon>Add designation</Button>}
+          {currentUser?.role === "EXECUTIVE" && <Button variant="secondary" size="sm" onClick={() => { setDesignation(""); setError(""); setOptionKind("designations"); }}><Icon className="text-[16px]">add</Icon>Add designation</Button>}
         </section>
       </div>
       {error && <div className="mt-6 rounded-xl bg-error/10 px-4 py-3 text-sm text-error">{error}</div>}
 
       <FormDialog
         open={showAddMember}
-        title="Add administrator"
+        title="Add member"
         description="Create an account with access to the portal."
         icon="person_add"
         width="lg"
@@ -283,7 +283,7 @@ export function AdministrationPage() {
           <FormField label="Full name"><Input value={memberForm.name} onChange={(event) => setMemberForm((current) => ({ ...current, name: event.target.value }))} required autoFocus /></FormField>
           <FormField label="Work email"><Input type="email" value={memberForm.email} onChange={(event) => setMemberForm((current) => ({ ...current, email: event.target.value }))} required /></FormField>
           <FormField label="Temporary password" hint="At least 8 characters."><Input type="password" autoComplete="new-password" value={memberForm.password} onChange={(event) => setMemberForm((current) => ({ ...current, password: event.target.value }))} minLength={8} required /></FormField>
-          <FormField label="Role"><Select value={memberForm.role} onChange={(event) => setMemberForm((current) => ({ ...current, role: event.target.value as UserRole }))}>{USER_ROLES.map((role) => <option key={role} value={role}>{roleLabel(role)}</option>)}</Select></FormField>
+          <FormField label="Role"><Select value={memberForm.role} onChange={(event) => setMemberForm((current) => ({ ...current, role: event.target.value as UserRole }))}>{USER_ROLES.map((role) => <option key={role} value={role}>{employeeTypeLabel(role)}</option>)}</Select></FormField>
         </div>
       </FormDialog>
 

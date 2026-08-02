@@ -1,5 +1,5 @@
 import { StatusChip } from "../atoms/Badge";
-import { formatDate, formatMoney, label } from "../../lib/format";
+import { formatDate, formatMoney } from "../../lib/format";
 import type { Project } from "../../types";
 import { DataTable, TableHeadRow, TableRow } from "./DataTable";
 
@@ -19,16 +19,13 @@ export function ProjectsTable({
   onRowClick: (project: Project) => void;
 }) {
   return (
-    <DataTable minWidth="1120px">
+    <DataTable minWidth="880px">
       <thead>
         <TableHeadRow>
           <th className="px-6 py-3 font-medium">Project</th>
           <th className="px-4 py-3 font-medium">Client</th>
-          <th className="px-4 py-3 font-medium">Type</th>
           <th className="px-4 py-3 font-medium">Value</th>
-          <th className="px-4 py-3 font-medium">Timeline</th>
-          <th className="px-4 py-3 font-medium">Received</th>
-          <th className="px-4 py-3 font-medium">Outstanding</th>
+          <th className="px-4 py-3 font-medium">Deadline</th>
           <th className="px-4 py-3 font-medium">Status</th>
           <th className="px-4 py-3 font-medium">Payment</th>
         </TableHeadRow>
@@ -40,15 +37,9 @@ export function ProjectsTable({
               <strong className="block text-sm font-medium text-on-surface">{project.name}</strong>
             </td>
             <td className="px-4 text-sm text-on-surface">{project.clientName}</td>
-            <td className="px-4 text-sm text-on-surface">{label(project.projectType)}</td>
             <td className="px-4 text-sm text-on-surface">{projectValue(project)}</td>
-            <td className="px-4 text-sm leading-6 text-on-surface">
-              {formatDate(project.startDate)}
-              <br />– {formatDate(project.endDate ?? undefined)}
-            </td>
-            <td className="px-4 text-sm text-on-surface">{formatMoney(project.totalReceived)}</td>
-            <td className="px-4 text-sm font-medium text-on-surface">
-              {formatMoney(project.outstandingBalance)}
+            <td className="px-4 text-sm text-on-surface">
+              {project.endDate ? formatDate(project.endDate) : "—"}
             </td>
             <td className="px-4"><StatusChip value={project.status} /></td>
             <td className="px-4">

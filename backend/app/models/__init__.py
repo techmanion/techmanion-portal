@@ -1,5 +1,5 @@
 from app.models.activity import ActivityLog
-from app.models.auth import User, UserRole
+from app.models.auth import User
 from app.models.common import TimestampMixin, utc_now
 from app.models.finance import Expense, ExpenseFrequency, ExpenseType
 from app.models.employees import (
@@ -60,6 +60,5 @@ __all__ = [
     "SalaryRevision",
     "TimestampMixin",
     "User",
-    "UserRole",
     "utc_now",
 ]

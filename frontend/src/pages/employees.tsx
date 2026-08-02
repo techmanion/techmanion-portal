@@ -7,7 +7,7 @@ import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { useClearSearchParams, useSearchParamState } from "../hooks/useSearchParamState";
 import { listEmployees } from "../lib/api/employees";
 import { listDesignations } from "../lib/api/settings";
-import { label } from "../lib/format";
+import { employeeTypeLabel, label } from "../lib/format";
 import { EMPLOYEE_STATUSES, EMPLOYEE_TYPES } from "../lib/options";
 import type { Employee, EmployeeStatus, NamedOption } from "../types";
 
@@ -95,7 +95,7 @@ export function EmployeesPage() {
             <FilterSelect value={employeeType} onChange={setEmployeeType} labelText="Employment type" placeholder="Filter by employment type">
               {EMPLOYEE_TYPES.map((value) => (
                 <option key={value} value={value}>
-                  {label(value)}
+                  {employeeTypeLabel(value)}
                 </option>
               ))}
             </FilterSelect>

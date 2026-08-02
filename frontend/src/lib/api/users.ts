@@ -9,17 +9,17 @@ export interface CreateUserPayload {
 }
 
 export function listUsers() {
-  return api<User[]>("/users");
+  return api<User[]>("/admin/users");
 }
 
 export function createUser(payload: CreateUserPayload) {
-  return api<User>("/users", { method: "POST", body: JSON.stringify(payload) });
+  return api<User>("/admin/users", { method: "POST", body: JSON.stringify(payload) });
 }
 
 export function updateUser(userId: number, payload: { role?: UserRole; isActive?: boolean }) {
-  return api<User>(`/users/${userId}`, { method: "PATCH", body: JSON.stringify(payload) });
+  return api<User>(`/admin/users/${userId}`, { method: "PATCH", body: JSON.stringify(payload) });
 }
 
 export function deleteUser(userId: number) {
-  return api<void>(`/users/${userId}`, { method: "DELETE" });
+  return api<void>(`/admin/users/${userId}`, { method: "DELETE" });
 }

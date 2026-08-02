@@ -118,7 +118,7 @@ def build_home_feed(db: Session) -> HomeOut:
                 )
             )
             .order_by(ActivityLog.timestamp.desc())
-            .limit(12)
+            .limit(6)
         ).all()
     )
     return HomeOut(

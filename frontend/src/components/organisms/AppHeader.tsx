@@ -4,11 +4,11 @@ import { Icon } from "../atoms/Icon";
 import { IconButton } from "../atoms/IconButton";
 import { Logo } from "../atoms/Logo";
 import { UserMenu } from "../molecules/UserMenu";
-import { ADMIN_NAV_ITEMS, NAV_ITEMS } from "../../lib/nav";
+import { EXECUTIVE_NAV_ITEMS, NAV_ITEMS } from "../../lib/nav";
 
 function useSectionLabel() {
   const { pathname } = useLocation();
-  const match = [...NAV_ITEMS, ...ADMIN_NAV_ITEMS]
+  const match = [...NAV_ITEMS, ...EXECUTIVE_NAV_ITEMS]
     .filter((item) => pathname.startsWith(item.to))
     .sort((a, b) => b.to.length - a.to.length)[0];
   return match ?? NAV_ITEMS[0];

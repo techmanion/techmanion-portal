@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from sqlalchemy import select
 
-from app.api.dependencies import AdminUser, CurrentUser, DbSession
+from app.api.dependencies import CurrentUser, DbSession, ExecutiveUser
 from app.models import Department, Designation
 from app.schemas import NamedOption
 
@@ -14,7 +14,7 @@ def list_departments(db: DbSession, _: CurrentUser) -> list[Department]:
 
 
 @router.post("/settings/departments", response_model=NamedOption)
-def add_department(name: str, db: DbSession, _: AdminUser) -> Department:
+def add_department(name: str, db: DbSession, _: ExecutiveUser) -> Department:
     department = Department(name=name.strip())
     db.add(department)
     db.commit()
@@ -28,7 +28,7 @@ def list_designations(db: DbSession, _: CurrentUser) -> list[Designation]:
 
 
 @router.post("/settings/designations", response_model=NamedOption)
-def add_designation(name: str, db: DbSession, _: AdminUser) -> Designation:
+def add_designation(name: str, db: DbSession, _: ExecutiveUser) -> Designation:
     designation = Designation(name=name.strip())
     db.add(designation)
     db.commit()

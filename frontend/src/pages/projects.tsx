@@ -58,7 +58,7 @@ export function ProjectsPage() {
         title="Projects"
         description="Manage active and historical client projects."
         actions={
-          user?.role === "ADMIN" ? (
+          user?.role === "EXECUTIVE" ? (
             <Link
               to="/projects/new"
               className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-5 text-sm font-medium text-on-primary shadow-md shadow-black/10 hover:brightness-105"

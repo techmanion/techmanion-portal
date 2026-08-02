@@ -23,15 +23,15 @@ export function label(value: string): string {
     .join(" ");
 }
 
-const roleLabels: Record<string, string> = {
-  ADMIN: "Admin",
-  HR: "HR",
-  MANAGER: "Manager",
+const employeeTypeLabels: Record<string, string> = {
+  EXECUTIVE: "Core Member",
   EMPLOYEE: "Employee",
+  CONTRACTOR: "Contractor",
+  INTERN: "Intern",
 };
 
-export function roleLabel(value: string): string {
-  return roleLabels[value] ?? label(value);
+export function employeeTypeLabel(value: string): string {
+  return employeeTypeLabels[value] ?? label(value);
 }
 
 export function initials(name: string): string {

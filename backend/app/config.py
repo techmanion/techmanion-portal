@@ -14,8 +14,8 @@ class Settings(BaseSettings):
     access_token_minutes: int = 480
     frontend_url: str = "http://localhost:5173"
     upload_dir: Path = Path("uploads")
-    initial_admin_email: str = "admin@techmanion.com"
-    initial_admin_password: str = "ChangeMe123!"
+    seed_user_email: str = "core@techmanion.com"
+    seed_user_password: str = "ChangeMe123!"
 
     model_config = SettingsConfigDict(
         env_file=Path(__file__).resolve().parents[1] / ".env",

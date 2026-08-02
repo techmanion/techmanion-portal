@@ -6,7 +6,7 @@ export function getOrganization() {
 }
 
 export function updateOrganization(payload: OrganizationPayload) {
-  return api<Organization>("/organization", {
+  return api<Organization>("/admin/organization", {
     method: "PUT",
     body: JSON.stringify(payload),
   });

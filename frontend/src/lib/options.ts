@@ -7,7 +7,6 @@ import type {
   ProjectStatus,
   ProjectType,
   MilestoneStatus,
-  UserRole,
 } from "../types";
 
 export const EMPLOYEE_TYPES: EmployeeType[] = ["EXECUTIVE", "EMPLOYEE", "CONTRACTOR", "INTERN"];
@@ -36,7 +35,7 @@ export const CANDIDATE_STAGES: CandidateStage[] = [
   "REJECTED",
 ];
 
-export const USER_ROLES: UserRole[] = ["ADMIN", "HR", "MANAGER", "EMPLOYEE"];
+export const USER_ROLES = EMPLOYEE_TYPES;
 
 export const DOCUMENT_KINDS = ["CV", "CONTRACT", "ID_COPY", "CERTIFICATE", "OTHER"];
 

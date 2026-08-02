@@ -17,12 +17,12 @@ const emptyPayment = (): ProjectPaymentPayload => ({
 
 export function ProjectPaymentsPanel({
   project,
-  isAdmin,
+  isExecutive,
   onAdd,
   onDelete,
 }: {
   project: Project;
-  isAdmin: boolean;
+  isExecutive: boolean;
   onAdd: (payload: ProjectPaymentPayload) => Promise<void>;
   onDelete: (paymentId: number) => void;
 }) {
@@ -62,7 +62,7 @@ export function ProjectPaymentsPanel({
             </div>
             <StatusChip value={project.paymentStatus} />
           </div>
-          {isAdmin && <Button size="sm" onClick={() => { setError(""); setDialogOpen(true); }}><Icon className="text-[16px]">add</Icon>Add payment</Button>}
+          {isExecutive && <Button size="sm" onClick={() => { setError(""); setDialogOpen(true); }}><Icon className="text-[16px]">add</Icon>Add payment</Button>}
         </div>
       </div>
 
@@ -108,7 +108,7 @@ export function ProjectPaymentsPanel({
               <th className="px-4 py-3 font-medium">Method</th>
               <th className="px-4 py-3 font-medium">Reference</th>
               <th className="px-4 py-3 font-medium">Notes</th>
-              {isAdmin && <th className="px-4 py-3 font-medium" />}
+              {isExecutive && <th className="px-4 py-3 font-medium" />}
             </TableHeadRow>
           </thead>
           <tbody className="divide-y divide-outline-variant/30">
@@ -119,7 +119,7 @@ export function ProjectPaymentsPanel({
                 <td className="px-4 text-sm text-on-surface">{payment.method}</td>
                 <td className="px-4 text-sm text-on-surface">{payment.reference || "—"}</td>
                 <td className="max-w-60 truncate px-4 text-sm text-on-surface">{payment.notes || "—"}</td>
-                {isAdmin && (
+                {isExecutive && (
                   <td className="px-4 text-right">
                     <IconButton aria-label="Delete payment" size="sm" onClick={() => onDelete(payment.id)}>
                       <Icon className="text-[17px]">delete</Icon>

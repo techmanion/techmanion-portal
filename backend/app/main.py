@@ -7,20 +7,20 @@ from sqlalchemy import select
 from app.api import router
 from app.config import settings
 from app.database import SessionLocal
-from app.models import CompanyProfile, Department, Designation, User, UserRole
+from app.models import CompanyProfile, Department, Designation, EmployeeType, User
 from app.security import hash_password
 
 
 def seed_defaults() -> None:
     with SessionLocal() as db:
-        admin = db.scalar(select(User).where(User.email == settings.initial_admin_email.lower()))
-        if not admin:
+        seed_user = db.scalar(select(User).where(User.email == settings.seed_user_email.lower()))
+        if not seed_user:
             db.add(
                 User(
-                    email=settings.initial_admin_email.lower(),
-                    password_hash=hash_password(settings.initial_admin_password),
-                    name="Portal Administrator",
-                    role=UserRole.ADMIN,
+                    email=settings.seed_user_email.lower(),
+                    password_hash=hash_password(settings.seed_user_password),
+                    name="Core Member",
+                    role=EmployeeType.EXECUTIVE,
                 )
             )
         if not db.scalar(select(Department).limit(1)):

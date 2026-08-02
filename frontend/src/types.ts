@@ -1,6 +1,7 @@
-export type UserRole = "ADMIN" | "HR" | "MANAGER" | "EMPLOYEE";
 export type EmployeeStatus = "ACTIVE" | "ON_LEAVE" | "RESIGNED" | "TERMINATED";
 export type EmployeeType = "EXECUTIVE" | "EMPLOYEE" | "CONTRACTOR" | "INTERN";
+/** User.role reuses EmployeeType: EXECUTIVE (core member) has elevated access. */
+export type UserRole = EmployeeType;
 export type ProjectStatus = "PLANNED" | "ACTIVE" | "ON_HOLD" | "COMPLETED";
 export type ProjectType = "MONTHLY_RECURRING" | "FIXED" | "HOURLY";
 export type ProjectPaymentStatus =
@@ -28,6 +29,7 @@ export interface User {
   name: string;
   role: UserRole;
   isActive: boolean;
+  avatarUrl: string | null;
   createdAt: string;
 }
 
@@ -92,6 +94,7 @@ export interface Employee {
   joiningDate: string;
   currentSalary?: Salary;
   identifierHistory: EmployeeIdentifier[];
+  avatarUrl: string | null;
   createdAt: string;
 }
 
@@ -104,6 +107,7 @@ export type EmployeePayload = Omit<
   | "designation"
   | "currentSalary"
   | "identifierHistory"
+  | "avatarUrl"
   | "createdAt"
 > & {
   baseAmount?: number;

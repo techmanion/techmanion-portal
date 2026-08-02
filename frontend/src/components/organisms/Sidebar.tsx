@@ -1,7 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../auth";
 import { Icon } from "../atoms/Icon";
-import { ADMIN_NAV_ITEMS, NAV_ITEMS } from "../../lib/nav";
+import { EXECUTIVE_NAV_ITEMS, NAV_ITEMS } from "../../lib/nav";
 
 function NavRow({
   to,
@@ -49,10 +49,10 @@ export function Sidebar({ open = false, onClose }: { open?: boolean; onClose?: (
           {NAV_ITEMS.map((item) => (
             <NavRow key={item.label} {...item} />
           ))}
-          {user?.role === "ADMIN" && (
+          {user?.role === "EXECUTIVE" && (
             <>
               <div className="mx-4 my-4 h-px bg-outline-variant/50" />
-              {ADMIN_NAV_ITEMS.map((item) => (
+              {EXECUTIVE_NAV_ITEMS.map((item) => (
                 <NavRow key={item.label} {...item} />
               ))}
             </>

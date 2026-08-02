@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { SectionHeading } from "../atoms/Typography";
-import { formatDate, label } from "../../lib/format";
+import { employeeTypeLabel, formatDate, label } from "../../lib/format";
 import type { Employee } from "../../types";
 
 function Definition({ labelText, children }: { labelText: string; children: ReactNode }) {
@@ -24,7 +24,7 @@ export function EmployeeOverviewPanel({ employee }: { employee: Employee }) {
         <Definition labelText="Email">{employee.email}</Definition>
         <Definition labelText="Phone">{employee.phone}</Definition>
         <Definition labelText="Designation">{employee.designation?.name ?? "—"}</Definition>
-        <Definition labelText="Employment type">{label(employee.employeeType)}</Definition>
+        <Definition labelText="Employment type">{employeeTypeLabel(employee.employeeType)}</Definition>
         <Definition labelText="Status">
           <span className="inline-flex items-center gap-1.5">
             <span className="size-1.5 rounded-full bg-green-500" />
@@ -47,7 +47,7 @@ export function EmployeeOverviewPanel({ employee }: { employee: Employee }) {
                 className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-surface-container-highest/40 px-4 py-2.5 text-sm"
               >
                 <span className="font-medium text-on-surface">{entry.code}</span>
-                <span className="text-xs text-on-surface-variant">{label(entry.employeeType)}</span>
+                <span className="text-xs text-on-surface-variant">{employeeTypeLabel(entry.employeeType)}</span>
                 <span className="flex items-center gap-1.5 text-xs">
                   {entry.retiredAt ? (
                     <span className="rounded-full bg-surface-container-highest px-2 py-0.5 text-on-surface-variant">

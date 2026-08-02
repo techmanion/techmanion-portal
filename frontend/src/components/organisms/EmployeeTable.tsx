@@ -1,6 +1,7 @@
 import { StatusChip } from "../atoms/Badge";
 import { EmployeeCell } from "../molecules/EmployeeCell";
-import { formatDate, label } from "../../lib/format";
+import { avatarSrc } from "../../lib/api/client";
+import { employeeTypeLabel, formatDate } from "../../lib/format";
 import type { Employee } from "../../types";
 import { DataTable, TableHeadRow, TableRow } from "./DataTable";
 
@@ -26,12 +27,12 @@ export function EmployeeTable({
         {employees.map((employee) => (
           <TableRow key={employee.id} onClick={() => onRowClick(employee)}>
             <td className="px-6">
-              <EmployeeCell name={employee.fullName} subtitle={employee.email} />
+              <EmployeeCell name={employee.fullName} subtitle={employee.email} avatarSrc={avatarSrc(employee.avatarUrl)} />
             </td>
             <td className="px-4 text-sm text-on-surface">{employee.designation?.name ?? "—"}</td>
             <td className="px-4">
               <span className="rounded-lg bg-surface-container-highest px-2.5 py-1 text-xs text-on-surface-variant">
-                {label(employee.employeeType)}
+                {employeeTypeLabel(employee.employeeType)}
               </span>
             </td>
             <td className="px-4 text-sm text-on-surface">{formatDate(employee.joiningDate)}</td>

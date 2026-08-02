@@ -2,7 +2,8 @@ import { Link } from "react-router-dom";
 import { Avatar } from "../atoms/Avatar";
 import { StatusChip } from "../atoms/Badge";
 import { Icon } from "../atoms/Icon";
-import { formatDate, label } from "../../lib/format";
+import { avatarSrc } from "../../lib/api/client";
+import { employeeTypeLabel, formatDate } from "../../lib/format";
 import type { Employee } from "../../types";
 
 export function ProfileHeader({ employee }: { employee: Employee }) {
@@ -10,7 +11,7 @@ export function ProfileHeader({ employee }: { employee: Employee }) {
     <div className="flex flex-wrap items-start justify-between gap-6">
       <div className="flex items-center gap-5">
         <div className="relative">
-          <Avatar alt={employee.fullName} size="xl" />
+          <Avatar src={avatarSrc(employee.avatarUrl)} alt={employee.fullName} size="xl" />
           <span className="absolute bottom-0.5 right-0.5 size-4 rounded-full border-[3px] border-background bg-green-500" />
         </div>
         <div>
@@ -21,7 +22,7 @@ export function ProfileHeader({ employee }: { employee: Employee }) {
           <p className="mt-1.5 flex flex-wrap items-center gap-2 text-sm text-on-surface-variant">
             <span>{employee.designation?.name ?? "No designation"}</span>
             <span className="size-1 rounded-full bg-outline-variant" />
-            <span>{label(employee.employeeType)}</span>
+            <span>{employeeTypeLabel(employee.employeeType)}</span>
           </p>
           <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1.5 text-xs text-on-surface-variant/80">
             <span className="flex items-center gap-1.5">

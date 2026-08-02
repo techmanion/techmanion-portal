@@ -6,10 +6,10 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_db
-from app.models import User, UserRole
+from app.models import EmployeeType, User
 from app.security import decode_access_token
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.api_prefix}/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.api_prefix}/admin/auth/login")
 DbSession = Annotated[Session, Depends(get_db)]
 
 
@@ -31,10 +31,10 @@ def get_current_user(
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
-def require_admin(user: CurrentUser) -> User:
-    if user.role != UserRole.ADMIN:
-        raise HTTPException(status_code=403, detail="Administrator access is required.")
+def require_executive(user: CurrentUser) -> User:
+    if user.role != EmployeeType.EXECUTIVE:
+        raise HTTPException(status_code=403, detail="Core member access is required.")
     return user
 
 
-AdminUser = Annotated[User, Depends(require_admin)]
+ExecutiveUser = Annotated[User, Depends(require_executive)]

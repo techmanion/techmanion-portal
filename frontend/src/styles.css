@@ -175,6 +175,16 @@
     background: var(--color-surface-container);
     box-shadow: var(--shadow-panel);
   }
+
+  .login-diagonal-bg {
+    background-image: repeating-linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-on-background) 7%, transparent) 0px,
+      color-mix(in srgb, var(--color-on-background) 7%, transparent) 1px,
+      transparent 1px,
+      transparent 12px
+    );
+  }
 }
 
 .material-symbols-outlined {

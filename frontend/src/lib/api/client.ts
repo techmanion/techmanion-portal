@@ -1,6 +1,10 @@
 export const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000/api/v1";
 const TOKEN_KEY = "techmanion_access_token";
 
+export function avatarSrc(path?: string | null): string | undefined {
+  return path ? `${API_URL}${path}` : undefined;
+}
+
 export class ApiError extends Error {
   constructor(
     message: string,

@@ -1,19 +1,20 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.api.dependencies import AdminUser, CurrentUser, DbSession
+from app.api.dependencies import CurrentUser, DbSession, ExecutiveUser
 from app.core.errors import get_or_404
-from app.models import User, UserRole
+from app.core.uploads import delete_avatar, store_avatar
+from app.models import EmployeeType, User
 from app.schemas import (
     PasswordChange,
     ProfileUpdate,
     TokenOut,
-    UserAdminUpdate,
+    UserAccessUpdate,
     UserCreate,
     UserOut,
 )
@@ -22,12 +23,12 @@ from app.security import create_access_token, hash_password, verify_password
 router = APIRouter(tags=["auth"])
 
 
-def _active_admin_count(db: Session) -> int:
+def _active_executive_count(db: Session) -> int:
     return (
         db.scalar(
             select(func.count())
             .select_from(User)
-            .where(User.role == UserRole.ADMIN, User.is_active.is_(True))
+            .where(User.role == EmployeeType.EXECUTIVE, User.is_active.is_(True))
         )
         or 0
     )
@@ -54,6 +55,17 @@ def update_profile(payload: ProfileUpdate, db: DbSession, user: CurrentUser) -> 
     return user
 
 
+@router.post("/auth/me/avatar", response_model=UserOut)
+async def upload_my_avatar(db: DbSession, user: CurrentUser, file: UploadFile = File(...)) -> User:
+    key = await store_avatar(file)
+    old_key = user.avatar_key
+    user.avatar_key = key
+    db.commit()
+    delete_avatar(old_key)
+    db.refresh(user)
+    return user
+
+
 @router.post("/auth/change-password", status_code=status.HTTP_204_NO_CONTENT)
 def change_password(payload: PasswordChange, db: DbSession, user: CurrentUser) -> None:
     if not verify_password(payload.current_password, user.password_hash):
@@ -63,12 +75,12 @@ def change_password(payload: PasswordChange, db: DbSession, user: CurrentUser) -
 
 
 @router.get("/users", response_model=list[UserOut])
-def list_users(db: DbSession, _: AdminUser) -> list[User]:
+def list_users(db: DbSession, _: ExecutiveUser) -> list[User]:
     return list(db.scalars(select(User).order_by(User.name)).all())
 
 
 @router.post("/users", response_model=UserOut, status_code=status.HTTP_201_CREATED)
-def create_user(payload: UserCreate, db: DbSession, admin: AdminUser) -> User:
+def create_user(payload: UserCreate, db: DbSession, executive: ExecutiveUser) -> User:
     new_user = User(
         email=payload.email.lower(),
         password_hash=hash_password(payload.password),
@@ -87,26 +99,32 @@ def create_user(payload: UserCreate, db: DbSession, admin: AdminUser) -> User:
 
 
 @router.patch("/users/{user_id}", response_model=UserOut)
-def update_user(user_id: int, payload: UserAdminUpdate, db: DbSession, admin: AdminUser) -> User:
+def update_user(
+    user_id: int, payload: UserAccessUpdate, db: DbSession, executive: ExecutiveUser
+) -> User:
     target = get_or_404(db, User, user_id, "User was not found.")
     demoting_self = (
-        target.id == admin.id and payload.role is not None and payload.role != UserRole.ADMIN
+        target.id == executive.id
+        and payload.role is not None
+        and payload.role != EmployeeType.EXECUTIVE
     )
-    deactivating_self = target.id == admin.id and payload.is_active is False
+    deactivating_self = target.id == executive.id and payload.is_active is False
     if demoting_self or deactivating_self:
-        raise HTTPException(status_code=400, detail="You cannot revoke your own admin access.")
+        raise HTTPException(
+            status_code=400, detail="You cannot revoke your own core member access."
+        )
 
-    losing_admin_access = (payload.role is not None and payload.role != UserRole.ADMIN) or (
-        payload.is_active is False
-    )
+    losing_executive_access = (
+        payload.role is not None and payload.role != EmployeeType.EXECUTIVE
+    ) or (payload.is_active is False)
     if (
-        target.role == UserRole.ADMIN
+        target.role == EmployeeType.EXECUTIVE
         and target.is_active
-        and losing_admin_access
-        and _active_admin_count(db) <= 1
+        and losing_executive_access
+        and _active_executive_count(db) <= 1
     ):
         raise HTTPException(
-            status_code=400, detail="At least one active administrator must remain."
+            status_code=400, detail="At least one active core member must remain."
         )
 
     if payload.role is not None:
@@ -119,13 +137,17 @@ def update_user(user_id: int, payload: UserAdminUpdate, db: DbSession, admin: Ad
 
 
 @router.delete("/users/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_user(user_id: int, db: DbSession, admin: AdminUser) -> None:
+def delete_user(user_id: int, db: DbSession, executive: ExecutiveUser) -> None:
     target = get_or_404(db, User, user_id, "User was not found.")
-    if target.id == admin.id:
+    if target.id == executive.id:
         raise HTTPException(status_code=400, detail="You cannot delete your own account.")
-    if target.role == UserRole.ADMIN and target.is_active and _active_admin_count(db) <= 1:
+    if (
+        target.role == EmployeeType.EXECUTIVE
+        and target.is_active
+        and _active_executive_count(db) <= 1
+    ):
         raise HTTPException(
-            status_code=400, detail="At least one active administrator must remain."
+            status_code=400, detail="At least one active core member must remain."
         )
     try:
         db.delete(target)

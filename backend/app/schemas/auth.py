@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import EmailStr, Field
 
-from app.models import UserRole
+from app.models import EmployeeType
 from app.schemas.common import ApiModel
 
 
@@ -10,8 +10,9 @@ class UserOut(ApiModel):
     id: int
     email: EmailStr
     name: str
-    role: UserRole
+    role: EmployeeType
     is_active: bool
+    avatar_url: str | None = None
     created_at: datetime
 
 
@@ -34,9 +35,9 @@ class UserCreate(ApiModel):
     name: str = Field(min_length=1, max_length=120)
     email: EmailStr
     password: str = Field(min_length=8, max_length=128)
-    role: UserRole = UserRole.HR
+    role: EmployeeType = EmployeeType.EMPLOYEE
 
 
-class UserAdminUpdate(ApiModel):
-    role: UserRole | None = None
+class UserAccessUpdate(ApiModel):
+    role: EmployeeType | None = None
     is_active: bool | None = None

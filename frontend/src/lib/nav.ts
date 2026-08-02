@@ -12,7 +12,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/finance", label: "Finance", icon: "payments" },
 ];
 
-export const ADMIN_NAV_ITEMS: NavItem[] = [
+export const EXECUTIVE_NAV_ITEMS: NavItem[] = [
   { to: "/organization", label: "Organization", icon: "domain" },
-  { to: "/administration", label: "Administration", icon: "hub" },
+  { to: "/management", label: "Management", icon: "hub" },
 ];

@@ -33,7 +33,7 @@ export function ProjectDetailPage() {
       .catch((reason: Error) => setError(reason.message));
   }, [projectId]);
 
-  const isAdmin = user?.role === "ADMIN";
+  const isExecutive = user?.role === "EXECUTIVE";
 
   async function removeProject() {
     setConfirmDelete(false);
@@ -95,7 +95,7 @@ export function ProjectDetailPage() {
         <div className="flex flex-wrap items-center gap-3">
           <StatusChip value={project.status} />
           <StatusChip value={project.paymentStatus} />
-          {isAdmin && (
+          {isExecutive && (
             <Link
               to={`/projects/${project.id}/edit`}
               className="inline-flex h-9 items-center gap-2 rounded-full bg-surface-container-highest px-4 text-sm font-medium text-on-surface ring-1 ring-outline-variant/40 hover:bg-surface-bright"
@@ -104,7 +104,7 @@ export function ProjectDetailPage() {
               Edit
             </Link>
           )}
-          {isAdmin && (
+          {isExecutive && (
             <Button variant="ghost" onClick={() => setConfirmDelete(true)}>
               <Icon className="text-[16px]">delete</Icon>
               Delete
@@ -128,7 +128,7 @@ export function ProjectDetailPage() {
       )}
       <ProjectPaymentsPanel
         project={project}
-        isAdmin={isAdmin}
+        isExecutive={isExecutive}
         onAdd={addPayment}
         onDelete={removePayment}
       />

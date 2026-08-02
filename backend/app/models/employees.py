@@ -66,6 +66,7 @@ class Employee(TimestampMixin, Base):
     probation_end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     confirmation_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     access_log: Mapped[str | None] = mapped_column(Text, nullable=True)
+    avatar_key: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     department: Mapped[Department | None] = relationship()
     designation: Mapped[Designation] = relationship()
@@ -86,6 +87,10 @@ class Employee(TimestampMixin, Base):
     @property
     def full_name(self) -> str:
         return f"{self.first_name} {self.last_name}".strip()
+
+    @property
+    def avatar_url(self) -> str | None:
+        return f"/avatars/{self.avatar_key}" if self.avatar_key else None
 
     @property
     def current_identifier(self) -> EmployeeIdentifier | None:

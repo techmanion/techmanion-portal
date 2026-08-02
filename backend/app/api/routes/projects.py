@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 
-from app.api.dependencies import AdminUser, CurrentUser, DbSession
+from app.api.dependencies import CurrentUser, DbSession, ExecutiveUser
 from app.core.errors import get_or_404
 from app.models import Project, ProjectPayment
 from app.repositories.projects import get_project_detailed, list_projects_detailed
@@ -62,7 +62,7 @@ def list_projects(db: DbSession, _: CurrentUser) -> list[ProjectOut]:
 
 
 @router.post("/projects", response_model=ProjectOut, status_code=status.HTTP_201_CREATED)
-def create_project(payload: ProjectCreate, db: DbSession, _: AdminUser) -> ProjectOut:
+def create_project(payload: ProjectCreate, db: DbSession, _: ExecutiveUser) -> ProjectOut:
     project = create_project_service(db, payload)
     return serialize_project(get_project_detailed(db, project.id))
 
@@ -77,7 +77,7 @@ def get_project(project_id: int, db: DbSession, _: CurrentUser) -> ProjectOut:
 
 @router.put("/projects/{project_id}", response_model=ProjectOut)
 def update_project(
-    project_id: int, payload: ProjectUpdate, db: DbSession, _: AdminUser
+    project_id: int, payload: ProjectUpdate, db: DbSession, _: ExecutiveUser
 ) -> ProjectOut:
     project = get_project_detailed(db, project_id)
     if not project:
@@ -87,7 +87,7 @@ def update_project(
 
 
 @router.delete("/projects/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_project(project_id: int, db: DbSession, _: AdminUser) -> None:
+def delete_project(project_id: int, db: DbSession, _: ExecutiveUser) -> None:
     project = get_or_404(db, Project, project_id, "Project was not found.")
     delete_project_service(db, project)
 
@@ -98,7 +98,7 @@ def delete_project(project_id: int, db: DbSession, _: AdminUser) -> None:
     status_code=status.HTTP_201_CREATED,
 )
 def add_payment(
-    project_id: int, payload: ProjectPaymentCreate, db: DbSession, _: AdminUser
+    project_id: int, payload: ProjectPaymentCreate, db: DbSession, _: ExecutiveUser
 ) -> ProjectOut:
     project = get_or_404(db, Project, project_id, "Project was not found.")
     add_project_payment(db, project, payload)
@@ -107,7 +107,7 @@ def add_payment(
 
 @router.delete("/projects/{project_id}/payments/{payment_id}", response_model=ProjectOut)
 def remove_payment(
-    project_id: int, payment_id: int, db: DbSession, _: AdminUser
+    project_id: int, payment_id: int, db: DbSession, _: ExecutiveUser
 ) -> ProjectOut:
     project = get_or_404(db, Project, project_id, "Project was not found.")
     payment = get_or_404(db, ProjectPayment, payment_id, "Payment was not found.")

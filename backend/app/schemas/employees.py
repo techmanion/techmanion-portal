@@ -53,6 +53,7 @@ class EmployeeOut(EmployeeBase):
     designation: NamedOption | None = None
     current_salary: SalaryOut | None = None
     identifier_history: list[EmployeeIdentifierOut] = Field(default_factory=list)
+    avatar_url: str | None = None
     created_at: datetime
 
 

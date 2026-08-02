@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useAuth } from "../auth";
-import { Avatar, Button, Icon, Input } from "../components/atoms";
+import { Button, Icon, Input } from "../components/atoms";
 import { SectionHeading } from "../components/atoms/Typography";
-import { ChangePasswordDialog, FormDialog, FormField } from "../components/molecules";
+import { ChangePasswordDialog, EditableAvatar, FormDialog, FormField } from "../components/molecules";
 import { PageHeader } from "../components/organisms";
-import { ApiError } from "../lib/api";
-import { updateProfile } from "../lib/api/auth";
-import { formatDate, roleLabel } from "../lib/format";
+import { ApiError, avatarSrc } from "../lib/api";
+import { updateProfile, uploadMyAvatar } from "../lib/api/auth";
+import { formatDate, employeeTypeLabel } from "../lib/format";
 import { useToast } from "../toast";
 
 export function ProfilePage() {
@@ -21,6 +21,16 @@ export function ProfilePage() {
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
 
   if (!user) return null;
+
+  async function uploadAvatar(file: File) {
+    try {
+      const updated = await uploadMyAvatar(file);
+      updateUser(updated);
+      toast.success("Photo updated.");
+    } catch (reason) {
+      toast.error(reason instanceof ApiError ? reason.message : "Photo could not be uploaded.");
+    }
+  }
 
   async function saveName(event: React.FormEvent) {
     event.preventDefault();
@@ -44,12 +54,12 @@ export function ProfilePage() {
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,320px)_1fr]">
         <section className="surface-panel flex flex-col items-center gap-4 p-8 text-center">
-          <Avatar alt={user.name} size="xl" />
+          <EditableAvatar src={avatarSrc(user.avatarUrl)} alt={user.name} size="xl" onUpload={uploadAvatar} />
           <div>
             <h2 className="text-heading font-semibold text-on-surface">{user.name}</h2>
             <p className="mt-1 text-sm text-on-surface-variant">{user.email}</p>
           </div>
-          <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">{roleLabel(user.role)}</span>
+          <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">{employeeTypeLabel(user.role)}</span>
           <div className="mt-2 flex w-full items-center justify-center gap-2 border-t border-outline-variant/30 pt-4 text-xs text-on-surface-variant">
             <Icon className="text-[16px]">calendar_today</Icon>
             Member since {formatDate(user.createdAt)}
@@ -95,7 +105,7 @@ export function ProfilePage() {
         onClose={() => { setProfileDialogOpen(false); setName(user.name); setNameError(""); }}
       >
         <FormField label="Full name"><Input value={name} onChange={(event) => setName(event.target.value)} required minLength={1} autoFocus /></FormField>
-        <FormField label="Work email" hint="Contact an administrator to change your email."><Input value={user.email} disabled className="opacity-60" /></FormField>
+        <FormField label="Work email" hint="Contact a core member to change your email."><Input value={user.email} disabled className="opacity-60" /></FormField>
       </FormDialog>
     </div>
   );

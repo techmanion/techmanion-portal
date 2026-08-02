@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Avatar } from "../atoms/Avatar";
 import { Icon } from "../atoms/Icon";
-import { roleLabel } from "../../lib/format";
+import { avatarSrc } from "../../lib/api/client";
+import { employeeTypeLabel } from "../../lib/format";
 import { useTheme } from "../../theme";
 import type { User } from "../../types";
 
@@ -36,7 +37,7 @@ export function UserMenu({ user, onLogout }: { user: User; onLogout: () => void 
         aria-expanded={open}
         className="flex h-10 items-center gap-2.5 rounded-full py-1 pl-1 pr-1 transition hover:bg-surface-container-high sm:pr-3"
       >
-        <Avatar alt={user.name} size="md" />
+        <Avatar src={avatarSrc(user.avatarUrl)} alt={user.name} size="md" />
         <span className="hidden max-w-[140px] truncate text-sm font-medium text-on-surface sm:block">
           {user.name}
         </span>
@@ -50,18 +51,6 @@ export function UserMenu({ user, onLogout }: { user: User; onLogout: () => void 
           role="menu"
           className="absolute right-0 top-[calc(100%+10px)] w-64 overflow-hidden rounded-2xl bg-surface-container-high shadow-panel ring-1 ring-outline-variant/30"
         >
-          <div className="flex items-center gap-3 border-b border-outline-variant/30 px-4 py-3.5">
-            <Avatar alt={user.name} size="lg" />
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <p className="truncate text-sm font-medium text-on-surface">{user.name}</p>
-                <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
-                  {roleLabel(user.role)}
-                </span>
-              </div>
-              <p className="truncate text-xs text-on-surface-variant">{user.email}</p>
-            </div>
-          </div>
           <div className="p-1.5">
             <Link
               to="/profile"
@@ -72,7 +61,7 @@ export function UserMenu({ user, onLogout }: { user: User; onLogout: () => void 
               <Icon className="text-[18px] text-on-surface-variant">person</Icon>
               My profile
             </Link>
-            {user.role === "ADMIN" && (
+            {user.role === "EXECUTIVE" && (
               <>
                 <Link
                   to="/organization"
@@ -84,13 +73,13 @@ export function UserMenu({ user, onLogout }: { user: User; onLogout: () => void 
                   Organization
                 </Link>
                 <Link
-                  to="/administration"
+                  to="/management"
                   role="menuitem"
                   onClick={() => setOpen(false)}
                   className="flex items-center gap-3 rounded-xl px-2.5 py-2 text-sm text-on-surface hover:bg-surface-container-highest"
                 >
-                  <Icon className="text-[18px] text-on-surface-variant">admin_panel_settings</Icon>
-                  Administration
+                  <Icon className="text-[18px] text-on-surface-variant">workspace_premium</Icon>
+                  Management
                 </Link>
               </>
             )}

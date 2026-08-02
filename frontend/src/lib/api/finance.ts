@@ -17,15 +17,15 @@ export interface PayrollEntryPayload {
 }
 
 export function getFinanceOverview() {
-  return api<FinanceOverview>("/finance/overview");
+  return api<FinanceOverview>("/admin/finance/overview");
 }
 
 export function listFinanceIncome() {
-  return api<FinanceIncome[]>("/finance/income");
+  return api<FinanceIncome[]>("/admin/finance/income");
 }
 
 export function listExpenses() {
-  return api<Expense[]>("/finance/expenses");
+  return api<Expense[]>("/admin/finance/expenses");
 }
 
 export async function getExpense(expenseId: number): Promise<Expense | undefined> {
@@ -34,25 +34,25 @@ export async function getExpense(expenseId: number): Promise<Expense | undefined
 }
 
 export function createExpense(payload: ExpensePayload) {
-  return api<Expense>("/finance/expenses", {
+  return api<Expense>("/admin/finance/expenses", {
     method: "POST",
     body: JSON.stringify(payload),
   });
 }
 
 export function updateExpense(expenseId: number, payload: ExpensePayload) {
-  return api<Expense>(`/finance/expenses/${expenseId}`, {
+  return api<Expense>(`/admin/finance/expenses/${expenseId}`, {
     method: "PUT",
     body: JSON.stringify(payload),
   });
 }
 
 export function deleteExpense(expenseId: number) {
-  return api<void>(`/finance/expenses/${expenseId}`, { method: "DELETE" });
+  return api<void>(`/admin/finance/expenses/${expenseId}`, { method: "DELETE" });
 }
 
 export function listPayrollEntries(month: string) {
-  return api<PayrollEntry[]>(`/finance/payroll?month=${encodeURIComponent(month)}`);
+  return api<PayrollEntry[]>(`/admin/finance/payroll?month=${encodeURIComponent(month)}`);
 }
 
 export async function getPayrollEntry(
@@ -64,13 +64,13 @@ export async function getPayrollEntry(
 }
 
 export function generatePayroll(month: string) {
-  return api<PayrollEntry[]>(`/finance/payroll/generate?month=${encodeURIComponent(month)}`, {
+  return api<PayrollEntry[]>(`/admin/finance/payroll/generate?month=${encodeURIComponent(month)}`, {
     method: "POST",
   });
 }
 
 export function createPayrollEntry(payload: PayrollEntryPayload) {
-  return api<PayrollEntry>("/finance/payroll", {
+  return api<PayrollEntry>("/admin/finance/payroll", {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -80,18 +80,18 @@ export function updatePayrollEntry(
   entryId: number,
   payload: Omit<PayrollEntryPayload, "employeeId" | "month">,
 ) {
-  return api<PayrollEntry>(`/finance/payroll/${entryId}`, {
+  return api<PayrollEntry>(`/admin/finance/payroll/${entryId}`, {
     method: "PUT",
     body: JSON.stringify(payload),
   });
 }
 
 export function deletePayrollEntry(entryId: number) {
-  return api<void>(`/finance/payroll/${entryId}`, { method: "DELETE" });
+  return api<void>(`/admin/finance/payroll/${entryId}`, { method: "DELETE" });
 }
 
 export function markPayrollPaid(entryId: number) {
-  return api<PayrollEntry>(`/finance/payroll/${entryId}/pay`, {
+  return api<PayrollEntry>(`/admin/finance/payroll/${entryId}/pay`, {
     method: "PATCH",
     body: JSON.stringify({}),
   });

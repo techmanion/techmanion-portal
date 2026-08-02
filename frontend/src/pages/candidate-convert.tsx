@@ -5,7 +5,7 @@ import { EmptyState, FormField, FormSection, MoneyInput } from "../components/mo
 import { FormPage } from "../components/organisms";
 import { convertCandidate, getCandidate } from "../lib/api/hiring";
 import { listDesignations } from "../lib/api/settings";
-import { label } from "../lib/format";
+import { employeeTypeLabel } from "../lib/format";
 import { EMPLOYEE_TYPES } from "../lib/options";
 import { useToast } from "../toast";
 import type { Candidate, ConvertToEmployeePayload, NamedOption } from "../types";
@@ -83,7 +83,7 @@ export function CandidateConvertPage() {
           >
             {EMPLOYEE_TYPES.map((value) => (
               <option key={value} value={value}>
-                {label(value)}
+                {employeeTypeLabel(value)}
               </option>
             ))}
           </Select>

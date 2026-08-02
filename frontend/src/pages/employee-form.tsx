@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Input, Select } from "../components/atoms";
-import { FormField, FormSection, MoneyInput } from "../components/molecules";
+import { EditableAvatar, FormField, FormSection, MoneyInput } from "../components/molecules";
 import { FormPage } from "../components/organisms";
-import { createEmployee, getEmployee, updateEmployee } from "../lib/api/employees";
+import { avatarSrc } from "../lib/api/client";
+import { createEmployee, getEmployee, updateEmployee, uploadEmployeeAvatar } from "../lib/api/employees";
 import { listDesignations } from "../lib/api/settings";
-import { label } from "../lib/format";
+import { employeeTypeLabel, label } from "../lib/format";
 import { EMPLOYEE_STATUSES, EMPLOYEE_TYPES } from "../lib/options";
 import { useToast } from "../toast";
 import type { Employee, EmployeePayload, NamedOption } from "../types";
@@ -29,6 +30,7 @@ export function EmployeeFormPage() {
   const isEdit = Boolean(employeeId);
   const [form, setForm] = useState<EmployeePayload>(emptyEmployee);
   const [fullName, setFullName] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [designations, setDesignations] = useState<NamedOption[]>([]);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -39,6 +41,7 @@ export function EmployeeFormPage() {
     if (employeeId) {
       getEmployee(employeeId).then((employee: Employee) => {
         setFullName(employee.fullName);
+        setAvatarUrl(employee.avatarUrl ?? null);
         setForm({
           firstName: employee.firstName,
           lastName: employee.lastName,
@@ -52,6 +55,16 @@ export function EmployeeFormPage() {
       });
     }
   }, [employeeId]);
+
+  async function uploadAvatar(file: File) {
+    try {
+      const updated = await uploadEmployeeAvatar(employeeId!, file);
+      setAvatarUrl(updated.avatarUrl ?? null);
+      toast.success("Photo updated.");
+    } catch (reason) {
+      toast.error(reason instanceof Error ? reason.message : "Photo could not be uploaded.");
+    }
+  }
 
   const title = useMemo(() => (isEdit ? "Edit employee" : "Add employee"), [isEdit]);
   const cancelTo = isEdit ? `/employees/${employeeId}` : "/employees";
@@ -98,6 +111,11 @@ export function EmployeeFormPage() {
       error={error}
     >
       <FormSection heading="Contact details" bordered={false}>
+        {isEdit && (
+          <FormField label="Photo" className="md:col-span-2">
+            <EditableAvatar src={avatarSrc(avatarUrl)} alt={fullName || "Employee"} size="lg" onUpload={uploadAvatar} />
+          </FormField>
+        )}
         <FormField label="Full name" className="md:col-span-2">
           <Input value={fullName} onChange={(event) => setFullName(event.target.value)} required />
         </FormField>
@@ -138,7 +156,7 @@ export function EmployeeFormPage() {
           >
             {EMPLOYEE_TYPES.map((value) => (
               <option key={value} value={value}>
-                {label(value)}
+                {employeeTypeLabel(value)}
               </option>
             ))}
           </Select>

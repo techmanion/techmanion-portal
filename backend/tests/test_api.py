@@ -12,5 +12,5 @@ def test_health() -> None:
 
 def test_protected_resource_rejects_anonymous_request() -> None:
     client = TestClient(app)
-    response = client.get("/api/v1/employees")
+    response = client.get("/api/v1/admin/employees")
     assert response.status_code == 401

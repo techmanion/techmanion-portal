@@ -1,6 +1,7 @@
 export * from "./Breadcrumb";
 export * from "./ChangePasswordDialog";
 export * from "./ConfirmDialog";
+export * from "./EditableAvatar";
 export * from "./EmployeeCell";
 export * from "./EmptyState";
 export * from "./FilterSelect";

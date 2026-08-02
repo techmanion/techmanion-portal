@@ -2,10 +2,12 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth";
 import { Button, Icon, Logo } from "../components/atoms";
+import { useTheme } from "../theme";
 
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { theme, setTheme } = useTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -29,8 +31,36 @@ export function LoginPage() {
   return (
     <main className="relative flex min-h-screen w-full bg-background text-on-background">
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-        <div className="absolute inset-0 bg-[repeating-linear-gradient(135deg,rgba(255,255,255,0.05)_0px,rgba(255,255,255,0.05)_1px,transparent_1px,transparent_12px)]" />
+        <div className="login-diagonal-bg absolute inset-0" />
       </div>
+
+      <div
+        role="group"
+        aria-label="Theme"
+        className="absolute right-6 top-6 z-20 flex items-center gap-0.5 rounded-full bg-surface-container-highest p-0.5"
+      >
+        <button
+          type="button"
+          aria-pressed={theme === "dark"}
+          onClick={() => setTheme("dark")}
+          className={`grid size-8 place-items-center rounded-full transition ${
+            theme === "dark" ? "bg-primary text-on-primary" : "text-on-surface-variant hover:text-on-surface"
+          }`}
+        >
+          <Icon className="text-[18px]">dark_mode</Icon>
+        </button>
+        <button
+          type="button"
+          aria-pressed={theme === "light"}
+          onClick={() => setTheme("light")}
+          className={`grid size-8 place-items-center rounded-full transition ${
+            theme === "light" ? "bg-primary text-on-primary" : "text-on-surface-variant hover:text-on-surface"
+          }`}
+        >
+          <Icon className="text-[18px]">light_mode</Icon>
+        </button>
+      </div>
+
       <section className="hidden w-1/2 flex-col justify-between px-18 py-8 lg:flex">
         <Logo />
         <div className="-mt-36 flex flex-col gap-6">
@@ -102,7 +132,7 @@ export function LoginPage() {
                 </div>
               </form>
               <div className="mt-8 border-t border-outline-variant/30 pt-5 text-xs text-on-surface-variant">
-                Having trouble signing in? Contact your administrator.
+                Having trouble signing in? Contact a core member.
               </div>
             </div>
           </div>
