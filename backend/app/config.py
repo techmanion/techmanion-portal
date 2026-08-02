@@ -1,21 +1,24 @@
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     app_name: str = "Techmanion Portal API"
-    api_prefix: str = "/api/v1"
     database_url: str
     jwt_secret: str = "development-only-secret-change-me"
     jwt_algorithm: str = "HS256"
     access_token_minutes: int = 480
-    frontend_url: str = "http://localhost:5173"
+    # Comma-separated list of allowed CORS origins, e.g. one per frontend deployment.
+    frontend_urls: str = "http://localhost:5173"
     upload_dir: Path = Path("uploads")
-    seed_user_email: str = "core@techmanion.com"
-    seed_user_password: str = "ChangeMe123!"
+
+    s3_bucket_name: str = ""
+    s3_region: str = "us-east-1"
+    s3_public_base_url: str = ""
+    aws_access_key_id: str = ""
+    aws_secret_access_key: str = ""
 
     model_config = SettingsConfigDict(
         env_file=Path(__file__).resolve().parents[1] / ".env",
@@ -23,10 +26,9 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    @field_validator("frontend_url")
-    @classmethod
-    def strip_trailing_slash(cls, value: str) -> str:
-        return value.rstrip("/")
+    @property
+    def frontend_url_list(self) -> list[str]:
+        return [url.strip().rstrip("/") for url in self.frontend_urls.split(",") if url.strip()]
 
 
 @lru_cache

@@ -4,12 +4,11 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
-from app.config import settings
 from app.database import get_db
 from app.models import EmployeeType, User
 from app.security import decode_access_token
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.api_prefix}/admin/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/admin/auth/login")
 DbSession = Annotated[Session, Depends(get_db)]
 
 

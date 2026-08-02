@@ -15,10 +15,6 @@ export async function login(email: string, password: string) {
   return response.json() as Promise<{ accessToken: string; user: User }>;
 }
 
-export function updateProfile(name: string) {
-  return api<User>("/admin/auth/me", { method: "PATCH", body: JSON.stringify({ name }) });
-}
-
 export function uploadMyAvatar(file: File) {
   const form = new FormData();
   form.append("file", file);

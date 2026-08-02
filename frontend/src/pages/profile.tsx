@@ -1,22 +1,17 @@
 import { useState } from "react";
 import { useAuth } from "../auth";
-import { Button, Icon, Input } from "../components/atoms";
+import { Button, Icon } from "../components/atoms";
 import { SectionHeading } from "../components/atoms/Typography";
-import { ChangePasswordDialog, EditableAvatar, FormDialog, FormField } from "../components/molecules";
+import { ChangePasswordDialog, EditableAvatar } from "../components/molecules";
 import { PageHeader } from "../components/organisms";
 import { ApiError, avatarSrc } from "../lib/api";
-import { updateProfile, uploadMyAvatar } from "../lib/api/auth";
+import { uploadMyAvatar } from "../lib/api/auth";
 import { formatDate, employeeTypeLabel } from "../lib/format";
 import { useToast } from "../toast";
 
 export function ProfilePage() {
   const { user, updateUser } = useAuth();
   const toast = useToast();
-
-  const [name, setName] = useState(user?.name ?? "");
-  const [savingName, setSavingName] = useState(false);
-  const [nameError, setNameError] = useState("");
-  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
 
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
 
@@ -29,22 +24,6 @@ export function ProfilePage() {
       toast.success("Photo updated.");
     } catch (reason) {
       toast.error(reason instanceof ApiError ? reason.message : "Photo could not be uploaded.");
-    }
-  }
-
-  async function saveName(event: React.FormEvent) {
-    event.preventDefault();
-    setNameError("");
-    setSavingName(true);
-    try {
-      const updated = await updateProfile(name.trim());
-      updateUser(updated);
-      setProfileDialogOpen(false);
-      toast.success("Profile updated.");
-    } catch (reason) {
-      setNameError(reason instanceof ApiError ? reason.message : "Profile could not be updated.");
-    } finally {
-      setSavingName(false);
     }
   }
 
@@ -70,10 +49,10 @@ export function ProfilePage() {
           <section className="surface-panel p-6">
             <div className="mb-5 flex items-center justify-between gap-4">
               <SectionHeading><Icon className="text-primary">badge</Icon>Account details</SectionHeading>
-              <Button variant="secondary" size="sm" onClick={() => { setName(user.name); setNameError(""); setProfileDialogOpen(true); }}><Icon className="text-[16px]">edit</Icon>Edit</Button>
             </div>
             <dl className="grid gap-5 sm:grid-cols-2">
               <div><dt className="text-xs uppercase tracking-wider text-on-surface-variant">Full name</dt><dd className="mt-1.5 text-sm text-on-surface">{user.name}</dd></div>
+              <div><dt className="text-xs uppercase tracking-wider text-on-surface-variant">Employee ID</dt><dd className="mt-1.5 text-sm text-on-surface">{user.employeeCode ?? "—"}</dd></div>
               <div><dt className="text-xs uppercase tracking-wider text-on-surface-variant">Work email</dt><dd className="mt-1.5 text-sm text-on-surface">{user.email}</dd></div>
             </dl>
           </section>
@@ -92,21 +71,6 @@ export function ProfilePage() {
       </div>
 
       <ChangePasswordDialog open={passwordDialogOpen} onClose={() => setPasswordDialogOpen(false)} />
-      <FormDialog
-        open={profileDialogOpen}
-        title="Edit profile"
-        description="Update the name shown across the portal."
-        icon="badge"
-        submitLabel="Save changes"
-        submitting={savingName}
-        submitDisabled={!name.trim() || name.trim() === user.name}
-        error={nameError}
-        onSubmit={saveName}
-        onClose={() => { setProfileDialogOpen(false); setName(user.name); setNameError(""); }}
-      >
-        <FormField label="Full name"><Input value={name} onChange={(event) => setName(event.target.value)} required minLength={1} autoFocus /></FormField>
-        <FormField label="Work email" hint="Contact a core member to change your email."><Input value={user.email} disabled className="opacity-60" /></FormField>
-      </FormDialog>
     </div>
   );
 }

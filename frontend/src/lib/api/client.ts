@@ -1,8 +1,12 @@
-export const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000/api/v1";
+export const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 const TOKEN_KEY = "techmanion_access_token";
 
+/** Dispatched on window when a request 401s while we believed we had a valid session. */
+export const UNAUTHORIZED_EVENT = "techmanion:unauthorized";
+
 export function avatarSrc(path?: string | null): string | undefined {
-  return path ? `${API_URL}${path}` : undefined;
+  if (!path) return undefined;
+  return /^https?:\/\//.test(path) ? path : `${API_URL}${path}`;
 }
 
 export class ApiError extends Error {
@@ -18,9 +22,24 @@ export function getToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
 }
 
+let unauthorizedNotified = false;
+
 export function setToken(token: string | null): void {
-  if (token) localStorage.setItem(TOKEN_KEY, token);
-  else localStorage.removeItem(TOKEN_KEY);
+  if (token) {
+    localStorage.setItem(TOKEN_KEY, token);
+    unauthorizedNotified = false;
+  } else {
+    localStorage.removeItem(TOKEN_KEY);
+  }
+}
+
+function handleUnauthorized(): void {
+  const hadToken = Boolean(getToken());
+  setToken(null);
+  if (hadToken && !unauthorizedNotified) {
+    unauthorizedNotified = true;
+    window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
+  }
 }
 
 interface ValidationIssue {
@@ -57,7 +76,7 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
     } catch {
       // Keep the safe fallback when the response is not JSON.
     }
-    if (response.status === 401) setToken(null);
+    if (response.status === 401) handleUnauthorized();
     throw new ApiError(message, response.status);
   }
   if (response.status === 204) return undefined as T;
@@ -69,6 +88,9 @@ export async function apiBlob(path: string): Promise<Blob> {
   const response = await fetch(`${API_URL}${path}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : undefined,
   });
-  if (!response.ok) throw new ApiError("File could not be downloaded.", response.status);
+  if (!response.ok) {
+    if (response.status === 401) handleUnauthorized();
+    throw new ApiError("File could not be downloaded.", response.status);
+  }
   return response.blob();
 }

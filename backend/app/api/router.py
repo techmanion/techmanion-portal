@@ -2,7 +2,6 @@ from fastapi import APIRouter
 
 from app.api.routes import (
     auth,
-    avatars,
     employees,
     finance,
     hiring,
@@ -30,6 +29,3 @@ admin_router.include_router(home.router)
 admin_router.include_router(settings.router)
 admin_router.include_router(organization.router)
 router.include_router(admin_router)
-
-# Avatar files are served publicly (referenced directly by <img> tags, no auth header).
-router.include_router(avatars.router)

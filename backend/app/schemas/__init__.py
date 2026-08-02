@@ -1,8 +1,6 @@
 from app.schemas.auth import (
     PasswordChange,
-    ProfileUpdate,
     TokenOut,
-    UserAccessUpdate,
     UserCreate,
     UserOut,
 )
@@ -91,7 +89,6 @@ __all__ = [
     "PayrollEntryOut",
     "PayrollEntryUpdate",
     "PayrollMarkPaid",
-    "ProfileUpdate",
     "ProjectBase",
     "ProjectCreate",
     "ProjectMilestoneInput",
@@ -103,7 +100,6 @@ __all__ = [
     "SalaryCreate",
     "SalaryOut",
     "TokenOut",
-    "UserAccessUpdate",
     "UserCreate",
     "UserOut",
 ]

@@ -1,12 +1,10 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth";
 import { Button, Icon, Logo } from "../components/atoms";
 import { useTheme } from "../theme";
 
 export function LoginPage() {
   const { login } = useAuth();
-  const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,10 +18,10 @@ export function LoginPage() {
     setSubmitting(true);
     try {
       await login(email, password);
-      navigate("/home");
+      // Successful login flips `user` in AuthContext; the /login route itself
+      // reacts to that and redirects (back to where the user came from, if any).
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Unable to sign in.");
-    } finally {
       setSubmitting(false);
     }
   }

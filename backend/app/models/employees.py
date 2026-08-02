@@ -7,6 +7,7 @@ from sqlalchemy import BigInteger, Date, DateTime, ForeignKey, String, Text
 from sqlalchemy import Enum as SqlEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.config import settings
 from app.database import Base
 from app.models.common import TimestampMixin, utc_now
 from app.models.organization import Department, Designation
@@ -90,7 +91,9 @@ class Employee(TimestampMixin, Base):
 
     @property
     def avatar_url(self) -> str | None:
-        return f"/avatars/{self.avatar_key}" if self.avatar_key else None
+        if not self.avatar_key:
+            return None
+        return f"{settings.s3_public_base_url.rstrip('/')}/{self.avatar_key}"
 
     @property
     def current_identifier(self) -> EmployeeIdentifier | None:

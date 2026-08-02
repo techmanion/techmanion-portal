@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { api, getToken, login as apiLogin, setToken } from "./lib/api";
+import { UNAUTHORIZED_EVENT, api, getToken, login as apiLogin, setToken } from "./lib/api";
 import type { User } from "./types";
 
 interface AuthValue {
@@ -22,6 +22,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .then(setUser)
       .catch(() => setToken(null))
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    function handleUnauthorized() {
+      setUser(null);
+    }
+    window.addEventListener(UNAUTHORIZED_EVENT, handleUnauthorized);
+    return () => window.removeEventListener(UNAUTHORIZED_EVENT, handleUnauthorized);
   }, []);
 
   const value = useMemo<AuthValue>(

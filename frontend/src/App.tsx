@@ -1,7 +1,12 @@
+import { useEffect } from "react";
 import type { ReactNode } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
+import type { Location } from "react-router-dom";
 import { useAuth } from "./auth";
 import { AppShell, Loading } from "./components";
+import { useDocumentTitle } from "./hooks/useDocumentTitle";
+import { UNAUTHORIZED_EVENT } from "./lib/api";
+import { useToast } from "./toast";
 import { CandidateConvertPage } from "./pages/candidate-convert";
 import { CandidateDetailPage } from "./pages/candidate-detail";
 import { CandidateFormPage } from "./pages/candidate-form";
@@ -24,16 +29,19 @@ import { ProjectDetailPage } from "./pages/project-detail";
 import { ProjectFormPage } from "./pages/project-form";
 import { ProjectsPage } from "./pages/projects";
 
+function FullScreenLoading() {
+  return (
+    <div className="grid min-h-screen place-items-center bg-background">
+      <Loading />
+    </div>
+  );
+}
+
 function ProtectedLayout() {
   const { user, loading } = useAuth();
-  if (loading) {
-    return (
-      <div className="grid min-h-screen place-items-center bg-background">
-        <Loading />
-      </div>
-    );
-  }
-  return user ? <AppShell /> : <Navigate to="/login" replace />;
+  const location = useLocation();
+  if (loading) return <FullScreenLoading />;
+  return user ? <AppShell /> : <Navigate to="/login" state={{ from: location }} replace />;
 }
 
 function RequireExecutive({ children }: { children: ReactNode }) {
@@ -41,11 +49,32 @@ function RequireExecutive({ children }: { children: ReactNode }) {
   return user?.role === "EXECUTIVE" ? <>{children}</> : <Navigate to="/home" replace />;
 }
 
+function LoginRoute() {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+  if (loading) return <FullScreenLoading />;
+  if (user) {
+    const from = (location.state as { from?: Location } | null)?.from;
+    return <Navigate to={from ? `${from.pathname}${from.search}` : "/home"} replace />;
+  }
+  return <LoginPage />;
+}
+
 export function App() {
-  const { user } = useAuth();
+  const toast = useToast();
+  useDocumentTitle();
+
+  useEffect(() => {
+    function handleUnauthorized() {
+      toast.error("Your session has expired. Please sign in again.");
+    }
+    window.addEventListener(UNAUTHORIZED_EVENT, handleUnauthorized);
+    return () => window.removeEventListener(UNAUTHORIZED_EVENT, handleUnauthorized);
+  }, [toast]);
+
   return (
     <Routes>
-      <Route path="/login" element={user ? <Navigate to="/home" replace /> : <LoginPage />} />
+      <Route path="/login" element={<LoginRoute />} />
       <Route element={<ProtectedLayout />}>
         <Route index element={<Navigate to="/home" replace />} />
         <Route path="/home" element={<HomePage />} />

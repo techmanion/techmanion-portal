@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { Avatar } from "../atoms/Avatar";
 import { Icon } from "../atoms/Icon";
 import { avatarSrc } from "../../lib/api/client";
-import { employeeTypeLabel } from "../../lib/format";
 import { useTheme } from "../../theme";
 import type { User } from "../../types";
 

@@ -1,21 +1,21 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../auth";
-import { Button, Icon, IconButton, Input, Loading, Select, StatusChip } from "../components/atoms";
+import { Button, Icon, Input, Loading, Select, StatusChip } from "../components/atoms";
 import { SectionHeading } from "../components/atoms/Typography";
-import { ConfirmDialog, EmployeeCell, FormDialog, FormField } from "../components/molecules";
+import { EmployeeCell, FormDialog, FormField } from "../components/molecules";
 import { DataTable, PageHeader, TableHeadRow, TableRow } from "../components/organisms";
 import { ApiError, avatarSrc } from "../lib/api";
+import { listEmployees } from "../lib/api/employees";
 import { addDepartment, addDesignation, listDepartments, listDesignations } from "../lib/api/settings";
-import { createUser, deleteUser, listUsers, updateUser as updateUserRequest } from "../lib/api/users";
-import { formatDate, employeeTypeLabel } from "../lib/format";
-import { USER_ROLES } from "../lib/options";
+import { createUser, listUsers } from "../lib/api/users";
+import { formatDate } from "../lib/format";
 import { useToast } from "../toast";
-import type { NamedOption, User, UserRole } from "../types";
+import type { Employee, NamedOption, User } from "../types";
 
-const emptyMemberForm = { name: "", email: "", password: "", role: "EMPLOYEE" as UserRole };
+const emptyMemberForm = { employeeId: 0, email: "", password: "" };
 
 export function ManagementPage() {
-  const { user: currentUser, updateUser: setCurrentUser } = useAuth();
+  const { user: currentUser } = useAuth();
   const [departments, setDepartments] = useState<NamedOption[]>([]);
   const [designations, setDesignations] = useState<NamedOption[]>([]);
   const [department, setDepartment] = useState("");
@@ -25,13 +25,12 @@ export function ManagementPage() {
   const [error, setError] = useState("");
 
   const [members, setMembers] = useState<User[]>([]);
+  const [coreMembers, setCoreMembers] = useState<Employee[]>([]);
   const [loadingMembers, setLoadingMembers] = useState(true);
   const [membersError, setMembersError] = useState("");
   const [showAddMember, setShowAddMember] = useState(false);
   const [memberForm, setMemberForm] = useState(emptyMemberForm);
   const [creatingMember, setCreatingMember] = useState(false);
-  const [confirmDeactivate, setConfirmDeactivate] = useState<User | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<User | null>(null);
 
   const toast = useToast();
 
@@ -46,17 +45,28 @@ export function ManagementPage() {
   useEffect(load, [currentUser?.role]);
 
   function refreshMembers() {
-    listUsers()
-      .then(setMembers)
+    Promise.all([listUsers(), listEmployees("")])
+      .then(([users, employees]) => {
+        setMembers(users);
+        setCoreMembers(employees.filter((employee) => employee.employeeType === "EXECUTIVE"));
+      })
       .catch((reason: Error) => setMembersError(reason.message));
   }
 
   useEffect(() => {
-    listUsers()
-      .then(setMembers)
+    Promise.all([listUsers(), listEmployees("")])
+      .then(([users, employees]) => {
+        setMembers(users);
+        setCoreMembers(employees.filter((employee) => employee.employeeType === "EXECUTIVE"));
+      })
       .catch((reason: Error) => setMembersError(reason.message))
       .finally(() => setLoadingMembers(false));
   }, []);
+
+  const availableCoreMembers = useMemo(
+    () => coreMembers.filter((employee) => !members.some((member) => member.employeeId === employee.id)),
+    [coreMembers, members],
+  );
 
   async function add(kind: "departments" | "designations", name: string) {
     setAddingOption(true);
@@ -97,57 +107,6 @@ export function ManagementPage() {
     }
   }
 
-  async function changeRole(member: User, role: UserRole) {
-    setMembersError("");
-    try {
-      const updated = await updateUserRequest(member.id, { role });
-      setMembers((current) => current.map((row) => (row.id === updated.id ? updated : row)));
-      if (currentUser?.id === updated.id) setCurrentUser(updated);
-      toast.success(`${updated.name}'s role updated to ${employeeTypeLabel(updated.role)}.`);
-    } catch (reason) {
-      setMembersError(reason instanceof ApiError ? reason.message : "Could not update this account.");
-    }
-  }
-
-  async function reactivate(member: User) {
-    setMembersError("");
-    try {
-      const updated = await updateUserRequest(member.id, { isActive: true });
-      setMembers((current) => current.map((row) => (row.id === updated.id ? updated : row)));
-      toast.success(`${updated.name} reactivated.`);
-    } catch (reason) {
-      setMembersError(reason instanceof ApiError ? reason.message : "Could not update this account.");
-    }
-  }
-
-  async function confirmDeactivateMember() {
-    if (!confirmDeactivate) return;
-    const member = confirmDeactivate;
-    setConfirmDeactivate(null);
-    setMembersError("");
-    try {
-      const updated = await updateUserRequest(member.id, { isActive: false });
-      setMembers((current) => current.map((row) => (row.id === updated.id ? updated : row)));
-      toast.success(`${updated.name} deactivated.`);
-    } catch (reason) {
-      setMembersError(reason instanceof ApiError ? reason.message : "Could not deactivate this account.");
-    }
-  }
-
-  async function confirmDeleteMember() {
-    if (!confirmDelete) return;
-    const member = confirmDelete;
-    setConfirmDelete(null);
-    setMembersError("");
-    try {
-      await deleteUser(member.id);
-      setMembers((current) => current.filter((row) => row.id !== member.id));
-      toast.success(`${member.name} removed.`);
-    } catch (reason) {
-      setMembersError(reason instanceof ApiError ? reason.message : "Could not delete this account.");
-    }
-  }
-
   return (
     <div className="mx-auto max-w-[1450px] px-6 py-8">
       <PageHeader
@@ -162,10 +121,12 @@ export function ManagementPage() {
             <Icon className="text-primary">workspace_premium</Icon>
             Portal accounts
           </SectionHeading>
-          <Button variant="secondary" size="sm" onClick={() => { setMemberForm(emptyMemberForm); setMembersError(""); setShowAddMember(true); }}>
-            <Icon className="text-[16px]">person_add</Icon>
-            Add member
-          </Button>
+          {availableCoreMembers.length > 0 && (
+            <Button variant="secondary" size="sm" onClick={() => { setMemberForm({ ...emptyMemberForm, employeeId: availableCoreMembers[0].id }); setMembersError(""); setShowAddMember(true); }}>
+              <Icon className="text-[16px]">person_add</Icon>
+              Add member
+            </Button>
+          )}
         </div>
 
         {loadingMembers ? (
@@ -173,71 +134,28 @@ export function ManagementPage() {
             <Loading />
           </div>
         ) : (
-          <DataTable minWidth="820px">
+          <DataTable minWidth="720px">
             <thead>
               <TableHeadRow>
                 <th className="px-6 py-3 font-medium">Member</th>
-                <th className="px-4 py-3 font-medium">Role</th>
+                <th className="px-4 py-3 font-medium">Employee ID</th>
                 <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium">Joined</th>
-                <th className="w-24 px-4 py-3" />
               </TableHeadRow>
             </thead>
             <tbody className="divide-y divide-outline-variant/20">
-              {members.map((member) => {
-                const isSelf = member.id === currentUser?.id;
-                return (
-                  <TableRow key={member.id}>
-                    <td className="px-6">
-                      <EmployeeCell name={member.name} subtitle={member.email} avatarSrc={avatarSrc(member.avatarUrl)} />
-                    </td>
-                    <td className="px-4">
-                      <Select
-                        aria-label={`Role for ${member.name}`}
-                        value={member.role}
-                        disabled={isSelf}
-                        title={isSelf ? "You cannot change your own role." : undefined}
-                        onChange={(event) => changeRole(member, event.target.value as UserRole)}
-                        className="!h-9 w-40"
-                      >
-                        {USER_ROLES.map((role) => (
-                          <option key={role} value={role}>
-                            {employeeTypeLabel(role)}
-                          </option>
-                        ))}
-                      </Select>
-                    </td>
-                    <td className="px-4">
-                      <StatusChip value={member.isActive ? "ACTIVE" : "INACTIVE"} />
-                    </td>
-                    <td className="px-4 text-sm text-on-surface-variant">{formatDate(member.createdAt)}</td>
-                    <td className="px-4">
-                      {!isSelf && (
-                        <div className="flex items-center gap-1">
-                          <IconButton
-                            size="sm"
-                            aria-label={member.isActive ? `Deactivate ${member.name}` : `Activate ${member.name}`}
-                            title={member.isActive ? "Deactivate" : "Activate"}
-                            onClick={() =>
-                              member.isActive ? setConfirmDeactivate(member) : reactivate(member)
-                            }
-                          >
-                            <Icon className="text-[18px]">{member.isActive ? "block" : "check_circle"}</Icon>
-                          </IconButton>
-                          <IconButton
-                            size="sm"
-                            aria-label={`Delete ${member.name}`}
-                            title="Delete account"
-                            onClick={() => setConfirmDelete(member)}
-                          >
-                            <Icon className="text-[18px] text-error">delete</Icon>
-                          </IconButton>
-                        </div>
-                      )}
-                    </td>
-                  </TableRow>
-                );
-              })}
+              {members.map((member) => (
+                <TableRow key={member.id}>
+                  <td className="px-6">
+                    <EmployeeCell name={member.name} subtitle={member.email} avatarSrc={avatarSrc(member.avatarUrl)} />
+                  </td>
+                  <td className="px-4 text-sm text-on-surface">{member.employeeCode ?? "—"}</td>
+                  <td className="px-4">
+                    <StatusChip value={member.isActive ? "ACTIVE" : "INACTIVE"} />
+                  </td>
+                  <td className="px-4 text-sm text-on-surface-variant">{formatDate(member.createdAt)}</td>
+                </TableRow>
+              ))}
             </tbody>
           </DataTable>
         )}
@@ -268,22 +186,34 @@ export function ManagementPage() {
       <FormDialog
         open={showAddMember}
         title="Add member"
-        description="Create an account with access to the portal."
+        description="Grant portal access to a core member. They must already exist as an employee record."
         icon="person_add"
         width="lg"
         submitLabel="Create account"
         submittingLabel="Creating…"
         submitting={creatingMember}
-        submitDisabled={!memberForm.name.trim() || !memberForm.email.trim() || memberForm.password.length < 8}
+        submitDisabled={!memberForm.employeeId || !memberForm.email.trim() || memberForm.password.length < 8}
         error={membersError}
         onSubmit={createMember}
         onClose={() => { setShowAddMember(false); setMemberForm(emptyMemberForm); setMembersError(""); }}
       >
         <div className="grid gap-4 md:grid-cols-2">
-          <FormField label="Full name"><Input value={memberForm.name} onChange={(event) => setMemberForm((current) => ({ ...current, name: event.target.value }))} required autoFocus /></FormField>
+          <FormField label="Core member" className="md:col-span-2">
+            <Select
+              value={memberForm.employeeId}
+              onChange={(event) => setMemberForm((current) => ({ ...current, employeeId: Number(event.target.value) }))}
+              required
+              autoFocus
+            >
+              {availableCoreMembers.map((employee) => (
+                <option key={employee.id} value={employee.id}>
+                  {employee.fullName} {employee.employeeCode ? `(${employee.employeeCode})` : ""}
+                </option>
+              ))}
+            </Select>
+          </FormField>
           <FormField label="Work email"><Input type="email" value={memberForm.email} onChange={(event) => setMemberForm((current) => ({ ...current, email: event.target.value }))} required /></FormField>
           <FormField label="Temporary password" hint="At least 8 characters."><Input type="password" autoComplete="new-password" value={memberForm.password} onChange={(event) => setMemberForm((current) => ({ ...current, password: event.target.value }))} minLength={8} required /></FormField>
-          <FormField label="Role"><Select value={memberForm.role} onChange={(event) => setMemberForm((current) => ({ ...current, role: event.target.value as UserRole }))}>{USER_ROLES.map((role) => <option key={role} value={role}>{employeeTypeLabel(role)}</option>)}</Select></FormField>
         </div>
       </FormDialog>
 
@@ -312,31 +242,6 @@ export function ManagementPage() {
           />
         </FormField>
       </FormDialog>
-
-      <ConfirmDialog
-        open={confirmDeactivate !== null}
-        title="Deactivate this account?"
-        description={
-          confirmDeactivate
-            ? `${confirmDeactivate.name} will immediately lose access to the portal. You can reactivate the account later.`
-            : undefined
-        }
-        confirmLabel="Deactivate"
-        onConfirm={confirmDeactivateMember}
-        onCancel={() => setConfirmDeactivate(null)}
-      />
-      <ConfirmDialog
-        open={confirmDelete !== null}
-        title="Delete this account?"
-        description={
-          confirmDelete
-            ? `"${confirmDelete.name}" will be permanently removed and cannot be recovered.`
-            : undefined
-        }
-        confirmLabel="Delete account"
-        onConfirm={confirmDeleteMember}
-        onCancel={() => setConfirmDelete(null)}
-      />
     </div>
   );
 }

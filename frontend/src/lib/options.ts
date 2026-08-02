@@ -35,8 +35,6 @@ export const CANDIDATE_STAGES: CandidateStage[] = [
   "REJECTED",
 ];
 
-export const USER_ROLES = EMPLOYEE_TYPES;
-
 export const DOCUMENT_KINDS = ["CV", "CONTRACT", "ID_COPY", "CERTIFICATE", "OTHER"];
 
 export const CURRENCIES = ["PKR", "USD", "EUR", "GBP", "AED", "SAR", "INR", "CAD", "AUD"];

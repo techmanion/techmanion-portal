@@ -30,6 +30,8 @@ export interface User {
   role: UserRole;
   isActive: boolean;
   avatarUrl: string | null;
+  employeeId: number | null;
+  employeeCode: string | null;
   createdAt: string;
 }
 

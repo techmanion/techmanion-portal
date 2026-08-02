@@ -103,7 +103,7 @@ async def upload_employee_avatar(
     employee_id: int, db: DbSession, _: CurrentUser, file: UploadFile = File(...)
 ) -> EmployeeOut:
     employee = get_or_404(db, Employee, employee_id, "Employee was not found.")
-    key = await store_avatar(file)
+    key = await store_avatar(file, folder="employees")
     old_key = employee.avatar_key
     employee.avatar_key = key
     db.commit()
