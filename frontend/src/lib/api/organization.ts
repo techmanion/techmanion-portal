@@ -2,7 +2,7 @@ import type { Organization, OrganizationPayload } from "../../types";
 import { api } from "./client";
 
 export function getOrganization() {
-  return api<Organization>("/organization");
+  return api<Organization>("/public/organization");
 }
 
 export function updateOrganization(payload: OrganizationPayload) {

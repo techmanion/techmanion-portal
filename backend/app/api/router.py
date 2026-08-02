@@ -15,7 +15,7 @@ from app.api.routes import (
 router = APIRouter()
 
 # Public endpoints: no authentication required (careers listing, company/contact info).
-router.include_router(public.router)
+router.include_router(public.router, prefix="/public")
 
 # Everything else lives under /admin and requires an authenticated session; some
 # endpoints additionally require ExecutiveUser (core member) access.
