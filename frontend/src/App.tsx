@@ -24,6 +24,7 @@ import { HomePage } from "./pages/home";
 import { JobFormPage } from "./pages/job-form";
 import { JobDetailPage } from "./pages/job-detail";
 import { LoginPage } from "./pages/login";
+import { NotFoundPage } from "./pages/not-found";
 import { OrganizationPage } from "./pages/organization";
 import { OrganizationFormPage } from "./pages/organization-form";
 import { PayrollEntryFormPage } from "./pages/payroll-entry-form";
@@ -148,7 +149,7 @@ export function App() {
         <Route path="/settings" element={<Navigate to="/management" replace />} />
         <Route path="/administration" element={<Navigate to="/management" replace />} />
       </Route>
-      <Route path="*" element={<Navigate to="/home" replace />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }
