@@ -7,7 +7,7 @@ from fastapi import HTTPException, UploadFile
 
 from app.config import settings
 
-MAX_AVATAR_BYTES = 5 * 1024 * 1024
+MAX_AVATAR_BYTES = 20 * 1024 * 1024
 
 
 @lru_cache

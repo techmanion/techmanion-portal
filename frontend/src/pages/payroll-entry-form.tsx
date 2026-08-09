@@ -1,16 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Input, Select, Textarea } from "../components/atoms";
-import { FormField, FormSection } from "../components/molecules";
+import { FormField, FormSection, MoneyInput } from "../components/molecules";
 import { FormPage } from "../components/organisms";
 import { listEmployees } from "../lib/api/employees";
 import {
   createPayrollEntry,
   getPayrollEntry,
+  listBankAccounts,
   updatePayrollEntry,
 } from "../lib/api/finance";
 import { useToast } from "../toast";
-import type { Employee } from "../types";
+import type { BankAccount, Employee, PayrollEntry } from "../types";
 
 interface PayrollFormState {
   employeeId: string;
@@ -18,6 +19,7 @@ interface PayrollFormState {
   adjustment: string;
   currency: string;
   notes: string;
+  pkrEquivalent: number;
 }
 
 const emptyForm: PayrollFormState = {
@@ -26,6 +28,7 @@ const emptyForm: PayrollFormState = {
   adjustment: "0",
   currency: "PKR",
   notes: "",
+  pkrEquivalent: 0,
 };
 
 export function PayrollEntryFormPage() {
@@ -36,24 +39,29 @@ export function PayrollEntryFormPage() {
   const month = searchParams.get("month") ?? new Date().toISOString().slice(0, 7);
   const [form, setForm] = useState<PayrollFormState>(emptyForm);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
+  const [entry, setEntry] = useState<PayrollEntry | null>(null);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const toast = useToast();
 
   useEffect(() => {
     listEmployees("").then(setEmployees).catch(() => undefined);
+    listBankAccounts().then(setBankAccounts).catch(() => undefined);
   }, []);
 
   useEffect(() => {
     if (entryId) {
-      getPayrollEntry(month, Number(entryId)).then((entry) => {
-        if (!entry) return;
+      getPayrollEntry(month, Number(entryId)).then((row) => {
+        if (!row) return;
+        setEntry(row);
         setForm({
-          employeeId: String(entry.employeeId),
-          baseCompensation: String(entry.baseCompensation / 100),
-          adjustment: String(entry.adjustment / 100),
-          currency: entry.currency,
-          notes: entry.notes ?? "",
+          employeeId: String(row.employeeId),
+          baseCompensation: String(row.baseCompensation / 100),
+          adjustment: String(row.adjustment / 100),
+          currency: row.currency,
+          notes: row.notes ?? "",
+          pkrEquivalent: row.pkrEquivalent ?? 0,
         });
       });
     }
@@ -61,6 +69,14 @@ export function PayrollEntryFormPage() {
 
   const title = useMemo(() => (isEdit ? "Edit entry" : "Add entry"), [isEdit]);
   const cancelTo = `/finance?tab=payroll&month=${month}`;
+
+  const linkedAccount = useMemo(
+    () => bankAccounts.find((account) => account.id === entry?.bankAccountId) ?? null,
+    [bankAccounts, entry],
+  );
+  // The bank transaction's PKR equivalent only matters once the entry is paid from a
+  // foreign-currency account — that's the only case the server actually persists it.
+  const showPkrEquivalent = isEdit && entry?.status === "PAID" && linkedAccount?.currency !== "PKR";
 
   function set<K extends keyof PayrollFormState>(key: K, value: PayrollFormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -77,6 +93,7 @@ export function PayrollEntryFormPage() {
           adjustment: Math.round(Number(form.adjustment || 0) * 100),
           currency: form.currency,
           notes: form.notes || null,
+          pkrEquivalent: showPkrEquivalent ? form.pkrEquivalent : null,
         });
         toast.success("Payroll entry updated.");
       } else {
@@ -150,6 +167,19 @@ export function PayrollEntryFormPage() {
             required
           />
         </FormField>
+        {showPkrEquivalent && (
+          <FormField
+            label="PKR equivalent"
+            hint={`Value of this payment from ${linkedAccount?.name} in PKR`}
+            className="md:col-span-2"
+          >
+            <MoneyInput
+              value={form.pkrEquivalent}
+              onChange={(amount) => set("pkrEquivalent", amount)}
+              required
+            />
+          </FormField>
+        )}
       </FormSection>
 
       <FormSection heading="Notes" accent="tertiary">

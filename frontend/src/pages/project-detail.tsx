@@ -15,14 +15,16 @@ import {
   deleteProjectPayment,
   getProject,
 } from "../lib/api/projects";
+import { listBankAccounts } from "../lib/api/finance";
 import { useToast } from "../toast";
-import type { Project, ProjectPaymentPayload } from "../types";
+import type { BankAccount, Project, ProjectPaymentPayload } from "../types";
 
 export function ProjectDetailPage() {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [project, setProject] = useState<Project | null>(null);
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [error, setError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const toast = useToast();
@@ -31,6 +33,7 @@ export function ProjectDetailPage() {
     getProject(projectId!)
       .then(setProject)
       .catch((reason: Error) => setError(reason.message));
+    listBankAccounts().then(setBankAccounts).catch(() => undefined);
   }, [projectId]);
 
   const isExecutive = user?.role === "EXECUTIVE";
@@ -124,10 +127,11 @@ export function ProjectDetailPage() {
 
       <ProjectInfoPanel project={project} />
       {project.projectType === "FIXED" && (
-        <ProjectMilestonesPanel milestones={project.milestones} />
+        <ProjectMilestonesPanel milestones={project.milestones} currency={project.currency} />
       )}
       <ProjectPaymentsPanel
         project={project}
+        bankAccounts={bankAccounts}
         isExecutive={isExecutive}
         onAdd={addPayment}
         onDelete={removePayment}

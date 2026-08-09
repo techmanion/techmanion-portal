@@ -11,7 +11,7 @@ from app.services.employees import issue_employee_identifier
 
 
 def update_candidate_stage(
-    db: Session, candidate: Candidate, payload: CandidateStageUpdate
+    db: Session, candidate: Candidate, payload: CandidateStageUpdate, actor: User | None = None
 ) -> Candidate:
     if candidate.stage == CandidateStage.HIRED:
         raise HTTPException(status_code=400, detail="A hired candidate's stage cannot be changed.")
@@ -24,6 +24,7 @@ def update_candidate_stage(
         candidate.id,
         "UPDATE",
         f"Moved {candidate.full_name} to {payload.stage.value.lower().replace('_', ' ')}",
+        performed_by_user_id=actor.id if actor else None,
     )
     db.commit()
     return candidate
@@ -67,8 +68,9 @@ def convert_candidate_to_employee(
             db,
             "Candidate",
             candidate.id,
-            "CONVERT",
+            "HIRED",
             f"Converted {candidate.full_name} to an employee",
+            performed_by_user_id=actor.id,
         )
         log_activity(
             db,
@@ -76,6 +78,7 @@ def convert_candidate_to_employee(
             employee.id,
             "CREATE",
             f"Added employee {employee.full_name} from Hiring",
+            performed_by_user_id=actor.id,
         )
         db.commit()
     except IntegrityError as exc:

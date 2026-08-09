@@ -2,7 +2,7 @@ from datetime import date
 
 from pydantic import Field, model_validator
 
-from app.models import MilestoneStatus, PaymentStatus, ProjectStatus, ProjectType
+from app.models import Currency, MilestoneStatus, PaymentStatus, ProjectStatus, ProjectType
 from app.schemas.common import ApiModel
 
 
@@ -24,10 +24,19 @@ class ProjectPaymentCreate(ApiModel):
     method: str = Field(min_length=1, max_length=80)
     reference: str | None = Field(default=None, max_length=160)
     notes: str | None = None
+    bank_account_id: int
+    pkr_equivalent: int | None = Field(default=None, gt=0)
 
 
-class ProjectPaymentOut(ProjectPaymentCreate):
+class ProjectPaymentOut(ApiModel):
     id: int
+    amount: int
+    payment_date: date
+    method: str
+    reference: str | None = None
+    notes: str | None = None
+    bank_account_id: int | None = None
+    bank_transaction_id: int | None = None
 
 
 class ProjectBase(ApiModel):
@@ -35,6 +44,7 @@ class ProjectBase(ApiModel):
     client_name: str = Field(min_length=1, max_length=160)
     project_type: ProjectType
     status: ProjectStatus = ProjectStatus.PLANNED
+    currency: Currency
     start_date: date
     end_date: date | None = None
     notes: str | None = None

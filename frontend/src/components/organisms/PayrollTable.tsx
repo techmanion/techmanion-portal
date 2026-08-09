@@ -44,6 +44,11 @@ export function PayrollTable({
             </td>
             <td className="px-4 text-right text-sm font-semibold">
               {formatMoney(entry.finalAmount, entry.currency)}
+              {entry.pkrEquivalent != null && entry.currency !== "PKR" && (
+                <span className="mt-0.5 block text-xs font-normal text-on-surface-variant">
+                  ≈ {formatMoney(entry.pkrEquivalent, "PKR")}
+                </span>
+              )}
             </td>
             <td className="px-4">
               <StatusChip value={entry.status} />

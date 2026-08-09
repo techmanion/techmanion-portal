@@ -1,3 +1,4 @@
+from app.schemas.activity import ActivityListOut, ActivityOut
 from app.schemas.auth import (
     PasswordChange,
     TokenOut,
@@ -15,6 +16,14 @@ from app.schemas.employees import (
     SalaryOut,
 )
 from app.schemas.finance import (
+    BankAccountBase,
+    BankAccountCreate,
+    BankAccountOut,
+    BankAccountUpdate,
+    BankTransactionCreate,
+    BankTransactionOut,
+    BankTransferCreate,
+    BankTransferOut,
     ExpenseBase,
     ExpenseCreate,
     ExpenseOut,
@@ -35,7 +44,7 @@ from app.schemas.hiring import (
     JobOut,
     JobUpdate,
 )
-from app.schemas.home import ActivityOut, HomeItem, HomeOut
+from app.schemas.home import HomeItem, HomeOut
 from app.schemas.organization import OrganizationOut, OrganizationUpdate
 from app.schemas.payroll import (
     PayrollEntryCreate,
@@ -55,8 +64,17 @@ from app.schemas.projects import (
 )
 
 __all__ = [
+    "ActivityListOut",
     "ActivityOut",
     "ApiModel",
+    "BankAccountBase",
+    "BankAccountCreate",
+    "BankAccountOut",
+    "BankAccountUpdate",
+    "BankTransactionCreate",
+    "BankTransactionOut",
+    "BankTransferCreate",
+    "BankTransferOut",
     "CandidateBase",
     "CandidateCreate",
     "CandidateOut",

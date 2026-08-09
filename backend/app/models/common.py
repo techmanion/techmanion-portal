@@ -1,9 +1,17 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from enum import Enum
 
 from sqlalchemy import DateTime
 from sqlalchemy.orm import Mapped, mapped_column
+
+
+class Currency(str, Enum):
+    PKR = "PKR"
+    USD = "USD"
+    EUR = "EUR"
+    GBP = "GBP"
 
 
 def utc_now() -> datetime:

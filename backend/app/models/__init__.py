@@ -1,7 +1,15 @@
 from app.models.activity import ActivityLog
 from app.models.auth import User
 from app.models.common import TimestampMixin, utc_now
-from app.models.finance import Expense, ExpenseFrequency, ExpenseType
+from app.models.finance import (
+    BankAccount,
+    BankTransaction,
+    Expense,
+    ExpenseFrequency,
+    ExpenseType,
+    TransactionSource,
+    TransactionType,
+)
 from app.models.employees import (
     EMPLOYEE_ID_FORMATS,
     BankDetail,
@@ -18,6 +26,7 @@ from app.models.hiring import Candidate, CandidateStage, Job, JobStatus
 from app.models.organization import CompanyProfile, Department, Designation
 from app.models.payroll import PayrollEntry, PayrollEntryStatus
 from app.models.projects import (
+    Currency,
     MilestoneStatus,
     PaymentStatus,
     Project,
@@ -30,11 +39,14 @@ from app.models.projects import (
 __all__ = [
     "EMPLOYEE_ID_FORMATS",
     "ActivityLog",
+    "BankAccount",
     "BankDetail",
+    "BankTransaction",
     "Candidate",
     "CandidateStage",
     "CompanyProfile",
     "CompensationType",
+    "Currency",
     "Department",
     "Designation",
     "Employee",
@@ -59,6 +71,8 @@ __all__ = [
     "ProjectType",
     "SalaryRevision",
     "TimestampMixin",
+    "TransactionSource",
+    "TransactionType",
     "User",
     "utc_now",
 ]

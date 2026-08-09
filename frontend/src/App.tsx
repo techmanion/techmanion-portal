@@ -7,6 +7,9 @@ import { AppShell, Loading } from "./components";
 import { useDocumentTitle } from "./hooks/useDocumentTitle";
 import { UNAUTHORIZED_EVENT } from "./lib/api";
 import { useToast } from "./toast";
+import { ActivityPage } from "./pages/activity";
+import { BankAccountDetailPage } from "./pages/bank-account-detail";
+import { BankAccountFormPage } from "./pages/bank-account-form";
 import { CandidateConvertPage } from "./pages/candidate-convert";
 import { CandidateDetailPage } from "./pages/candidate-detail";
 import { CandidateFormPage } from "./pages/candidate-form";
@@ -109,10 +112,14 @@ export function App() {
           }
         />
         <Route path="/finance" element={<FinancePage />} />
+        <Route path="/finance/bank-accounts/new" element={<BankAccountFormPage />} />
+        <Route path="/finance/bank-accounts/:accountId" element={<BankAccountDetailPage />} />
+        <Route path="/finance/bank-accounts/:accountId/edit" element={<BankAccountFormPage />} />
         <Route path="/finance/expenses/new" element={<ExpenseFormPage />} />
         <Route path="/finance/expenses/:expenseId/edit" element={<ExpenseFormPage />} />
         <Route path="/finance/payroll/new" element={<PayrollEntryFormPage />} />
         <Route path="/finance/payroll/:entryId/edit" element={<PayrollEntryFormPage />} />
+        <Route path="/activity" element={<ActivityPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route
           path="/organization"

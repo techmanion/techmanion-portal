@@ -7,15 +7,20 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models import (
+    BankAccount,
     MilestoneStatus,
     PaymentStatus,
     Project,
     ProjectMilestone,
     ProjectPayment,
     ProjectType,
+    TransactionSource,
+    TransactionType,
+    User,
 )
 from app.schemas.projects import ProjectCreate, ProjectPaymentCreate, ProjectUpdate
 from app.services.activity import log_activity
+from app.services.bank import _build_bank_transaction
 
 
 def _replace_milestones(project: Project, rows: list[dict]) -> None:
@@ -31,14 +36,21 @@ def _project_values(payload: ProjectCreate | ProjectUpdate) -> tuple[dict, list[
     return values, milestones
 
 
-def create_project(db: Session, payload: ProjectCreate) -> Project:
+def create_project(db: Session, payload: ProjectCreate, actor: User | None = None) -> Project:
     values, milestones = _project_values(payload)
     project = Project(**values)
     _replace_milestones(project, milestones)
     db.add(project)
     try:
         db.flush()
-        log_activity(db, "Project", project.id, "CREATE", f"Created project {project.name}")
+        log_activity(
+            db,
+            "Project",
+            project.id,
+            "CREATE",
+            f"Created project {project.name}",
+            performed_by_user_id=actor.id if actor else None,
+        )
         db.commit()
     except IntegrityError as exc:
         db.rollback()
@@ -48,12 +60,26 @@ def create_project(db: Session, payload: ProjectCreate) -> Project:
     return project
 
 
-def update_project(db: Session, project: Project, payload: ProjectUpdate) -> Project:
+def update_project(
+    db: Session, project: Project, payload: ProjectUpdate, actor: User | None = None
+) -> Project:
+    if project.payments and payload.currency != project.currency:
+        raise HTTPException(
+            status_code=422,
+            detail="Project currency cannot be changed after payments have been recorded.",
+        )
     values, milestones = _project_values(payload)
     for key, value in values.items():
         setattr(project, key, value)
     _replace_milestones(project, milestones)
-    log_activity(db, "Project", project.id, "UPDATE", f"Updated project {project.name}")
+    log_activity(
+        db,
+        "Project",
+        project.id,
+        "UPDATE",
+        f"Updated project {project.name}",
+        performed_by_user_id=actor.id if actor else None,
+    )
     try:
         db.commit()
     except IntegrityError as exc:
@@ -64,36 +90,84 @@ def update_project(db: Session, project: Project, payload: ProjectUpdate) -> Pro
     return project
 
 
-def delete_project(db: Session, project: Project) -> None:
-    log_activity(db, "Project", project.id, "DELETE", f"Deleted project {project.name}")
+def delete_project(db: Session, project: Project, actor: User | None = None) -> None:
+    log_activity(
+        db,
+        "Project",
+        project.id,
+        "DELETE",
+        f"Deleted project {project.name}",
+        performed_by_user_id=actor.id if actor else None,
+    )
     db.delete(project)
     db.commit()
 
 
 def add_project_payment(
-    db: Session, project: Project, payload: ProjectPaymentCreate
+    db: Session,
+    project: Project,
+    payload: ProjectPaymentCreate,
+    account: BankAccount,
+    actor: User | None = None,
 ) -> ProjectPayment:
-    payment = ProjectPayment(project_id=project.id, **payload.model_dump())
+    if project.currency != account.currency:
+        raise HTTPException(
+            status_code=422,
+            detail="Payment currency must match the selected bank account currency.",
+        )
+    payment = ProjectPayment(
+        project_id=project.id,
+        amount=payload.amount,
+        payment_date=payload.payment_date,
+        method=payload.method,
+        reference=payload.reference,
+        notes=payload.notes,
+    )
     db.add(payment)
+    db.flush()
+    transaction = _build_bank_transaction(
+        db,
+        account,
+        TransactionType.CREDIT,
+        transaction_date=payload.payment_date,
+        amount=payload.amount,
+        pkr_equivalent_supplied=payload.pkr_equivalent,
+        description=f"Payment · {project.name}",
+        notes=payload.notes,
+        source=TransactionSource.INCOME,
+    )
+    payment.bank_transaction_id = transaction.id
+    db.flush()
     log_activity(
         db,
-        "Project",
-        project.id,
-        "UPDATE",
+        "ProjectPayment",
+        payment.id,
+        "CREATE",
         f"Recorded payment for {project.name}",
+        performed_by_user_id=actor.id if actor else None,
+        metadata={"project_id": project.id, "amount": payload.amount, "method": payload.method},
     )
     db.commit()
     return payment
 
 
-def delete_project_payment(db: Session, project: Project, payment: ProjectPayment) -> None:
+def delete_project_payment(
+    db: Session, project: Project, payment: ProjectPayment, actor: User | None = None
+) -> None:
+    transaction = payment.bank_transaction
+    payment_id = payment.id
     db.delete(payment)
+    db.flush()
+    if transaction is not None:
+        db.delete(transaction)
     log_activity(
         db,
-        "Project",
-        project.id,
-        "UPDATE",
+        "ProjectPayment",
+        payment_id,
+        "DELETE",
         f"Removed payment from {project.name}",
+        performed_by_user_id=actor.id if actor else None,
+        metadata={"project_id": project.id},
     )
     db.commit()
 

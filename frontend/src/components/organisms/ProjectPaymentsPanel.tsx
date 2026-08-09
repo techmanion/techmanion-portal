@@ -1,35 +1,45 @@
-import { useState } from "react";
-import { Button, Icon, IconButton, Input, Textarea } from "../atoms";
+import { useMemo, useState } from "react";
+import { Button, Icon, IconButton, Input, Select, Textarea } from "../atoms";
 import { StatusChip } from "../atoms/Badge";
 import { SectionHeading } from "../atoms/Typography";
 import { EmptyState, FormDialog, FormField, MoneyInput } from "../molecules";
 import { formatDate, formatMoney } from "../../lib/format";
-import type { Project, ProjectPaymentPayload } from "../../types";
+import type { BankAccount, Project, ProjectPaymentPayload } from "../../types";
 import { DataTable, TableHeadRow, TableRow } from "./DataTable";
 
-const emptyPayment = (): ProjectPaymentPayload => ({
+const emptyPayment = (defaultBankAccountId: number | null): ProjectPaymentPayload => ({
   amount: 0,
   paymentDate: new Date().toISOString().slice(0, 10),
   method: "",
   reference: null,
   notes: null,
+  bankAccountId: defaultBankAccountId ?? 0,
+  pkrEquivalent: null,
 });
 
 export function ProjectPaymentsPanel({
   project,
+  bankAccounts,
   isExecutive,
   onAdd,
   onDelete,
 }: {
   project: Project;
+  bankAccounts: BankAccount[];
   isExecutive: boolean;
   onAdd: (payload: ProjectPaymentPayload) => Promise<void>;
   onDelete: (paymentId: number) => void;
 }) {
-  const [form, setForm] = useState(emptyPayment);
+  const eligibleAccounts = useMemo(
+    () => bankAccounts.filter((account) => account.currency === project.currency),
+    [bankAccounts, project.currency],
+  );
+  const [form, setForm] = useState(() => emptyPayment(eligibleAccounts[0]?.id ?? null));
   const [dialogOpen, setDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  const selectedAccount = eligibleAccounts.find((account) => account.id === form.bankAccountId) ?? null;
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -37,7 +47,7 @@ export function ProjectPaymentsPanel({
     setError("");
     try {
       await onAdd(form);
-      setForm(emptyPayment());
+      setForm(emptyPayment(eligibleAccounts[0]?.id ?? null));
       setDialogOpen(false);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Payment could not be added.");
@@ -54,11 +64,11 @@ export function ProjectPaymentsPanel({
           <div className="flex flex-wrap gap-x-8 gap-y-3 text-sm">
             <div>
               <span className="block text-xs text-on-surface-variant">Total received</span>
-              <strong className="text-on-surface">{formatMoney(project.totalReceived)}</strong>
+              <strong className="text-on-surface">{formatMoney(project.totalReceived, project.currency)}</strong>
             </div>
             <div>
               <span className="block text-xs text-on-surface-variant">Outstanding</span>
-              <strong className="text-on-surface">{formatMoney(project.outstandingBalance)}</strong>
+              <strong className="text-on-surface">{formatMoney(project.outstandingBalance, project.currency)}</strong>
             </div>
             <StatusChip value={project.paymentStatus} />
           </div>
@@ -75,15 +85,39 @@ export function ProjectPaymentsPanel({
         submitLabel="Add payment"
         submittingLabel="Adding…"
         submitting={submitting}
-        submitDisabled={form.amount <= 0}
+        submitDisabled={form.amount <= 0 || !form.bankAccountId}
         error={error}
         onSubmit={submit}
-        onClose={() => { setDialogOpen(false); setError(""); setForm(emptyPayment()); }}
+        onClose={() => { setDialogOpen(false); setError(""); setForm(emptyPayment(eligibleAccounts[0]?.id ?? null)); }}
       >
         <div className="grid gap-4 md:grid-cols-2">
-          <FormField label="Amount">
+          <FormField label="Amount" hint={project.currency}>
             <MoneyInput value={form.amount} onChange={(amount) => setForm((row) => ({ ...row, amount }))} required />
           </FormField>
+          <FormField
+            label="Destination bank account"
+            hint={eligibleAccounts.length ? undefined : `No ${project.currency} bank accounts available`}
+          >
+            <Select
+              value={form.bankAccountId || ""}
+              onChange={(event) => setForm((row) => ({ ...row, bankAccountId: Number(event.target.value), pkrEquivalent: null }))}
+              required
+            >
+              <option value="" disabled hidden>Select bank account</option>
+              {eligibleAccounts.map((account) => (
+                <option key={account.id} value={account.id}>{account.name}</option>
+              ))}
+            </Select>
+          </FormField>
+          {selectedAccount && selectedAccount.currency !== "PKR" && (
+            <FormField label="PKR equivalent">
+              <MoneyInput
+                value={form.pkrEquivalent ?? 0}
+                onChange={(amount) => setForm((row) => ({ ...row, pkrEquivalent: amount }))}
+                required
+              />
+            </FormField>
+          )}
           <FormField label="Date">
             <Input type="date" value={form.paymentDate} onChange={(event) => setForm((row) => ({ ...row, paymentDate: event.target.value }))} required />
           </FormField>
@@ -115,7 +149,7 @@ export function ProjectPaymentsPanel({
             {project.payments.map((payment) => (
               <TableRow key={payment.id}>
                 <td className="px-6 text-sm text-on-surface">{formatDate(payment.paymentDate)}</td>
-                <td className="px-4 text-sm font-medium text-on-surface">{formatMoney(payment.amount)}</td>
+                <td className="px-4 text-sm font-medium text-on-surface">{formatMoney(payment.amount, project.currency)}</td>
                 <td className="px-4 text-sm text-on-surface">{payment.method}</td>
                 <td className="px-4 text-sm text-on-surface">{payment.reference || "—"}</td>
                 <td className="max-w-60 truncate px-4 text-sm text-on-surface">{payment.notes || "—"}</td>

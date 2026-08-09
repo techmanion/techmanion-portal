@@ -1,5 +1,6 @@
 import type {
   CandidateStage,
+  Currency,
   EmployeeStatus,
   EmployeeType,
   ExpenseType,
@@ -23,6 +24,7 @@ export const EXPENSE_TYPES: ExpenseType[] = ["ONE_TIME", "MONTHLY_RECURRING"];
 export const PROJECT_STATUSES: ProjectStatus[] = ["PLANNED", "ACTIVE", "ON_HOLD", "COMPLETED"];
 export const PROJECT_TYPES: ProjectType[] = ["MONTHLY_RECURRING", "FIXED", "HOURLY"];
 export const MILESTONE_STATUSES: MilestoneStatus[] = ["PENDING", "IN_PROGRESS", "COMPLETED"];
+export const PROJECT_CURRENCIES: Currency[] = ["PKR", "USD", "EUR", "GBP"];
 
 export const JOB_STATUSES: JobStatus[] = ["OPEN", "CLOSED"];
 
@@ -36,6 +38,30 @@ export const CANDIDATE_STAGES: CandidateStage[] = [
 ];
 
 export const DOCUMENT_KINDS = ["CV", "CONTRACT", "ID_COPY", "CERTIFICATE", "OTHER"];
+
+export const ACTIVITY_ENTITY_TYPES = [
+  "Project",
+  "ProjectPayment",
+  "Expense",
+  "PayrollEntry",
+  "BankAccount",
+  "BankTransaction",
+  "BankTransfer",
+  "Employee",
+  "Candidate",
+  "Job",
+  "Organization",
+];
+
+export const ACTIVITY_ACTIONS = [
+  "CREATE",
+  "UPDATE",
+  "DELETE",
+  "PAID",
+  "HIRED",
+  "ACTIVATE",
+  "DEACTIVATE",
+];
 
 export const CURRENCIES = ["PKR", "USD", "EUR", "GBP", "AED", "SAR", "INR", "CAD", "AUD"];
 

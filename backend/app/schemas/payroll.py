@@ -25,6 +25,7 @@ class PayrollEntryUpdate(ApiModel):
     adjustment: int = 0
     currency: str = Field(default="PKR", min_length=3, max_length=3)
     notes: str | None = None
+    pkr_equivalent: int | None = Field(default=None, gt=0)
 
     @field_validator("currency")
     @classmethod
@@ -44,7 +45,12 @@ class PayrollEntryOut(ApiModel):
     status: PayrollEntryStatus
     payment_date: date | None = None
     notes: str | None = None
+    bank_account_id: int | None = None
+    bank_transaction_id: int | None = None
+    pkr_equivalent: int | None = None
 
 
 class PayrollMarkPaid(ApiModel):
     payment_date: date | None = None
+    bank_account_id: int
+    pkr_equivalent: int | None = Field(default=None, gt=0)

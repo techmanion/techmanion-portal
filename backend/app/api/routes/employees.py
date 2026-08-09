@@ -91,10 +91,10 @@ def get_employee(employee_id: int, db: DbSession, _: CurrentUser) -> EmployeeOut
 
 @router.put("/employees/{employee_id}", response_model=EmployeeOut)
 def update_employee(
-    employee_id: int, payload: EmployeeUpdate, db: DbSession, _: CurrentUser
+    employee_id: int, payload: EmployeeUpdate, db: DbSession, user: CurrentUser
 ) -> EmployeeOut:
     employee = get_or_404(db, Employee, employee_id, "Employee was not found.")
-    update_employee_service(db, employee, payload)
+    update_employee_service(db, employee, payload, user)
     return serialize_employee(get_employee_detailed(db, employee_id))
 
 

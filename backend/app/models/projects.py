@@ -9,7 +9,19 @@ from sqlalchemy import Enum as SqlEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
-from app.models.common import TimestampMixin
+from app.models.common import Currency, TimestampMixin
+from app.models.finance import BankTransaction
+
+__all__ = [
+    "Currency",
+    "MilestoneStatus",
+    "PaymentStatus",
+    "Project",
+    "ProjectMilestone",
+    "ProjectPayment",
+    "ProjectStatus",
+    "ProjectType",
+]
 
 
 class ProjectStatus(str, Enum):
@@ -49,6 +61,7 @@ class Project(TimestampMixin, Base):
     status: Mapped[ProjectStatus] = mapped_column(
         SqlEnum(ProjectStatus), default=ProjectStatus.PLANNED
     )
+    currency: Mapped[Currency] = mapped_column(SqlEnum(Currency), default=Currency.PKR)
     start_date: Mapped[date] = mapped_column(Date)
     end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -101,5 +114,9 @@ class ProjectPayment(TimestampMixin, Base):
     method: Mapped[str] = mapped_column(String(80))
     reference: Mapped[str | None] = mapped_column(String(160), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    bank_transaction_id: Mapped[int | None] = mapped_column(
+        ForeignKey("bank_transactions.id"), nullable=True
+    )
 
     project: Mapped[Project] = relationship(back_populates="payments")
+    bank_transaction: Mapped[BankTransaction | None] = relationship()

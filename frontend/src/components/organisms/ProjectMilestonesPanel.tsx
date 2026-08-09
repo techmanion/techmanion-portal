@@ -2,10 +2,16 @@ import { StatusChip } from "../atoms/Badge";
 import { SectionHeading } from "../atoms/Typography";
 import { EmptyState } from "../molecules";
 import { formatDate, formatMoney } from "../../lib/format";
-import type { ProjectMilestone } from "../../types";
+import type { Currency, ProjectMilestone } from "../../types";
 import { DataTable, TableHeadRow, TableRow } from "./DataTable";
 
-export function ProjectMilestonesPanel({ milestones }: { milestones: ProjectMilestone[] }) {
+export function ProjectMilestonesPanel({
+  milestones,
+  currency,
+}: {
+  milestones: ProjectMilestone[];
+  currency: Currency;
+}) {
   return (
     <section className="surface-panel mb-8 overflow-hidden">
       <div className="px-6 pt-6">
@@ -26,7 +32,7 @@ export function ProjectMilestonesPanel({ milestones }: { milestones: ProjectMile
             {milestones.map((milestone) => (
               <TableRow key={milestone.id}>
                 <td className="px-6 text-sm font-medium text-on-surface">{milestone.name}</td>
-                <td className="px-4 text-sm text-on-surface">{formatMoney(milestone.amount)}</td>
+                <td className="px-4 text-sm text-on-surface">{formatMoney(milestone.amount, currency)}</td>
                 <td className="px-4 text-sm text-on-surface">{formatDate(milestone.dueDate)}</td>
                 <td className="px-4"><StatusChip value={milestone.status} /></td>
                 <td className="px-4 text-sm text-on-surface">

@@ -99,7 +99,7 @@ def create_job(payload: JobCreate, db: DbSession, user: CurrentUser) -> JobOut:
     job = Job(**job_values(payload))
     db.add(job)
     db.flush()
-    log_activity(db, "Job", job.id, "CREATE", f"Created job {job.title}")
+    log_activity(db, "Job", job.id, "CREATE", f"Created job {job.title}", performed_by_user_id=user.id)
     db.commit()
     db.refresh(job)
     return serialize_job(job)
@@ -115,7 +115,7 @@ def update_job(job_id: int, payload: JobUpdate, db: DbSession, user: CurrentUser
     job = get_or_404(db, Job, job_id, "Job was not found.")
     for key, value in job_values(payload).items():
         setattr(job, key, value)
-    log_activity(db, "Job", job.id, "UPDATE", f"Updated job {job.title}")
+    log_activity(db, "Job", job.id, "UPDATE", f"Updated job {job.title}", performed_by_user_id=user.id)
     db.commit()
     db.refresh(job)
     return serialize_job(job)
@@ -124,7 +124,7 @@ def update_job(job_id: int, payload: JobUpdate, db: DbSession, user: CurrentUser
 @router.delete("/jobs/{job_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_job(job_id: int, db: DbSession, user: CurrentUser) -> None:
     job = get_or_404(db, Job, job_id, "Job was not found.")
-    log_activity(db, "Job", job.id, "DELETE", f"Deleted job {job.title}")
+    log_activity(db, "Job", job.id, "DELETE", f"Deleted job {job.title}", performed_by_user_id=user.id)
     db.delete(job)
     db.commit()
 
@@ -177,7 +177,14 @@ def create_candidate(payload: CandidateCreate, db: DbSession, user: CurrentUser)
     candidate = Candidate(**payload.model_dump())
     db.add(candidate)
     db.flush()
-    log_activity(db, "Candidate", candidate.id, "CREATE", f"Added candidate {candidate.full_name}")
+    log_activity(
+        db,
+        "Candidate",
+        candidate.id,
+        "CREATE",
+        f"Added candidate {candidate.full_name}",
+        performed_by_user_id=user.id,
+    )
     db.commit()
     return serialize_candidate(get_candidate_detailed(db, candidate.id))
 
@@ -200,7 +207,12 @@ def update_candidate(
     for key, value in payload.model_dump().items():
         setattr(candidate, key, value)
     log_activity(
-        db, "Candidate", candidate.id, "UPDATE", f"Updated candidate {candidate.full_name}"
+        db,
+        "Candidate",
+        candidate.id,
+        "UPDATE",
+        f"Updated candidate {candidate.full_name}",
+        performed_by_user_id=user.id,
     )
     db.commit()
     return serialize_candidate(get_candidate_detailed(db, candidate_id))
@@ -213,7 +225,7 @@ def patch_candidate_stage(
     candidate = get_candidate_detailed(db, candidate_id)
     if not candidate:
         raise HTTPException(status_code=404, detail="Candidate was not found.")
-    update_candidate_stage(db, candidate, payload)
+    update_candidate_stage(db, candidate, payload, user)
     return serialize_candidate(candidate)
 
 
@@ -221,7 +233,12 @@ def patch_candidate_stage(
 def delete_candidate(candidate_id: int, db: DbSession, user: CurrentUser) -> None:
     candidate = get_or_404(db, Candidate, candidate_id, "Candidate was not found.")
     log_activity(
-        db, "Candidate", candidate.id, "DELETE", f"Deleted candidate {candidate.full_name}"
+        db,
+        "Candidate",
+        candidate.id,
+        "DELETE",
+        f"Deleted candidate {candidate.full_name}",
+        performed_by_user_id=user.id,
     )
     db.delete(candidate)
     db.commit()

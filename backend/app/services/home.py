@@ -112,8 +112,9 @@ def build_home_feed(db: Session) -> HomeOut:
     activities = list(
         db.scalars(
             select(ActivityLog)
+            .options(selectinload(ActivityLog.performed_by))
             .where(
-                ActivityLog.entity.in_(
+                ActivityLog.entity_type.in_(
                     ["Candidate", "Job", "Employee", "Project", "PayrollEntry", "Expense"]
                 )
             )

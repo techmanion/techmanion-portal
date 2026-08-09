@@ -1,15 +1,9 @@
-from datetime import date, datetime
+from datetime import date
 
+from app.schemas.activity import ActivityOut
 from app.schemas.common import ApiModel
 
-
-class ActivityOut(ApiModel):
-    id: int
-    entity: str
-    entity_id: str
-    action: str
-    description: str
-    timestamp: datetime
+__all__ = ["ActivityOut", "HomeItem", "HomeOut"]
 
 
 class HomeItem(ApiModel):

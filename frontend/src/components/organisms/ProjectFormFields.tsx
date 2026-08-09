@@ -1,8 +1,13 @@
 import { Button, Icon, Input, Select, Textarea } from "../atoms";
 import { FormField, FormSection, MoneyInput } from "../molecules";
 import { label } from "../../lib/format";
-import { MILESTONE_STATUSES, PROJECT_STATUSES, PROJECT_TYPES } from "../../lib/options";
-import type { MilestoneStatus, ProjectPayload, ProjectStatus, ProjectType } from "../../types";
+import {
+  MILESTONE_STATUSES,
+  PROJECT_CURRENCIES,
+  PROJECT_STATUSES,
+  PROJECT_TYPES,
+} from "../../lib/options";
+import type { Currency, MilestoneStatus, ProjectPayload, ProjectStatus, ProjectType } from "../../types";
 
 export function ProjectFormFields({
   value,
@@ -47,6 +52,13 @@ export function ProjectFormFields({
             ))}
           </Select>
         </FormField>
+        <FormField label="Currency">
+          <Select value={value.currency} onChange={(event) => set("currency", event.target.value as Currency)} required>
+            {PROJECT_CURRENCIES.map((currency) => (
+              <option key={currency} value={currency}>{currency}</option>
+            ))}
+          </Select>
+        </FormField>
         <FormField label="Start date">
           <Input type="date" value={value.startDate} onChange={(event) => set("startDate", event.target.value)} required />
         </FormField>
@@ -57,7 +69,7 @@ export function ProjectFormFields({
 
       {value.projectType === "MONTHLY_RECURRING" && (
         <FormSection heading="Monthly recurring" accent="tertiary">
-          <FormField label="Monthly amount">
+          <FormField label="Monthly amount" hint={value.currency}>
             <MoneyInput value={value.monthlyAmount ?? 0} onChange={(amount) => set("monthlyAmount", amount)} required />
           </FormField>
           <FormField label="Billing day" hint="1–31; shorter months use their final day">
@@ -73,7 +85,7 @@ export function ProjectFormFields({
       {value.projectType === "FIXED" && (
         <>
           <FormSection heading="Fixed contract" accent="tertiary">
-            <FormField label="Contract value">
+            <FormField label="Contract value" hint={value.currency}>
               <MoneyInput value={value.contractValue ?? 0} onChange={(amount) => set("contractValue", amount)} required />
             </FormField>
           </FormSection>
@@ -84,7 +96,7 @@ export function ProjectFormFields({
                   <FormField label="Name">
                     <Input value={milestone.name} onChange={(event) => updateMilestone(index, { name: event.target.value })} required />
                   </FormField>
-                  <FormField label="Amount">
+                  <FormField label="Amount" hint={value.currency}>
                     <MoneyInput value={milestone.amount} onChange={(amount) => updateMilestone(index, { amount })} required />
                   </FormField>
                   <FormField label="Due date">
@@ -115,7 +127,7 @@ export function ProjectFormFields({
 
       {value.projectType === "HOURLY" && (
         <FormSection heading="Hourly billing" accent="tertiary">
-          <FormField label="Hourly rate">
+          <FormField label="Hourly rate" hint={value.currency}>
             <MoneyInput value={value.hourlyRate ?? 0} onChange={(amount) => set("hourlyRate", amount)} required />
           </FormField>
           <FormField label="Estimated hours" hint="Optional">

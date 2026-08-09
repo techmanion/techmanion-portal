@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Button, Icon, Loading } from "../components/atoms";
-import { ConfirmDialog, EmptyState, FilterSelect, SearchInput } from "../components/molecules";
+import { Button, Icon, Loading, Select } from "../components/atoms";
+import { ConfirmDialog, EmptyState, FilterSelect, FormDialog, FormField, MoneyInput, SearchInput } from "../components/molecules";
 import {
+  BankAccountsTable,
   ExpensesTable,
   FinanceIncomeTable,
   FinanceOverviewPanel,
@@ -17,15 +18,16 @@ import {
   deletePayrollEntry,
   generatePayroll,
   getFinanceOverview,
+  listBankAccounts,
   listExpenses,
   listFinanceIncome,
   listPayrollEntries,
   markPayrollPaid,
 } from "../lib/api/finance";
 import { useToast } from "../toast";
-import type { Expense, FinanceIncome, FinanceOverview, PayrollEntry } from "../types";
+import type { BankAccount, Expense, FinanceIncome, FinanceOverview, PayrollEntry } from "../types";
 
-const tabs = ["Overview", "Payroll", "Income", "Expenses"] as const;
+const tabs = ["Overview", "Payroll", "Income", "Expenses", "Bank Accounts"] as const;
 type FinanceTab = (typeof tabs)[number];
 
 function resolveTab(value: string): FinanceTab {
@@ -45,11 +47,21 @@ export function FinancePage() {
   const [income, setIncome] = useState<FinanceIncome[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [entries, setEntries] = useState<PayrollEntry[]>([]);
+  const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [confirmExpense, setConfirmExpense] = useState<Expense | null>(null);
   const [confirmGenerate, setConfirmGenerate] = useState(false);
   const [confirmPayroll, setConfirmPayroll] = useState<PayrollEntry | null>(null);
+  const [payTarget, setPayTarget] = useState<PayrollEntry | null>(null);
+  const [payBankAccountId, setPayBankAccountId] = useState<number | "">("");
+  const [payPkrEquivalent, setPayPkrEquivalent] = useState<number>(0);
+  const [paySubmitting, setPaySubmitting] = useState(false);
+  const [payError, setPayError] = useState("");
+
+  useEffect(() => {
+    listBankAccounts().then(setBankAccounts).catch(() => undefined);
+  }, []);
 
   function loadOverview() {
     return getFinanceOverview().then(setOverview);
@@ -63,7 +75,9 @@ export function FinancePage() {
           ? listFinanceIncome().then(setIncome)
           : activeTab === "Expenses"
             ? listExpenses().then(setExpenses)
-            : listPayrollEntries(month).then(setEntries);
+            : activeTab === "Bank Accounts"
+              ? listBankAccounts().then(setBankAccounts)
+              : listPayrollEntries(month).then(setEntries);
     request.catch((reason: Error) => setError(reason.message)).finally(() => setLoading(false));
   }, [activeTab, month]);
 
@@ -104,13 +118,32 @@ export function FinancePage() {
     }
   }
 
-  async function markPaid(entry: PayrollEntry) {
+  function openMarkPaid(entry: PayrollEntry) {
+    setPayTarget(entry);
+    setPayBankAccountId(bankAccounts[0]?.id ?? "");
+    setPayPkrEquivalent(0);
+    setPayError("");
+  }
+
+  const payAccount = bankAccounts.find((account) => account.id === payBankAccountId) ?? null;
+
+  async function submitMarkPaid(event: React.FormEvent) {
+    event.preventDefault();
+    if (!payTarget || !payBankAccountId) return;
+    setPaySubmitting(true);
+    setPayError("");
     try {
-      await markPayrollPaid(entry.id);
+      await markPayrollPaid(payTarget.id, {
+        bankAccountId: payBankAccountId,
+        pkrEquivalent: payAccount && payAccount.currency !== "PKR" ? payPkrEquivalent : null,
+      });
       await listPayrollEntries(month).then(setEntries);
-      toast.success(`Marked ${entry.employeeName} as paid.`);
+      toast.success(`Marked ${payTarget.employeeName} as paid.`);
+      setPayTarget(null);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Payroll entry could not be marked paid.");
+      setPayError(reason instanceof Error ? reason.message : "Payroll entry could not be marked paid.");
+    } finally {
+      setPaySubmitting(false);
     }
   }
 
@@ -152,6 +185,8 @@ export function FinancePage() {
     </>
   ) : activeTab === "Expenses" ? (
     <Link to="/finance/expenses/new" className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-5 text-sm font-medium text-on-primary shadow-md shadow-black/10 hover:brightness-105"><Icon className="text-[18px]">add</Icon>Add expense</Link>
+  ) : activeTab === "Bank Accounts" ? (
+    <Link to="/finance/bank-accounts/new" className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-5 text-sm font-medium text-on-primary shadow-md shadow-black/10 hover:brightness-105"><Icon className="text-[18px]">add</Icon>Add account</Link>
   ) : undefined;
 
   return (
@@ -167,14 +202,27 @@ export function FinancePage() {
       {!loading && activeTab === "Overview" && overview && <FinanceOverviewPanel overview={overview} />}
       {!loading && activeTab === "Income" && <section className="surface-panel overflow-hidden">{income.length ? <FinanceIncomeTable income={income} /> : <EmptyState>No project payments recorded yet.</EmptyState>}</section>}
       {!loading && activeTab === "Expenses" && (
-        <section className="surface-panel overflow-hidden">{expenses.length ? <ExpensesTable expenses={expenses} onEdit={(expense) => navigate(`/finance/expenses/${expense.id}/edit`)} onDelete={setConfirmExpense} /> : <EmptyState>No expenses recorded yet.</EmptyState>}</section>
+        <section className="surface-panel overflow-hidden">{expenses.length ? <ExpensesTable expenses={expenses} onEdit={(expense) => navigate(`/finance/expenses/${expense.id}/edit`)} onCopy={(expense) => navigate("/finance/expenses/new", { state: { copyFrom: expense } })} onDelete={setConfirmExpense} /> : <EmptyState>No expenses recorded yet.</EmptyState>}</section>
+      )}
+      {!loading && activeTab === "Bank Accounts" && (
+        <section className="surface-panel overflow-hidden">
+          {bankAccounts.length ? (
+            <BankAccountsTable
+              accounts={bankAccounts}
+              onSelect={(account) => navigate(`/finance/bank-accounts/${account.id}`)}
+              onEdit={(account) => navigate(`/finance/bank-accounts/${account.id}/edit`)}
+            />
+          ) : (
+            <EmptyState>No bank accounts added yet.</EmptyState>
+          )}
+        </section>
       )}
       {!loading && activeTab === "Payroll" && (
         <div className="space-y-6">
           <section className="surface-panel p-6"><PayrollSummary totalCount={entries.length} base={payrollTotals.base} adjustment={payrollTotals.adjustment} final={payrollTotals.final} currency={currency} paidCount={payrollTotals.paidCount} pendingCount={payrollTotals.pendingCount} paidPct={paidPct} /></section>
           <section className="surface-panel overflow-hidden">
             <div className="bg-surface-container-high/30 px-6 py-4"><FilterToolbar><SearchInput value={search} onChange={setSearch} placeholder="Search employees..." className="lg:max-w-[380px]" /><FilterSelect value={status} onChange={setStatus} labelText="Status" placeholder="Filter by status"><option value="PENDING">Pending</option><option value="PAID">Paid</option></FilterSelect>{(search || status) && <Button variant="ghost" size="sm" onClick={() => clearSearchParams(["search", "status"])}><Icon className="text-[16px]">filter_alt_off</Icon>Clear filters</Button>}</FilterToolbar></div>
-            {entries.length ? <PayrollTable entries={visiblePayroll} onMarkPaid={markPaid} onEdit={(entry) => navigate(`/finance/payroll/${entry.id}/edit?month=${month}`)} onDelete={setConfirmPayroll} /> : <EmptyState>No payroll entries for this month. Generate payroll or add an entry.</EmptyState>}
+            {entries.length ? <PayrollTable entries={visiblePayroll} onMarkPaid={openMarkPaid} onEdit={(entry) => navigate(`/finance/payroll/${entry.id}/edit?month=${month}`)} onDelete={setConfirmPayroll} /> : <EmptyState>No payroll entries for this month. Generate payroll or add an entry.</EmptyState>}
             {entries.length > 0 && !visiblePayroll.length && <EmptyState>No entries match these filters.</EmptyState>}
             <footer className="flex flex-wrap items-center justify-between gap-4 border-t border-outline-variant/30 bg-surface-container-highest/20 px-7 py-4 text-sm text-on-surface-variant"><span>Showing {visiblePayroll.length} of {entries.length} employees</span></footer>
           </section>
@@ -184,6 +232,40 @@ export function FinancePage() {
       <ConfirmDialog open={confirmGenerate} title={`Generate payroll for ${monthLabel}?`} description="This creates a pending payroll entry for every active employee who doesn't already have one this month." confirmLabel="Generate" tone="primary" onConfirm={generate} onCancel={() => setConfirmGenerate(false)} />
       <ConfirmDialog open={confirmPayroll !== null} title="Delete this payroll entry?" description={confirmPayroll ? `The entry for ${confirmPayroll.employeeName} will be permanently removed.` : undefined} confirmLabel="Delete entry" onConfirm={removePayroll} onCancel={() => setConfirmPayroll(null)} />
       <ConfirmDialog open={confirmExpense !== null} title="Delete this expense?" description={confirmExpense ? `"${confirmExpense.title}" will be permanently removed.` : undefined} confirmLabel="Delete expense" onConfirm={removeExpense} onCancel={() => setConfirmExpense(null)} />
+
+      <FormDialog
+        open={payTarget !== null}
+        title="Mark payroll as paid"
+        description={payTarget ? `Record a bank debit for ${payTarget.employeeName}'s ${payTarget.month} payroll.` : undefined}
+        icon="payments"
+        submitLabel="Mark paid"
+        submittingLabel="Recording…"
+        submitting={paySubmitting}
+        submitDisabled={!payBankAccountId}
+        error={payError}
+        onSubmit={submitMarkPaid}
+        onClose={() => setPayTarget(null)}
+      >
+        <div className="grid gap-4">
+          <FormField label="Source bank account">
+            <Select
+              value={payBankAccountId}
+              onChange={(event) => setPayBankAccountId(Number(event.target.value))}
+              required
+            >
+              <option value="" disabled hidden>Select bank account</option>
+              {bankAccounts.map((account) => (
+                <option key={account.id} value={account.id}>{account.name} ({account.currency})</option>
+              ))}
+            </Select>
+          </FormField>
+          {payAccount && payAccount.currency !== "PKR" && (
+            <FormField label="PKR equivalent">
+              <MoneyInput value={payPkrEquivalent} onChange={setPayPkrEquivalent} required />
+            </FormField>
+          )}
+        </div>
+      </FormDialog>
     </div>
   );
 }

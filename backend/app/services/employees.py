@@ -77,7 +77,14 @@ def create_employee(db: Session, payload: EmployeeCreate, actor: User) -> Employ
                 created_by_user_id=actor.id,
             )
         )
-        log_activity(db, "Employee", employee.id, "CREATE", f"Added employee {employee.full_name}")
+        log_activity(
+            db,
+            "Employee",
+            employee.id,
+            "CREATE",
+            f"Added employee {employee.full_name}",
+            performed_by_user_id=actor.id,
+        )
         db.commit()
     except IntegrityError as exc:
         db.rollback()
@@ -85,7 +92,9 @@ def create_employee(db: Session, payload: EmployeeCreate, actor: User) -> Employ
     return employee
 
 
-def update_employee(db: Session, employee: Employee, payload: EmployeeUpdate) -> Employee:
+def update_employee(
+    db: Session, employee: Employee, payload: EmployeeUpdate, actor: User | None = None
+) -> Employee:
     type_changed = payload.employee_type != employee.employee_type
     for key, value in payload.model_dump().items():
         setattr(employee, key, value)
@@ -98,8 +107,16 @@ def update_employee(db: Session, employee: Employee, payload: EmployeeUpdate) ->
             employee.id,
             "UPDATE",
             f"Reissued employee ID for {employee.full_name} ({payload.employee_type.value})",
+            performed_by_user_id=actor.id if actor else None,
         )
-    log_activity(db, "Employee", employee.id, "UPDATE", f"Updated employee {employee.full_name}")
+    log_activity(
+        db,
+        "Employee",
+        employee.id,
+        "UPDATE",
+        f"Updated employee {employee.full_name}",
+        performed_by_user_id=actor.id if actor else None,
+    )
     try:
         db.commit()
     except IntegrityError as exc:
@@ -118,7 +135,12 @@ def add_salary_revision(
     )
     db.add(revision)
     log_activity(
-        db, "Employee", employee.id, "UPDATE", f"Updated compensation for {employee.full_name}"
+        db,
+        "Employee",
+        employee.id,
+        "UPDATE",
+        f"Updated compensation for {employee.full_name}",
+        performed_by_user_id=actor.id,
     )
     db.commit()
     db.refresh(revision)

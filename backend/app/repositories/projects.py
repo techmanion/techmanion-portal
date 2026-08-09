@@ -1,11 +1,14 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from app.models import Project
+from app.models import Project, ProjectPayment
 
 
 def project_detail_options():
-    return (selectinload(Project.milestones), selectinload(Project.payments))
+    return (
+        selectinload(Project.milestones),
+        selectinload(Project.payments).selectinload(ProjectPayment.bank_transaction),
+    )
 
 
 def list_projects_detailed(db: Session) -> list[Project]:

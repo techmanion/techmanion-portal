@@ -9,6 +9,9 @@ def get_payroll_entry_detailed(db: Session, entry_id: int) -> PayrollEntry | Non
     statement = (
         select(PayrollEntry)
         .where(PayrollEntry.id == entry_id)
-        .options(selectinload(PayrollEntry.employee))
+        .options(
+            selectinload(PayrollEntry.employee),
+            selectinload(PayrollEntry.bank_transaction),
+        )
     )
     return db.scalar(statement)

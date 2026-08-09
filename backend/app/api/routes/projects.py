@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, status
 
 from app.api.dependencies import CurrentUser, DbSession, ExecutiveUser
 from app.core.errors import get_or_404
-from app.models import Project, ProjectPayment
+from app.models import BankAccount, Project, ProjectPayment
 from app.repositories.projects import get_project_detailed, list_projects_detailed
 from app.schemas import (
     ProjectCreate,
@@ -47,6 +47,8 @@ def serialize_project(project: Project) -> ProjectOut:
                 method=row.method,
                 reference=row.reference,
                 notes=row.notes,
+                bank_account_id=row.bank_transaction.bank_account_id if row.bank_transaction else None,
+                bank_transaction_id=row.bank_transaction_id,
             )
             for row in project.payments
         ],
@@ -62,8 +64,8 @@ def list_projects(db: DbSession, _: CurrentUser) -> list[ProjectOut]:
 
 
 @router.post("/projects", response_model=ProjectOut, status_code=status.HTTP_201_CREATED)
-def create_project(payload: ProjectCreate, db: DbSession, _: ExecutiveUser) -> ProjectOut:
-    project = create_project_service(db, payload)
+def create_project(payload: ProjectCreate, db: DbSession, user: ExecutiveUser) -> ProjectOut:
+    project = create_project_service(db, payload, user)
     return serialize_project(get_project_detailed(db, project.id))
 
 
@@ -77,19 +79,19 @@ def get_project(project_id: int, db: DbSession, _: CurrentUser) -> ProjectOut:
 
 @router.put("/projects/{project_id}", response_model=ProjectOut)
 def update_project(
-    project_id: int, payload: ProjectUpdate, db: DbSession, _: ExecutiveUser
+    project_id: int, payload: ProjectUpdate, db: DbSession, user: ExecutiveUser
 ) -> ProjectOut:
     project = get_project_detailed(db, project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project was not found.")
-    update_project_service(db, project, payload)
+    update_project_service(db, project, payload, user)
     return serialize_project(get_project_detailed(db, project_id))
 
 
 @router.delete("/projects/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_project(project_id: int, db: DbSession, _: ExecutiveUser) -> None:
+def delete_project(project_id: int, db: DbSession, user: ExecutiveUser) -> None:
     project = get_or_404(db, Project, project_id, "Project was not found.")
-    delete_project_service(db, project)
+    delete_project_service(db, project, user)
 
 
 @router.post(
@@ -98,20 +100,21 @@ def delete_project(project_id: int, db: DbSession, _: ExecutiveUser) -> None:
     status_code=status.HTTP_201_CREATED,
 )
 def add_payment(
-    project_id: int, payload: ProjectPaymentCreate, db: DbSession, _: ExecutiveUser
+    project_id: int, payload: ProjectPaymentCreate, db: DbSession, user: ExecutiveUser
 ) -> ProjectOut:
     project = get_or_404(db, Project, project_id, "Project was not found.")
-    add_project_payment(db, project, payload)
+    account = get_or_404(db, BankAccount, payload.bank_account_id, "Bank account was not found.")
+    add_project_payment(db, project, payload, account, user)
     return serialize_project(get_project_detailed(db, project_id))
 
 
 @router.delete("/projects/{project_id}/payments/{payment_id}", response_model=ProjectOut)
 def remove_payment(
-    project_id: int, payment_id: int, db: DbSession, _: ExecutiveUser
+    project_id: int, payment_id: int, db: DbSession, user: ExecutiveUser
 ) -> ProjectOut:
     project = get_or_404(db, Project, project_id, "Project was not found.")
     payment = get_or_404(db, ProjectPayment, payment_id, "Payment was not found.")
     if payment.project_id != project.id:
         raise HTTPException(status_code=404, detail="Payment was not found.")
-    delete_project_payment(db, project, payment)
+    delete_project_payment(db, project, payment, user)
     return serialize_project(get_project_detailed(db, project_id))

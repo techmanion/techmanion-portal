@@ -4,6 +4,7 @@ export type EmployeeType = "EXECUTIVE" | "EMPLOYEE" | "CONTRACTOR" | "INTERN";
 export type UserRole = EmployeeType;
 export type ProjectStatus = "PLANNED" | "ACTIVE" | "ON_HOLD" | "COMPLETED";
 export type ProjectType = "MONTHLY_RECURRING" | "FIXED" | "HOURLY";
+export type Currency = "PKR" | "USD" | "EUR" | "GBP";
 export type ProjectPaymentStatus =
   | "NOT_STARTED"
   | "IN_PROGRESS"
@@ -14,6 +15,8 @@ export type MilestoneStatus = "PENDING" | "IN_PROGRESS" | "COMPLETED";
 export type PayrollEntryStatus = "PENDING" | "PAID";
 export type ExpenseType = "ONE_TIME" | "MONTHLY_RECURRING";
 export type ExpenseFrequency = "MONTHLY";
+export type BankTransactionType = "CREDIT" | "DEBIT";
+export type TransactionSource = "MANUAL" | "EXPENSE" | "INCOME" | "PAYROLL" | "TRANSFER";
 export type JobStatus = "OPEN" | "CLOSED";
 export type CandidateStage =
   | "APPLIED"
@@ -173,6 +176,8 @@ export interface ProjectPayment {
   method: string;
   reference: string | null;
   notes: string | null;
+  bankAccountId: number | null;
+  bankTransactionId: number | null;
 }
 
 export interface Project {
@@ -181,6 +186,7 @@ export interface Project {
   clientName: string;
   projectType: ProjectType;
   status: ProjectStatus;
+  currency: Currency;
   startDate: string;
   endDate: string | null;
   notes: string | null;
@@ -205,7 +211,13 @@ export type ProjectPayload = Omit<
   milestones: Omit<ProjectMilestone, "id">[];
 };
 
-export type ProjectPaymentPayload = Omit<ProjectPayment, "id">;
+export type ProjectPaymentPayload = Omit<
+  ProjectPayment,
+  "id" | "bankTransactionId" | "bankAccountId"
+> & {
+  bankAccountId: number;
+  pkrEquivalent: number | null;
+};
 
 export interface PayrollEntry {
   id: number;
@@ -219,6 +231,15 @@ export interface PayrollEntry {
   status: PayrollEntryStatus;
   paymentDate?: string;
   notes?: string;
+  bankAccountId: number | null;
+  bankTransactionId: number | null;
+  pkrEquivalent: number | null;
+}
+
+export interface PayrollMarkPaidPayload {
+  bankAccountId: number;
+  pkrEquivalent: number | null;
+  paymentDate?: string;
 }
 
 export interface FinanceIncome {
@@ -228,6 +249,7 @@ export interface FinanceIncome {
   projectName: string;
   clientName: string;
   amount: number;
+  currency: Currency;
   paymentMethod: string;
   reference: string | null;
   notes: string | null;
@@ -243,9 +265,71 @@ export interface Expense {
   frequency: ExpenseFrequency | null;
   date: string;
   notes: string | null;
+  bankAccountId: number | null;
+  bankTransactionId: number | null;
 }
 
-export type ExpensePayload = Omit<Expense, "id">;
+export type ExpensePayload = Omit<Expense, "id" | "bankAccountId" | "bankTransactionId"> & {
+  bankAccountId: number;
+  pkrEquivalent: number | null;
+};
+
+export interface BankTransaction {
+  id: number;
+  bankAccountId: number;
+  transactionType: BankTransactionType;
+  isTransfer: boolean;
+  date: string;
+  amount: number;
+  pkrEquivalent: number;
+  description: string;
+  notes: string | null;
+  transferId: string | null;
+  counterpartyAccountId: number | null;
+  counterpartyAccountName: string | null;
+  source: TransactionSource;
+  isReconciled: boolean;
+}
+
+export interface BankAccount {
+  id: number;
+  name: string;
+  bankName: string;
+  currency: Currency;
+  openingBalance: number;
+  openingBalancePkr: number | null;
+  isActive: boolean;
+  accountIdentifier: string | null;
+  notes: string | null;
+  balance: number;
+  transactions: BankTransaction[];
+}
+
+export type BankAccountPayload = Omit<BankAccount, "id" | "balance" | "transactions">;
+
+export interface BankTransactionPayload {
+  date: string;
+  amount: number;
+  pkrEquivalent: number | null;
+  description: string;
+  notes: string | null;
+}
+
+export interface BankTransferPayload {
+  sourceAccountId: number;
+  destinationAccountId: number;
+  sourceAmount: number;
+  destinationAmount: number;
+  date: string;
+  description: string;
+  notes: string | null;
+  pkrEquivalent: number | null;
+}
+
+export interface BankTransferResult {
+  sourceAccount: BankAccount;
+  destinationAccount: BankAccount;
+}
 
 export interface FinanceTransaction {
   id: string;
@@ -260,18 +344,39 @@ export interface FinanceTransaction {
 export interface FinanceOverview {
   totalIncome: number;
   totalExpenses: number;
-  payrollTotal: number;
-  netCashFlow: number;
+  bankBalance: number;
+  netPosition: number;
+  unreconciledAmount: number;
   recentTransactions: FinanceTransaction[];
 }
 
 export interface Activity {
   id: number;
-  entity: string;
+  entityType: string;
   entityId: string;
   action: string;
   description: string;
   timestamp: string;
+  performedByUserId: number | null;
+  performedByName: string | null;
+  metadataJson: Record<string, unknown> | null;
+}
+
+export interface ActivityListResult {
+  items: Activity[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+export interface ActivityFilters {
+  entityType?: string;
+  action?: string;
+  userId?: number;
+  dateFrom?: string;
+  dateTo?: string;
+  page?: number;
+  pageSize?: number;
 }
 
 export interface HomeItem {

@@ -7,18 +7,29 @@ import type { Activity } from "../../types";
 
 function activityHref(activity: Activity): string | null {
   if (activity.action === "DELETE") return null;
-  if (activity.entity === "Candidate" || activity.entity === "Job") return "/hiring";
-  if (activity.entity === "Employee") return `/employees/${activity.entityId}`;
-  if (activity.entity === "Project") return `/projects/${activity.entityId}`;
-  if (activity.entity === "PayrollEntry") return "/finance?tab=payroll";
-  if (activity.entity === "Expense") return "/finance?tab=expenses";
+  if (activity.entityType === "Candidate" || activity.entityType === "Job") return "/hiring";
+  if (activity.entityType === "Employee") return `/employees/${activity.entityId}`;
+  if (activity.entityType === "Project" || activity.entityType === "ProjectPayment") {
+    return activity.entityType === "Project" ? `/projects/${activity.entityId}` : "/projects";
+  }
+  if (activity.entityType === "PayrollEntry") return "/finance?tab=payroll";
+  if (activity.entityType === "Expense") return "/finance?tab=expenses";
+  if (activity.entityType === "BankAccount" || activity.entityType === "BankTransaction") {
+    return activity.entityType === "BankAccount"
+      ? `/finance/bank-accounts/${activity.entityId}`
+      : "/finance?tab=bank%20accounts";
+  }
+  if (activity.entityType === "BankTransfer") return "/finance?tab=bank%20accounts";
+  if (activity.entityType === "Organization") return "/organization";
   return null;
 }
 
 function activityIcon(action: string): string {
   if (action === "DELETE") return "delete";
   if (action === "PAID") return "paid";
-  if (action === "CONVERT") return "person_add";
+  if (action === "HIRED") return "person_add";
+  if (action === "DEACTIVATE") return "block";
+  if (action === "ACTIVATE") return "check_circle";
   if (action === "CREATE") return "add";
   return "edit";
 }
@@ -45,7 +56,7 @@ export function ActivityFeed({ activities }: { activities: Activity[] }) {
                     {activity.description}
                   </strong>
                   <span className="mt-0.5 block text-xs text-on-surface-variant">
-                    {label(activity.entity)} · {label(activity.action)}
+                    {label(activity.entityType)} · {label(activity.action)}
                   </span>
                 </span>
                 <time className="shrink-0 text-xs text-on-surface-variant">

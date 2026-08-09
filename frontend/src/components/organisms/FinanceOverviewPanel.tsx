@@ -1,3 +1,4 @@
+import { StatusChip } from "../atoms/Badge";
 import { SectionHeading } from "../atoms/Typography";
 import { EmptyState } from "../molecules";
 import { formatDate, formatMoney, label } from "../../lib/format";
@@ -20,9 +21,24 @@ export function FinanceOverviewPanel({ overview }: { overview: FinanceOverview }
         <div className="grid grid-cols-2 gap-x-4 gap-y-5 sm:flex sm:divide-x sm:divide-outline-variant/50">
           <Metric labelText="Total Income" value={formatMoney(overview.totalIncome)} tone="primary" />
           <Metric labelText="Total Expenses" value={formatMoney(overview.totalExpenses)} tone="error" />
-          <Metric labelText="Payroll Total" value={formatMoney(overview.payrollTotal)} />
-          <Metric labelText="Net Cash Flow" value={formatMoney(overview.netCashFlow)} tone={overview.netCashFlow >= 0 ? "primary" : "error"} />
+          <Metric labelText="Current Bank Balance" value={formatMoney(overview.bankBalance)} />
+          <Metric labelText="Net Position" value={formatMoney(overview.netPosition)} tone={overview.netPosition >= 0 ? "primary" : "error"} />
         </div>
+      </section>
+
+      <section className={`surface-panel p-6 ${overview.unreconciledAmount === 0 ? "" : "ring-1 ring-error/40"}`}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span className="block text-xs font-semibold uppercase tracking-[0.1em] text-on-surface-variant">Reconciliation</span>
+          <StatusChip value={overview.unreconciledAmount === 0 ? "RECONCILED" : "UNRECONCILED"} />
+        </div>
+        <strong className={`mt-2 block text-xl font-semibold ${overview.unreconciledAmount === 0 ? "text-on-surface" : "text-error"}`}>
+          {formatMoney(overview.unreconciledAmount)}
+        </strong>
+        <p className="mt-1 text-xs text-on-surface-variant">
+          {overview.unreconciledAmount === 0
+            ? "Income, expenses, and bank balances are fully reconciled. Opening balances are treated as capital, not income."
+            : "Income − Expenses − (Bank Balance − Opening Balances) does not equal zero. Check bank accounts for manual credits or debits (marked \"Unreconciled\") that aren't linked to a tracked expense, payment, or payroll entry."}
+        </p>
       </section>
 
       <section className="surface-panel overflow-hidden">

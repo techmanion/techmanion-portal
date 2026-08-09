@@ -1,9 +1,15 @@
 import type {
+  BankAccount,
+  BankAccountPayload,
+  BankTransactionPayload,
+  BankTransferPayload,
+  BankTransferResult,
   Expense,
   ExpensePayload,
   FinanceIncome,
   FinanceOverview,
   PayrollEntry,
+  PayrollMarkPaidPayload,
 } from "../../types";
 import { api } from "./client";
 
@@ -14,6 +20,7 @@ export interface PayrollEntryPayload {
   adjustment: number;
   currency: string;
   notes: string | null;
+  pkrEquivalent?: number | null;
 }
 
 export function getFinanceOverview() {
@@ -90,9 +97,52 @@ export function deletePayrollEntry(entryId: number) {
   return api<void>(`/admin/finance/payroll/${entryId}`, { method: "DELETE" });
 }
 
-export function markPayrollPaid(entryId: number) {
+export function markPayrollPaid(entryId: number, payload: PayrollMarkPaidPayload) {
   return api<PayrollEntry>(`/admin/finance/payroll/${entryId}/pay`, {
     method: "PATCH",
-    body: JSON.stringify({}),
+    body: JSON.stringify(payload),
+  });
+}
+
+export function listBankAccounts() {
+  return api<BankAccount[]>("/admin/finance/bank-accounts");
+}
+
+export function getBankAccount(accountId: number) {
+  return api<BankAccount>(`/admin/finance/bank-accounts/${accountId}`);
+}
+
+export function createBankAccount(payload: BankAccountPayload) {
+  return api<BankAccount>("/admin/finance/bank-accounts", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateBankAccount(accountId: number, payload: BankAccountPayload) {
+  return api<BankAccount>(`/admin/finance/bank-accounts/${accountId}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function addBankCredit(accountId: number, payload: BankTransactionPayload) {
+  return api<BankAccount>(`/admin/finance/bank-accounts/${accountId}/credit`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function addBankDebit(accountId: number, payload: BankTransactionPayload) {
+  return api<BankAccount>(`/admin/finance/bank-accounts/${accountId}/debit`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function createBankTransfer(payload: BankTransferPayload) {
+  return api<BankTransferResult>("/admin/finance/bank-transfers", {
+    method: "POST",
+    body: JSON.stringify(payload),
   });
 }

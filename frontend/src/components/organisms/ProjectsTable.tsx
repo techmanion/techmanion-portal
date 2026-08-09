@@ -5,10 +5,10 @@ import { DataTable, TableHeadRow, TableRow } from "./DataTable";
 
 function projectValue(project: Project) {
   if (project.projectType === "MONTHLY_RECURRING") {
-    return `${formatMoney(project.monthlyAmount ?? 0)} / month`;
+    return `${formatMoney(project.monthlyAmount ?? 0, project.currency)} / month`;
   }
-  if (project.projectType === "FIXED") return formatMoney(project.contractValue ?? 0);
-  return `${formatMoney(project.hourlyRate ?? 0)} / hour`;
+  if (project.projectType === "FIXED") return formatMoney(project.contractValue ?? 0, project.currency);
+  return `${formatMoney(project.hourlyRate ?? 0, project.currency)} / hour`;
 }
 
 export function ProjectsTable({

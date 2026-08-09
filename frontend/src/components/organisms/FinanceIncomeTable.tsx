@@ -28,7 +28,7 @@ export function FinanceIncomeTable({ income }: { income: FinanceIncome[] }) {
             </td>
             <td className="px-4 text-sm text-on-surface">{payment.clientName}</td>
             <td className="px-4 text-right text-sm font-semibold text-primary">
-              {formatMoney(payment.amount)}
+              {formatMoney(payment.amount, payment.currency)}
             </td>
             <td className="px-4 text-sm text-on-surface">{payment.paymentMethod}</td>
             <td className="px-4 text-sm text-on-surface">{payment.reference || "—"}</td>

@@ -10,6 +10,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/employees", label: "Employees", icon: "group" },
   { to: "/projects", label: "Projects", icon: "list_alt" },
   { to: "/finance", label: "Finance", icon: "payments" },
+  { to: "/activity", label: "Activity", icon: "history" },
 ];
 
 export const EXECUTIVE_NAV_ITEMS: NavItem[] = [

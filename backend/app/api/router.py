@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.routes import (
+    activity,
     auth,
     employees,
     finance,
@@ -21,6 +22,7 @@ router.include_router(public.router, prefix="/public")
 # endpoints additionally require ExecutiveUser (core member) access.
 admin_router = APIRouter(prefix="/admin")
 admin_router.include_router(auth.router)
+admin_router.include_router(activity.router)
 admin_router.include_router(employees.router)
 admin_router.include_router(hiring.router)
 admin_router.include_router(projects.router)

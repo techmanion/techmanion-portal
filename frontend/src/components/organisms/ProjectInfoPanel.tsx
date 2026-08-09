@@ -19,21 +19,22 @@ export function ProjectInfoPanel({ project }: { project: Project }) {
       <SectionHeading className="mb-6">Project Information</SectionHeading>
       <dl className="grid grid-cols-1 gap-x-12 gap-y-6 md:grid-cols-2">
         <Detail labelText="Type">{label(project.projectType)}</Detail>
+        <Detail labelText="Currency">{project.currency}</Detail>
         <Detail labelText="Start date">{formatDate(project.startDate)}</Detail>
         <Detail labelText="End date">{formatDate(project.endDate ?? undefined)}</Detail>
         {project.projectType === "MONTHLY_RECURRING" && (
           <>
-            <Detail labelText="Monthly amount">{formatMoney(project.monthlyAmount ?? 0)}</Detail>
+            <Detail labelText="Monthly amount">{formatMoney(project.monthlyAmount ?? 0, project.currency)}</Detail>
             <Detail labelText="Billing day">Day {project.billingDay}</Detail>
             <Detail labelText="Auto renew">{project.autoRenew ? "Yes" : "No"}</Detail>
           </>
         )}
         {project.projectType === "FIXED" && (
-          <Detail labelText="Contract value">{formatMoney(project.contractValue ?? 0)}</Detail>
+          <Detail labelText="Contract value">{formatMoney(project.contractValue ?? 0, project.currency)}</Detail>
         )}
         {project.projectType === "HOURLY" && (
           <>
-            <Detail labelText="Hourly rate">{formatMoney(project.hourlyRate ?? 0)}</Detail>
+            <Detail labelText="Hourly rate">{formatMoney(project.hourlyRate ?? 0, project.currency)}</Detail>
             <Detail labelText="Estimated hours">{project.estimatedHours ?? "—"}</Detail>
             <Detail labelText="Logged hours">{project.loggedHours ?? 0}</Detail>
           </>

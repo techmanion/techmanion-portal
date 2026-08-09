@@ -10,6 +10,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 from app.models.common import TimestampMixin
 from app.models.employees import Employee
+from app.models.finance import BankTransaction
 
 
 class PayrollEntryStatus(str, Enum):
@@ -33,5 +34,9 @@ class PayrollEntry(TimestampMixin, Base):
     )
     payment_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    bank_transaction_id: Mapped[int | None] = mapped_column(
+        ForeignKey("bank_transactions.id"), nullable=True
+    )
 
     employee: Mapped[Employee] = relationship()
+    bank_transaction: Mapped[BankTransaction | None] = relationship()
