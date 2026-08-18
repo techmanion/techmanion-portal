@@ -28,12 +28,13 @@ from app.schemas.finance import (
     ExpenseCreate,
     ExpenseUpdate,
 )
-from app.schemas.payroll import PayrollEntryUpdate, PayrollMarkPaid
+from app.schemas.payroll import PayrollBackfillBankTransaction, PayrollEntryUpdate, PayrollMarkPaid
 from app.schemas.projects import ProjectCreate, ProjectPaymentCreate, ProjectUpdate
 from app.services import (
     add_bank_credit,
     add_bank_debit,
     add_project_payment,
+    backfill_payroll_bank_transaction,
     bank_account_balance,
     build_finance_overview,
     create_bank_account,
@@ -752,6 +753,46 @@ def test_mark_payroll_paid_twice_raises(db_session: Session) -> None:
 
     with pytest.raises(HTTPException):
         mark_payroll_paid(db_session, entry, PayrollMarkPaid(bank_account_id=account.id), account)
+
+
+def test_backfill_payroll_bank_transaction_links_legacy_paid_entry(db_session: Session) -> None:
+    account = _create_bank_account(db_session, opening_balance=200_000_00)
+    entry = _create_payroll_entry(
+        db_session,
+        final_amount=90_000_00,
+        status=PayrollEntryStatus.PAID,
+        payment_date=date(2026, 1, 31),
+    )
+
+    linked = backfill_payroll_bank_transaction(
+        db_session, entry, PayrollBackfillBankTransaction(bank_account_id=account.id), account
+    )
+
+    assert linked.bank_transaction_id is not None
+    assert linked.bank_transaction.amount == 90_000_00
+    assert linked.bank_transaction.source == TransactionSource.PAYROLL
+    assert bank_account_balance(account) == 110_000_00
+
+
+def test_backfill_payroll_bank_transaction_rejects_pending_entry(db_session: Session) -> None:
+    account = _create_bank_account(db_session, opening_balance=200_000_00)
+    entry = _create_payroll_entry(db_session, final_amount=90_000_00)
+
+    with pytest.raises(HTTPException):
+        backfill_payroll_bank_transaction(
+            db_session, entry, PayrollBackfillBankTransaction(bank_account_id=account.id), account
+        )
+
+
+def test_backfill_payroll_bank_transaction_rejects_already_linked_entry(db_session: Session) -> None:
+    account = _create_bank_account(db_session, opening_balance=200_000_00)
+    entry = _create_payroll_entry(db_session, final_amount=90_000_00)
+    mark_payroll_paid(db_session, entry, PayrollMarkPaid(bank_account_id=account.id), account)
+
+    with pytest.raises(HTTPException):
+        backfill_payroll_bank_transaction(
+            db_session, entry, PayrollBackfillBankTransaction(bank_account_id=account.id), account
+        )
 
 
 def test_update_payroll_entry_after_paid_updates_linked_transaction(db_session: Session) -> None:

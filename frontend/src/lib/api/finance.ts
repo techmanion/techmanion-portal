@@ -8,6 +8,7 @@ import type {
   ExpensePayload,
   FinanceIncome,
   FinanceOverview,
+  PayrollBackfillBankPayload,
   PayrollEntry,
   PayrollMarkPaidPayload,
 } from "../../types";
@@ -99,6 +100,13 @@ export function deletePayrollEntry(entryId: number) {
 
 export function markPayrollPaid(entryId: number, payload: PayrollMarkPaidPayload) {
   return api<PayrollEntry>(`/admin/finance/payroll/${entryId}/pay`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function backfillPayrollBank(entryId: number, payload: PayrollBackfillBankPayload) {
+  return api<PayrollEntry>(`/admin/finance/payroll/${entryId}/backfill-bank`, {
     method: "PATCH",
     body: JSON.stringify(payload),
   });

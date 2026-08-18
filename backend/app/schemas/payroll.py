@@ -54,3 +54,11 @@ class PayrollMarkPaid(ApiModel):
     payment_date: date | None = None
     bank_account_id: int
     pkr_equivalent: int | None = Field(default=None, gt=0)
+
+
+class PayrollBackfillBankTransaction(ApiModel):
+    """Attach a bank transaction to a payroll entry that was already marked PAID
+    before bank tracking existed, without re-running the pay workflow."""
+
+    bank_account_id: int
+    pkr_equivalent: int | None = Field(default=None, gt=0)

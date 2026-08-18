@@ -47,6 +47,7 @@ from app.schemas.hiring import (
 from app.schemas.home import HomeItem, HomeOut
 from app.schemas.organization import OrganizationOut, OrganizationUpdate
 from app.schemas.payroll import (
+    PayrollBackfillBankTransaction,
     PayrollEntryCreate,
     PayrollEntryOut,
     PayrollEntryUpdate,
@@ -103,6 +104,7 @@ __all__ = [
     "OrganizationOut",
     "OrganizationUpdate",
     "PasswordChange",
+    "PayrollBackfillBankTransaction",
     "PayrollEntryCreate",
     "PayrollEntryOut",
     "PayrollEntryUpdate",

@@ -242,6 +242,11 @@ export interface PayrollMarkPaidPayload {
   paymentDate?: string;
 }
 
+export interface PayrollBackfillBankPayload {
+  bankAccountId: number;
+  pkrEquivalent: number | null;
+}
+
 export interface FinanceIncome {
   id: number;
   date: string;

@@ -24,6 +24,7 @@ from app.services.finance import (
 from app.services.hiring import convert_candidate_to_employee, update_candidate_stage
 from app.services.home import build_home_feed
 from app.services.payroll import (
+    backfill_payroll_bank_transaction,
     create_payroll_entry,
     delete_payroll_entry,
     generate_payroll_for_month,
@@ -46,6 +47,7 @@ __all__ = [
     "add_bank_debit",
     "add_salary_revision",
     "add_project_payment",
+    "backfill_payroll_bank_transaction",
     "bank_account_balance",
     "bank_account_balance_pkr",
     "bank_account_opening_balance_pkr",

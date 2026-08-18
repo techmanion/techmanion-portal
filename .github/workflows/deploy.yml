@@ -1,0 +1,39 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script_stop: true
+          script: |
+            set -e
+
+            cd ~/techmanion/techmanion-portal
+            git pull origin main
+
+            # Frontend
+            cd frontend
+            npm ci
+            npm run build
+
+            # Backend
+            cd ../backend
+            source venv/bin/activate
+            pip install -r requirements.txt
+            alembic upgrade head
+
+            sudo systemctl restart techmanion-api
+            sudo systemctl is-active --quiet techmanion-api
+
+            echo "Deployment successful"

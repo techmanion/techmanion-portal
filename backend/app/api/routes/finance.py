@@ -24,6 +24,7 @@ from app.schemas import (
     ExpenseUpdate,
     FinanceOverviewOut,
     IncomeOut,
+    PayrollBackfillBankTransaction,
     PayrollEntryCreate,
     PayrollEntryOut,
     PayrollEntryUpdate,
@@ -32,6 +33,7 @@ from app.schemas import (
 from app.services import (
     add_bank_credit as add_bank_credit_service,
     add_bank_debit as add_bank_debit_service,
+    backfill_payroll_bank_transaction as backfill_payroll_bank_transaction_service,
     bank_account_balance,
     build_finance_overview,
     create_bank_account as create_bank_account_service,
@@ -219,6 +221,19 @@ def mark_payroll_paid(
         raise HTTPException(status_code=404, detail="Payroll entry was not found.")
     account = get_or_404(db, BankAccount, payload.bank_account_id, "Bank account was not found.")
     return serialize_payroll_entry(mark_payroll_paid_service(db, entry, payload, account, user))
+
+
+@router.patch("/payroll/{entry_id}/backfill-bank", response_model=PayrollEntryOut)
+def backfill_payroll_bank_transaction(
+    entry_id: int, payload: PayrollBackfillBankTransaction, db: DbSession, user: CurrentUser
+) -> PayrollEntryOut:
+    entry = get_payroll_entry_detailed(db, entry_id)
+    if not entry:
+        raise HTTPException(status_code=404, detail="Payroll entry was not found.")
+    account = get_or_404(db, BankAccount, payload.bank_account_id, "Bank account was not found.")
+    return serialize_payroll_entry(
+        backfill_payroll_bank_transaction_service(db, entry, payload, account, user)
+    )
 
 
 @router.get("/bank-accounts", response_model=list[BankAccountOut])

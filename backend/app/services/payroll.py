@@ -16,7 +16,12 @@ from app.models import (
     TransactionType,
     User,
 )
-from app.schemas import PayrollEntryCreate, PayrollEntryUpdate, PayrollMarkPaid
+from app.schemas import (
+    PayrollBackfillBankTransaction,
+    PayrollEntryCreate,
+    PayrollEntryUpdate,
+    PayrollMarkPaid,
+)
 from app.services.activity import log_activity
 from app.services.bank import _build_bank_transaction, _require_active_bank_account, _resolve_pkr_equivalent
 from app.services.employees import employee_current_salary
@@ -187,6 +192,48 @@ def mark_payroll_paid(
         entry.id,
         "PAID",
         f"Marked {entry.month} payroll paid for {entry.employee.full_name}",
+        performed_by_user_id=actor.id if actor else None,
+        metadata={"amount": entry.final_amount, "currency": entry.currency},
+    )
+    db.commit()
+    return entry
+
+
+def backfill_payroll_bank_transaction(
+    db: Session,
+    entry: PayrollEntry,
+    payload: PayrollBackfillBankTransaction,
+    account: BankAccount,
+    actor: User | None = None,
+) -> PayrollEntry:
+    """Link a bank transaction to a payroll entry that was marked PAID before bank
+    tracking existed. Distinct from mark_payroll_paid, which also transitions
+    PENDING -> PAID; this only fills in the missing transaction for a PAID entry."""
+    if entry.status != PayrollEntryStatus.PAID:
+        raise HTTPException(
+            status_code=422, detail="Only paid payroll entries can be backfilled."
+        )
+    if entry.bank_transaction_id is not None:
+        raise HTTPException(
+            status_code=422, detail="This payroll entry is already linked to a bank transaction."
+        )
+    transaction = _build_bank_transaction(
+        db,
+        account,
+        TransactionType.DEBIT,
+        transaction_date=entry.payment_date or entry.updated_at.date(),
+        amount=entry.final_amount,
+        pkr_equivalent_supplied=payload.pkr_equivalent,
+        description=f"Payroll · {entry.employee.full_name} · {entry.month}",
+        source=TransactionSource.PAYROLL,
+    )
+    entry.bank_transaction_id = transaction.id
+    log_activity(
+        db,
+        "PayrollEntry",
+        entry.id,
+        "UPDATE",
+        f"Linked {entry.month} payroll for {entry.employee.full_name} to {account.name}",
         performed_by_user_id=actor.id if actor else None,
         metadata={"amount": entry.final_amount, "currency": entry.currency},
     )

@@ -8,11 +8,13 @@ import { DataTable, TableHeadRow, TableRow } from "./DataTable";
 export function PayrollTable({
   entries,
   onMarkPaid,
+  onBackfillBank,
   onEdit,
   onDelete,
 }: {
   entries: PayrollEntry[];
   onMarkPaid: (entry: PayrollEntry) => void;
+  onBackfillBank: (entry: PayrollEntry) => void;
   onEdit: (entry: PayrollEntry) => void;
   onDelete: (entry: PayrollEntry) => void;
 }) {
@@ -61,6 +63,14 @@ export function PayrollTable({
                     onClick={() => onMarkPaid(entry)}
                   >
                     Mark paid
+                  </button>
+                )}
+                {entry.status === "PAID" && !entry.bankTransactionId && (
+                  <button
+                    className="rounded-full px-2.5 py-1.5 text-xs text-primary hover:bg-primary/10"
+                    onClick={() => onBackfillBank(entry)}
+                  >
+                    Link bank account
                   </button>
                 )}
                 <IconButton
