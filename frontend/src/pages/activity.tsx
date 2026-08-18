@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Button, Icon, Input, Loading } from "../components/atoms";
 import { FilterSelect } from "../components/molecules";
 import { ActivityTable, FilterToolbar, PageHeader } from "../components/organisms";
-import { useClearSearchParams, useSearchParamState } from "../hooks/useSearchParamState";
+import { useClearSearchParams, useSearchParamState, useSearchParamsUpdater } from "../hooks/useSearchParamState";
 import { listActivity } from "../lib/api/activity";
 import { listUsers } from "../lib/api/users";
 import { label } from "../lib/format";
@@ -12,14 +12,15 @@ import type { Activity, User } from "../types";
 const PAGE_SIZE = 25;
 
 export function ActivityPage() {
-  const [entityType, setEntityType] = useSearchParamState("module");
-  const [action, setAction] = useSearchParamState("action");
-  const [userId, setUserId] = useSearchParamState("user");
-  const [dateFrom, setDateFrom] = useSearchParamState("from");
-  const [dateTo, setDateTo] = useSearchParamState("to");
+  const [entityType] = useSearchParamState("module");
+  const [action] = useSearchParamState("action");
+  const [userId] = useSearchParamState("user");
+  const [dateFrom] = useSearchParamState("from");
+  const [dateTo] = useSearchParamState("to");
   const [pageParam, setPageParam] = useSearchParamState("page", "1");
   const page = Number(pageParam) || 1;
   const clearSearchParams = useClearSearchParams();
+  const updateSearchParams = useSearchParamsUpdater();
 
   const [activities, setActivities] = useState<Activity[]>([]);
   const [total, setTotal] = useState(0);
@@ -58,9 +59,8 @@ export function ActivityPage() {
   function clearFilters() {
     clearSearchParams(["module", "action", "user", "from", "to", "page"]);
   }
-  function setFilter(setter: (value: string) => void, value: string) {
-    setter(value);
-    setPageParam("1");
+  function setFilter(key: string, value: string) {
+    updateSearchParams({ [key]: value, page: "1" });
   }
 
   const totalPages = Math.max(Math.ceil(total / PAGE_SIZE), 1);
@@ -78,7 +78,7 @@ export function ActivityPage() {
           <FilterToolbar>
             <FilterSelect
               value={entityType}
-              onChange={(value) => setFilter(setEntityType, value)}
+              onChange={(value) => setFilter("module", value)}
               labelText="Module"
               placeholder="Filter by module"
             >
@@ -90,7 +90,7 @@ export function ActivityPage() {
             </FilterSelect>
             <FilterSelect
               value={action}
-              onChange={(value) => setFilter(setAction, value)}
+              onChange={(value) => setFilter("action", value)}
               labelText="Action"
               placeholder="Filter by action"
             >
@@ -103,7 +103,7 @@ export function ActivityPage() {
             {users.length > 0 && (
               <FilterSelect
                 value={userId}
-                onChange={(value) => setFilter(setUserId, value)}
+                onChange={(value) => setFilter("user", value)}
                 labelText="User"
                 placeholder="Filter by user"
               >
@@ -120,7 +120,7 @@ export function ActivityPage() {
                 aria-label="From date"
                 type="date"
                 value={dateFrom}
-                onChange={(event) => setFilter(setDateFrom, event.target.value)}
+                onChange={(event) => setFilter("from", event.target.value)}
                 className="!h-7 !w-32 !border-0 !bg-transparent !p-0 text-on-surface"
               />
             </label>
@@ -130,7 +130,7 @@ export function ActivityPage() {
                 aria-label="To date"
                 type="date"
                 value={dateTo}
-                onChange={(event) => setFilter(setDateTo, event.target.value)}
+                onChange={(event) => setFilter("to", event.target.value)}
                 className="!h-7 !w-32 !border-0 !bg-transparent !p-0 text-on-surface"
               />
             </label>

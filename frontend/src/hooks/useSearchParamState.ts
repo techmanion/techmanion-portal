@@ -23,6 +23,27 @@ export function useSearchParamState(key: string, defaultValue = ""): readonly [s
   return [value, setValue] as const;
 }
 
+export function useSearchParamsUpdater() {
+  const [, setSearchParams] = useSearchParams();
+
+  return useCallback(
+    (updates: Record<string, string | undefined>) => {
+      setSearchParams(
+        (current) => {
+          const updated = new URLSearchParams(current);
+          for (const [key, value] of Object.entries(updates)) {
+            if (value) updated.set(key, value);
+            else updated.delete(key);
+          }
+          return updated;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
+}
+
 export function useClearSearchParams() {
   const [, setSearchParams] = useSearchParams();
 
