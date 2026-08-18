@@ -32,9 +32,9 @@ jobs:
 
             # Backend
             cd ../backend
-            source venv/bin/activate
-            pip install -r requirements.txt
-            alembic upgrade head
+
+            ./venv/bin/python -m pip install -r requirements.txt
+            ./venv/bin/alembic upgrade head
 
             sudo systemctl restart techmanion-api
             sudo systemctl is-active --quiet techmanion-api
