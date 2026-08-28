@@ -1,4 +1,4 @@
-import type { InventoryAction, InventoryItem, InventoryStatus } from "../../types";
+import type { InventoryAction, InventoryItem, InventoryStatus } from "../types";
 
 export function availableInventoryActions(status: InventoryStatus): InventoryAction[] {
   switch (status) {
@@ -8,7 +8,7 @@ export function availableInventoryActions(status: InventoryStatus): InventoryAct
       return ["RETURN", "REPAIR", "RETIRE"];
     case "IN_REPAIR":
       return ["REPAIRED", "RETIRE"];
-    default:
+    case "RETIRED":
       return [];
   }
 }
