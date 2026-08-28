@@ -5,6 +5,7 @@ export * from "./employees";
 export * from "./finance";
 export * from "./hiring";
 export * from "./home";
+export * from "./inventory";
 export * from "./organization";
 export * from "./projects";
 export * from "./settings";

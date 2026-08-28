@@ -23,6 +23,14 @@ from app.services.finance import (
 )
 from app.services.hiring import convert_candidate_to_employee, update_candidate_stage
 from app.services.home import build_home_feed
+from app.services.inventory import (
+    apply_inventory_action,
+    build_inventory_overview,
+    create_inventory_item,
+    delete_inventory_item,
+    receive_inventory_items,
+    update_inventory_item,
+)
 from app.services.payroll import (
     backfill_payroll_bank_transaction,
     create_payroll_entry,
@@ -47,19 +55,23 @@ __all__ = [
     "add_bank_debit",
     "add_salary_revision",
     "add_project_payment",
+    "apply_inventory_action",
     "backfill_payroll_bank_transaction",
     "bank_account_balance",
     "bank_account_balance_pkr",
     "bank_account_opening_balance_pkr",
     "build_home_feed",
     "build_finance_overview",
+    "build_inventory_overview",
     "convert_candidate_to_employee",
     "create_bank_account",
     "create_bank_transfer",
     "create_employee",
     "create_expense",
+    "create_inventory_item",
     "create_project",
     "create_payroll_entry",
+    "delete_inventory_item",
     "delete_payroll_entry",
     "delete_expense",
     "delete_project",
@@ -72,10 +84,12 @@ __all__ = [
     "payroll_period_end",
     "project_billable_amount",
     "project_payment_summary",
+    "receive_inventory_items",
     "update_bank_account",
     "update_employee",
     "update_candidate_stage",
     "update_expense",
+    "update_inventory_item",
     "update_project",
     "update_payroll_entry",
 ]

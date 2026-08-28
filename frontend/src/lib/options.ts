@@ -4,6 +4,9 @@ import type {
   EmployeeStatus,
   EmployeeType,
   ExpenseType,
+  InventoryCategory,
+  InventoryCondition,
+  InventoryStatus,
   JobStatus,
   ProjectStatus,
   ProjectType,
@@ -37,6 +40,41 @@ export const CANDIDATE_STAGES: CandidateStage[] = [
   "REJECTED",
 ];
 
+export const INVENTORY_CATEGORIES: InventoryCategory[] = [
+  "LAPTOP",
+  "MONITOR",
+  "KEYBOARD",
+  "MOUSE",
+  "CHAIR",
+  "DESK",
+  "HEADSET",
+  "PHONE",
+  "CABLE",
+  "OTHER",
+];
+
+export const INVENTORY_STATUSES: InventoryStatus[] = [
+  "AVAILABLE",
+  "IN_USE",
+  "IN_REPAIR",
+  "RETIRED",
+];
+
+export const INVENTORY_CONDITIONS: InventoryCondition[] = ["NEW", "GOOD", "FAIR", "POOR"];
+
+export const INVENTORY_CATEGORY_ICONS: Record<InventoryCategory, string> = {
+  LAPTOP: "laptop_mac",
+  MONITOR: "desktop_windows",
+  KEYBOARD: "keyboard",
+  MOUSE: "mouse",
+  CHAIR: "chair",
+  DESK: "table_restaurant",
+  HEADSET: "headset_mic",
+  PHONE: "smartphone",
+  CABLE: "cable",
+  OTHER: "category",
+};
+
 export const DOCUMENT_KINDS = ["CV", "CONTRACT", "ID_COPY", "CERTIFICATE", "OTHER"];
 
 export const ACTIVITY_ENTITY_TYPES = [
@@ -51,6 +89,7 @@ export const ACTIVITY_ENTITY_TYPES = [
   "Candidate",
   "Job",
   "Organization",
+  "InventoryItem",
 ];
 
 export const ACTIVITY_ACTIONS = [

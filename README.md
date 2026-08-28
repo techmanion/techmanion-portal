@@ -29,9 +29,15 @@ npm install
 npm run dev
 ```
 
-Open <http://localhost:5173>. The initial login comes from
-the backend's `INITIAL_ADMIN_EMAIL` and `INITIAL_ADMIN_PASSWORD`. The API exposes
-interactive documentation at <http://localhost:8000/docs>.
+Open <http://localhost:5173>. The marketing site (`techmanion-ug`) runs separately
+on <http://localhost:3000>; include both origins in backend `FRONTEND_URLS` so
+Careers can call the API without CORS errors:
+
+```
+FRONTEND_URLS=http://localhost:5173,http://localhost:3000
+```
+
+The API exposes interactive documentation at <http://localhost:8000/docs>.
 
 ## Checks
 

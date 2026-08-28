@@ -21,6 +21,9 @@ import { FinancePage } from "./pages/finance";
 import { HiringPage } from "./pages/hiring";
 import { ManagementPage } from "./pages/management";
 import { HomePage } from "./pages/home";
+import { InventoryPage } from "./pages/inventory";
+import { InventoryItemDetailPage } from "./pages/inventory-item-detail";
+import { InventoryItemFormPage } from "./pages/inventory-item-form";
 import { JobFormPage } from "./pages/job-form";
 import { JobDetailPage } from "./pages/job-detail";
 import { LoginPage } from "./pages/login";
@@ -112,6 +115,10 @@ export function App() {
             </RequireExecutive>
           }
         />
+        <Route path="/inventory" element={<InventoryPage />} />
+        <Route path="/inventory/new" element={<InventoryItemFormPage />} />
+        <Route path="/inventory/items/:itemId" element={<InventoryItemDetailPage />} />
+        <Route path="/inventory/items/:itemId/edit" element={<InventoryItemFormPage />} />
         <Route path="/finance" element={<FinancePage />} />
         <Route path="/finance/bank-accounts/new" element={<BankAccountFormPage />} />
         <Route path="/finance/bank-accounts/:accountId" element={<BankAccountDetailPage />} />

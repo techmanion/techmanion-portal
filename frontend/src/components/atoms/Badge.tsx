@@ -4,14 +4,19 @@ export function StatusChip({ value }: { value: string }) {
     value === "PAID" ||
     value === "COMPLETED" ||
     value === "FULLY_PAID" ||
-    value === "RECONCILED"
+    value === "RECONCILED" ||
+    value === "AVAILABLE"
       ? "bg-primary/10 text-primary"
       : value === "TERMINATED" ||
           value === "CANCELLED" ||
           value === "OVERDUE" ||
-          value === "UNRECONCILED"
+          value === "UNRECONCILED" ||
+          value === "RETIRED"
         ? "bg-error/10 text-error"
-        : value === "PARTIALLY_PAID" || value === "IN_PROGRESS"
+        : value === "PARTIALLY_PAID" ||
+            value === "IN_PROGRESS" ||
+            value === "IN_REPAIR" ||
+            value === "IN_USE"
           ? "bg-tertiary/10 text-tertiary"
           : "bg-surface-container-highest text-on-surface-variant";
   const text = value

@@ -45,6 +45,18 @@ from app.schemas.hiring import (
     JobUpdate,
 )
 from app.schemas.home import HomeItem, HomeOut
+from app.schemas.inventory import (
+    InventoryAction,
+    InventoryActionPayload,
+    InventoryAttentionItemOut,
+    InventoryCategoryShelfOut,
+    InventoryEventOut,
+    InventoryItemCreate,
+    InventoryItemOut,
+    InventoryItemUpdate,
+    InventoryOverviewOut,
+    InventoryReceive,
+)
 from app.schemas.organization import OrganizationOut, OrganizationUpdate
 from app.schemas.payroll import (
     PayrollBackfillBankTransaction,
@@ -96,6 +108,16 @@ __all__ = [
     "HomeItem",
     "HomeOut",
     "IncomeOut",
+    "InventoryAction",
+    "InventoryActionPayload",
+    "InventoryAttentionItemOut",
+    "InventoryCategoryShelfOut",
+    "InventoryEventOut",
+    "InventoryItemCreate",
+    "InventoryItemOut",
+    "InventoryItemUpdate",
+    "InventoryOverviewOut",
+    "InventoryReceive",
     "JobBase",
     "JobCreate",
     "JobOut",

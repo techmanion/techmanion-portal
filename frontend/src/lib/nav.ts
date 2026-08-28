@@ -9,6 +9,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: "/hiring", label: "Hiring", icon: "person_search" },
   { to: "/employees", label: "Employees", icon: "group" },
   { to: "/projects", label: "Projects", icon: "list_alt" },
+  { to: "/inventory", label: "Inventory", icon: "inventory_2" },
   { to: "/finance", label: "Finance", icon: "payments" },
   { to: "/activity", label: "Activity", icon: "history" },
 ];

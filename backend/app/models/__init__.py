@@ -23,6 +23,14 @@ from app.models.employees import (
     SalaryRevision,
 )
 from app.models.hiring import Candidate, CandidateStage, Job, JobStatus
+from app.models.inventory import (
+    InventoryCategory,
+    InventoryCondition,
+    InventoryEvent,
+    InventoryEventType,
+    InventoryItem,
+    InventoryStatus,
+)
 from app.models.organization import CompanyProfile, Department, Designation
 from app.models.payroll import PayrollEntry, PayrollEntryStatus
 from app.models.projects import (
@@ -58,6 +66,12 @@ __all__ = [
     "Expense",
     "ExpenseFrequency",
     "ExpenseType",
+    "InventoryCategory",
+    "InventoryCondition",
+    "InventoryEvent",
+    "InventoryEventType",
+    "InventoryItem",
+    "InventoryStatus",
     "Job",
     "JobStatus",
     "MilestoneStatus",

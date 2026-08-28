@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_minutes: int = 480
     # Comma-separated list of allowed CORS origins, e.g. one per frontend deployment.
-    frontend_urls: str = "http://localhost:5173"
+    frontend_urls: str = "http://localhost:5173,http://localhost:3000"
     upload_dir: Path = Path("uploads")
 
     s3_bucket_name: str = ""

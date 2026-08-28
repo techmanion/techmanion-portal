@@ -20,7 +20,7 @@ export function QuickActionsPanel() {
     <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <QuickAction icon="person_add" labelText="Add Candidate" to="/hiring/candidates/new" />
       <QuickAction icon="group_add" labelText="Add Employee" to="/employees/new" />
-      <QuickAction icon="add_task" labelText="Add Project" to="/projects/new" />
+      <QuickAction icon="package_2" labelText="Receive stock" to="/inventory?receive=1" />
       <QuickAction icon="payments" labelText="Open Finance" to="/finance" />
     </div>
   );

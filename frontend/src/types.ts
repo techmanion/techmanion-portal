@@ -26,6 +26,30 @@ export type CandidateStage =
   | "HIRED"
   | "REJECTED";
 
+export type InventoryCategory =
+  | "LAPTOP"
+  | "MONITOR"
+  | "KEYBOARD"
+  | "MOUSE"
+  | "CHAIR"
+  | "DESK"
+  | "HEADSET"
+  | "PHONE"
+  | "CABLE"
+  | "OTHER";
+
+export type InventoryStatus = "AVAILABLE" | "IN_USE" | "IN_REPAIR" | "RETIRED";
+export type InventoryCondition = "NEW" | "GOOD" | "FAIR" | "POOR";
+export type InventoryEventType =
+  | "RECEIVED"
+  | "PLACED"
+  | "RETURNED"
+  | "SENT_TO_REPAIR"
+  | "REPAIRED"
+  | "RETIRED"
+  | "UPDATED";
+export type InventoryAction = "PLACE" | "RETURN" | "REPAIR" | "REPAIRED" | "RETIRE";
+
 export interface User {
   id: number;
   email: string;
@@ -396,6 +420,92 @@ export interface HomeData {
   needsAttention: HomeItem[];
   upcoming: HomeItem[];
   recentActivity: Activity[];
+}
+
+export interface InventoryEvent {
+  id: number;
+  eventType: InventoryEventType;
+  fromStatus: InventoryStatus | null;
+  toStatus: InventoryStatus | null;
+  location: string | null;
+  note: string | null;
+  performedByUserId: number | null;
+  createdAt: string;
+}
+
+export interface InventoryItem {
+  id: number;
+  assetTag: string;
+  name: string;
+  category: InventoryCategory;
+  status: InventoryStatus;
+  condition: InventoryCondition;
+  serialNumber: string | null;
+  location: string | null;
+  notes: string | null;
+  purchasedOn: string | null;
+  warrantyUntil: string | null;
+  events: InventoryEvent[];
+}
+
+export interface InventoryItemPayload {
+  name: string;
+  category: InventoryCategory;
+  condition: InventoryCondition;
+  serialNumber: string | null;
+  location: string | null;
+  notes: string | null;
+  purchasedOn: string | null;
+  warrantyUntil: string | null;
+  status?: InventoryStatus;
+}
+
+export interface InventoryReceivePayload {
+  name: string;
+  category: InventoryCategory;
+  condition: InventoryCondition;
+  quantity: number;
+  location: string | null;
+  serialNumber: string | null;
+  notes: string | null;
+  purchasedOn: string | null;
+  warrantyUntil: string | null;
+}
+
+export interface InventoryActionPayload {
+  action: InventoryAction;
+  location?: string | null;
+  note?: string | null;
+}
+
+export interface InventoryCategoryShelf {
+  category: InventoryCategory;
+  total: number;
+  available: number;
+  inUse: number;
+  inRepair: number;
+  retired: number;
+}
+
+export interface InventoryAttentionItem {
+  id: number;
+  assetTag: string;
+  name: string;
+  category: InventoryCategory;
+  status: InventoryStatus;
+  reason: string;
+  warrantyUntil: string | null;
+  location: string | null;
+}
+
+export interface InventoryOverview {
+  available: number;
+  inUse: number;
+  inRepair: number;
+  retired: number;
+  total: number;
+  categories: InventoryCategoryShelf[];
+  attention: InventoryAttentionItem[];
 }
 
 export interface EmployeeDocument {
