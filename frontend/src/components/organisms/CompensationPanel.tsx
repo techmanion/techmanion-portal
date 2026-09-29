@@ -87,22 +87,26 @@ export function CompensationPanel({
         <FormField label="Effective date">
           <Input type="date" value={effectiveDate} onChange={(event) => onEffectiveDateChange(event.target.value)} required />
         </FormField>
-        <FormField label="Commission rate" hint="Percentage, e.g. 5 for 5%. Optional.">
-          <Input
-            type="number"
-            min="0"
-            max="100"
-            step="0.01"
-            value={commissionRate ?? ""}
-            onChange={(event) => onCommissionRateChange(event.target.value === "" ? null : Number(event.target.value))}
-          />
-        </FormField>
-        <FormField label="Commission basis" hint="e.g. % of closed deal value. Optional.">
-          <Input
-            value={commissionBasis ?? ""}
-            onChange={(event) => onCommissionBasisChange(event.target.value || null)}
-          />
-        </FormField>
+        {employee.compensationType === "COMMISSION" && (
+          <>
+            <FormField label="Commission rate" hint="Percentage, e.g. 5 for 5%.">
+              <Input
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                value={commissionRate ?? ""}
+                onChange={(event) => onCommissionRateChange(event.target.value === "" ? null : Number(event.target.value))}
+              />
+            </FormField>
+            <FormField label="Commission basis" hint="e.g. % of closed deal value.">
+              <Input
+                value={commissionBasis ?? ""}
+                onChange={(event) => onCommissionBasisChange(event.target.value || null)}
+              />
+            </FormField>
+          </>
+        )}
       </FormDialog>
     </section>
   );

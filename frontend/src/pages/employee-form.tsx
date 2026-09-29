@@ -235,7 +235,14 @@ export function EmployeeFormPage() {
           <FormField label="Compensation type">
             <Select
               value={form.compensationType}
-              onChange={(event) => set("compensationType", event.target.value as EmployeePayload["compensationType"])}
+              onChange={(event) => {
+                const nextType = event.target.value as EmployeePayload["compensationType"];
+                setForm((current) => ({
+                  ...current,
+                  compensationType: nextType,
+                  ...(nextType === "COMMISSION" ? {} : { commissionRate: null, commissionBasis: null }),
+                }));
+              }}
             >
               {COMPENSATION_TYPES.map((value) => (
                 <option key={value} value={value}>
@@ -258,22 +265,26 @@ export function EmployeeFormPage() {
               required
             />
           </FormField>
-          <FormField label="Commission rate" hint="Percentage, e.g. 5 for 5%. Optional.">
-            <Input
-              type="number"
-              min="0"
-              max="100"
-              step="0.01"
-              value={form.commissionRate ?? ""}
-              onChange={(event) => set("commissionRate", event.target.value === "" ? null : Number(event.target.value))}
-            />
-          </FormField>
-          <FormField label="Commission basis" hint="e.g. % of closed deal value. Optional." className="md:col-span-2">
-            <Input
-              value={form.commissionBasis ?? ""}
-              onChange={(event) => set("commissionBasis", event.target.value || null)}
-            />
-          </FormField>
+          {form.compensationType === "COMMISSION" && (
+            <>
+              <FormField label="Commission rate" hint="Percentage, e.g. 5 for 5%.">
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  value={form.commissionRate ?? ""}
+                  onChange={(event) => set("commissionRate", event.target.value === "" ? null : Number(event.target.value))}
+                />
+              </FormField>
+              <FormField label="Commission basis" hint="e.g. % of closed deal value." className="md:col-span-2">
+                <Input
+                  value={form.commissionBasis ?? ""}
+                  onChange={(event) => set("commissionBasis", event.target.value || null)}
+                />
+              </FormField>
+            </>
+          )}
         </FormSection>
       )}
 
