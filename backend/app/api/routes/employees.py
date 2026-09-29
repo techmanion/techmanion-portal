@@ -174,3 +174,12 @@ def download_document(document_id: int, db: DbSession, _: CurrentUser) -> FileRe
     if not path.exists():
         raise HTTPException(status_code=404, detail="Stored file is unavailable.")
     return FileResponse(path, media_type=document.mime_type, filename=document.file_name)
+
+
+@router.delete("/documents/{document_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_document(document_id: int, db: DbSession, _: CurrentUser) -> None:
+    document = get_or_404(db, EmployeeDocument, document_id, "Document was not found.")
+    path = settings.upload_dir / document.file_key
+    db.delete(document)
+    db.commit()
+    path.unlink(missing_ok=True)

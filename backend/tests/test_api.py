@@ -695,6 +695,64 @@ def test_commission_employee_payroll_final_amount_includes_commission(
     assert entry["finalAmount"] == 71000
 
 
+def test_delete_document_removes_it_and_its_stored_file(
+    api_client: TestClient, executive_headers: dict[str, str]
+) -> None:
+    designation = api_client.post(
+        "/admin/settings/designations",
+        params={"name": f"Engineer {date.today().isoformat()}"},
+        headers=executive_headers,
+    ).json()
+    employee = api_client.post(
+        "/admin/employees",
+        json={
+            "firstName": "Doc",
+            "lastName": "Owner",
+            "email": f"doc-owner-{date.today().isoformat()}@example.com",
+            "phone": "03000000000",
+            "employeeType": "EMPLOYEE",
+            "status": "ACTIVE",
+            "designationId": designation["id"],
+            "joiningDate": "2025-01-01",
+            "baseAmount": 100000,
+            "currency": "PKR",
+        },
+        headers=executive_headers,
+    ).json()
+
+    document = api_client.post(
+        f"/admin/employees/{employee['id']}/documents",
+        data={"kind": "NDA"},
+        files={"file": ("nda.txt", b"confidential", "text/plain")},
+        headers=executive_headers,
+    ).json()
+
+    download = api_client.get(
+        f"/admin/documents/{document['id']}/download", headers=executive_headers
+    )
+    assert download.status_code == 200
+
+    delete_response = api_client.delete(
+        f"/admin/documents/{document['id']}", headers=executive_headers
+    )
+    assert delete_response.status_code == 204
+
+    listed = api_client.get(
+        f"/admin/employees/{employee['id']}/documents", headers=executive_headers
+    ).json()
+    assert listed == []
+
+    redownload = api_client.get(
+        f"/admin/documents/{document['id']}/download", headers=executive_headers
+    )
+    assert redownload.status_code == 404
+
+    redelete = api_client.delete(
+        f"/admin/documents/{document['id']}", headers=executive_headers
+    )
+    assert redelete.status_code == 404
+
+
 def test_activity_endpoint_filters_by_entity_type(
     api_client: TestClient, executive_headers: dict[str, str]
 ) -> None:

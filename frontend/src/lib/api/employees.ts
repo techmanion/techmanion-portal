@@ -48,3 +48,7 @@ export function uploadEmployeeDocument(employeeId: string | number, form: FormDa
 export function downloadDocument(documentId: number) {
   return apiBlob(`/admin/documents/${documentId}/download`);
 }
+
+export function deleteDocument(documentId: number) {
+  return api<void>(`/admin/documents/${documentId}`, { method: "DELETE" });
+}

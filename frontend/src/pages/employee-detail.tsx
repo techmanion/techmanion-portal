@@ -9,6 +9,7 @@ import {
   ProfileHeader,
 } from "../components/organisms";
 import {
+  deleteDocument,
   downloadDocument,
   getEmployee,
   listEmployeeDocuments,
@@ -86,6 +87,28 @@ export function EmployeeDetailPage() {
     }
   }
 
+  async function handleViewDocument(document: EmployeeDocument) {
+    const viewerTab = window.open("", "_blank");
+    try {
+      const blob = await downloadDocument(document.id);
+      const url = URL.createObjectURL(blob);
+      if (viewerTab) viewerTab.location.href = url;
+    } catch (reason) {
+      viewerTab?.close();
+      setError(reason instanceof Error ? reason.message : "Document could not be opened.");
+    }
+  }
+
+  async function handleDeleteDocument(document: EmployeeDocument) {
+    try {
+      await deleteDocument(document.id);
+      setDocuments((current) => current.filter((row) => row.id !== document.id));
+      toast.success("Document deleted.");
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Document could not be deleted.");
+    }
+  }
+
   if (!employee && !error) {
     return (
       <div className="grid min-h-[70vh] place-items-center">
@@ -147,7 +170,9 @@ export function EmployeeDetailPage() {
         <DocumentsPanel
           documents={documents}
           onUpload={uploadDocument}
+          onView={handleViewDocument}
           onDownload={handleDownloadDocument}
+          onDelete={handleDeleteDocument}
         />
       )}
       {error && <div className="mt-6 rounded-xl bg-error/10 px-4 py-3 text-sm text-error">{error}</div>}

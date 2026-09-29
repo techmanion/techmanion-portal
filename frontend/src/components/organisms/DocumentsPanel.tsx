@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Button, Icon, Input, Select } from "../atoms";
+import { Button, Icon, IconButton, Input, Select } from "../atoms";
 import { SectionHeading } from "../atoms/Typography";
-import { EmptyState, FormDialog, FormField } from "../molecules";
+import { ConfirmDialog, EmptyState, FormDialog, FormField } from "../molecules";
 import { documentKindLabel } from "../../lib/format";
 import { DOCUMENT_KINDS } from "../../lib/options";
 import type { EmployeeDocument } from "../../types";
@@ -9,15 +9,20 @@ import type { EmployeeDocument } from "../../types";
 export function DocumentsPanel({
   documents,
   onUpload,
+  onView,
   onDownload,
+  onDelete,
 }: {
   documents: EmployeeDocument[];
   onUpload: (formData: FormData) => Promise<void>;
+  onView: (document: EmployeeDocument) => void;
   onDownload: (document: EmployeeDocument) => void;
+  onDelete: (document: EmployeeDocument) => Promise<void>;
 }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState<EmployeeDocument | null>(null);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -31,6 +36,13 @@ export function DocumentsPanel({
     } finally {
       setSubmitting(false);
     }
+  }
+
+  function confirmDeleteDocument() {
+    if (!confirmDelete) return;
+    const document = confirmDelete;
+    setConfirmDelete(null);
+    void onDelete(document);
   }
 
   return (
@@ -54,9 +66,29 @@ export function DocumentsPanel({
                   </span>
                 </div>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => onDownload(document)}>
-                <Icon className="text-[16px]">download</Icon>Download
-              </Button>
+              <div className="flex items-center gap-1">
+                <IconButton
+                  size="sm"
+                  aria-label={`View ${document.fileName}`}
+                  onClick={() => onView(document)}
+                >
+                  <Icon className="text-[18px]">visibility</Icon>
+                </IconButton>
+                <IconButton
+                  size="sm"
+                  aria-label={`Download ${document.fileName}`}
+                  onClick={() => onDownload(document)}
+                >
+                  <Icon className="text-[18px]">download</Icon>
+                </IconButton>
+                <IconButton
+                  size="sm"
+                  aria-label={`Delete ${document.fileName}`}
+                  onClick={() => setConfirmDelete(document)}
+                >
+                  <Icon className="text-[18px]">delete</Icon>
+                </IconButton>
+              </div>
             </li>
           ))}
         </ul>
@@ -88,6 +120,14 @@ export function DocumentsPanel({
           <Input name="file" type="file" required />
         </FormField>
       </FormDialog>
+
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        title="Delete this document?"
+        description={confirmDelete ? `"${confirmDelete.fileName}" will be permanently removed.` : undefined}
+        onConfirm={confirmDeleteDocument}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }
