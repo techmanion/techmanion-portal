@@ -135,158 +135,160 @@ export function EmployeeFormPage() {
   }
 
   return (
-    <FormPage
-      breadcrumbTo={cancelTo}
-      breadcrumbTrail={isEdit ? ["Employees", fullName || "Employee", "Edit"] : ["Employees", "Add employee"]}
-      title={title}
-      description="Contact, employment, and compensation details."
-      onSubmit={submit}
-      submitLabel="Save changes"
-      submitting={submitting}
-      cancelTo={cancelTo}
-      error={error}
-    >
-      <FormSection heading="Contact details" bordered={false}>
-        {isEdit && (
-          <FormField label="Photo" className="md:col-span-2">
-            <EditableAvatar src={avatarSrc(avatarUrl)} alt={fullName || "Employee"} size="lg" onUpload={uploadAvatar} />
+    <>
+      <FormPage
+        breadcrumbTo={cancelTo}
+        breadcrumbTrail={isEdit ? ["Employees", fullName || "Employee", "Edit"] : ["Employees", "Add employee"]}
+        title={title}
+        description="Contact, employment, and compensation details."
+        onSubmit={submit}
+        submitLabel="Save changes"
+        submitting={submitting}
+        cancelTo={cancelTo}
+        error={error}
+      >
+        <FormSection heading="Contact details" bordered={false}>
+          {isEdit && (
+            <FormField label="Photo" className="md:col-span-2">
+              <EditableAvatar src={avatarSrc(avatarUrl)} alt={fullName || "Employee"} size="lg" onUpload={uploadAvatar} />
+            </FormField>
+          )}
+          <FormField label="Full name" className="md:col-span-2">
+            <Input value={fullName} onChange={(event) => setFullName(event.target.value)} required />
           </FormField>
-        )}
-        <FormField label="Full name" className="md:col-span-2">
-          <Input value={fullName} onChange={(event) => setFullName(event.target.value)} required />
-        </FormField>
-        <FormField label="Email">
-          <Input
-            type="email"
-            value={form.email}
-            onChange={(event) => set("email", event.target.value)}
-            required
-          />
-        </FormField>
-        <FormField label="Phone">
-          <Input value={form.phone} onChange={(event) => set("phone", event.target.value)} required />
-        </FormField>
-      </FormSection>
+          <FormField label="Email">
+            <Input
+              type="email"
+              value={form.email}
+              onChange={(event) => set("email", event.target.value)}
+              required
+            />
+          </FormField>
+          <FormField label="Phone">
+            <Input value={form.phone} onChange={(event) => set("phone", event.target.value)} required />
+          </FormField>
+        </FormSection>
 
-      <FormSection heading="Employment" accent="tertiary">
-        <FormField label="Designation">
-          <Select
-            value={form.designationId || ""}
-            onChange={(event) => {
-              if (event.target.value === ADD_DESIGNATION_VALUE) {
-                setDesignationError("");
-                setNewDesignationName("");
-                setAddingDesignation(true);
-                return;
-              }
-              set("designationId", Number(event.target.value));
-            }}
-            required
-          >
-            <option value="" disabled hidden>
-              Select designation
-            </option>
-            {designations.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-              </option>
-            ))}
-            {currentUser?.role === "EXECUTIVE" && (
-              <option value={ADD_DESIGNATION_VALUE}>+ Add new designation</option>
-            )}
-          </Select>
-        </FormField>
-        <FormField label="Employment type">
-          <Select
-            value={form.employeeType}
-            onChange={(event) => set("employeeType", event.target.value as EmployeePayload["employeeType"])}
-          >
-            {EMPLOYEE_TYPES.map((value) => (
-              <option key={value} value={value}>
-                {employeeTypeLabel(value)}
-              </option>
-            ))}
-          </Select>
-        </FormField>
-        <FormField label="Status">
-          <Select
-            value={form.status}
-            onChange={(event) => set("status", event.target.value as EmployeePayload["status"])}
-          >
-            {EMPLOYEE_STATUSES.map((value) => (
-              <option key={value} value={value}>
-                {label(value)}
-              </option>
-            ))}
-          </Select>
-        </FormField>
-        <FormField label="Joining date">
-          <Input
-            type="date"
-            value={form.joiningDate}
-            onChange={(event) => set("joiningDate", event.target.value)}
-            required
-          />
-        </FormField>
-      </FormSection>
-
-      {!isEdit && (
-        <FormSection heading="Compensation">
-          <FormField label="Compensation type">
+        <FormSection heading="Employment" accent="tertiary">
+          <FormField label="Designation">
             <Select
-              value={form.compensationType}
+              value={form.designationId || ""}
               onChange={(event) => {
-                const nextType = event.target.value as EmployeePayload["compensationType"];
-                setForm((current) => ({
-                  ...current,
-                  compensationType: nextType,
-                  ...(nextType === "COMMISSION" ? {} : { commissionRate: null, commissionBasis: null }),
-                }));
+                if (event.target.value === ADD_DESIGNATION_VALUE) {
+                  setDesignationError("");
+                  setNewDesignationName("");
+                  setAddingDesignation(true);
+                  return;
+                }
+                set("designationId", Number(event.target.value));
               }}
+              required
             >
-              {COMPENSATION_TYPES.map((value) => (
+              <option value="" disabled hidden>
+                Select designation
+              </option>
+              {designations.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+              {currentUser?.role === "EXECUTIVE" && (
+                <option value={ADD_DESIGNATION_VALUE}>+ Add new designation</option>
+              )}
+            </Select>
+          </FormField>
+          <FormField label="Employment type">
+            <Select
+              value={form.employeeType}
+              onChange={(event) => set("employeeType", event.target.value as EmployeePayload["employeeType"])}
+            >
+              {EMPLOYEE_TYPES.map((value) => (
+                <option key={value} value={value}>
+                  {employeeTypeLabel(value)}
+                </option>
+              ))}
+            </Select>
+          </FormField>
+          <FormField label="Status">
+            <Select
+              value={form.status}
+              onChange={(event) => set("status", event.target.value as EmployeePayload["status"])}
+            >
+              {EMPLOYEE_STATUSES.map((value) => (
                 <option key={value} value={value}>
                   {label(value)}
                 </option>
               ))}
             </Select>
           </FormField>
-          <FormField
-            label="Monthly compensation"
-            hint="Enter the amount in rupees; it is stored in minor units."
-          >
-            <MoneyInput value={form.baseAmount ?? 0} onChange={(value) => set("baseAmount", value)} required />
-          </FormField>
-          <FormField label="Currency">
+          <FormField label="Joining date">
             <Input
-              value={form.currency ?? "PKR"}
-              maxLength={3}
-              onChange={(event) => set("currency", event.target.value.toUpperCase())}
+              type="date"
+              value={form.joiningDate}
+              onChange={(event) => set("joiningDate", event.target.value)}
               required
             />
           </FormField>
-          {form.compensationType === "COMMISSION" && (
-            <>
-              <FormField label="Commission rate" hint="Percentage, e.g. 5 for 5%.">
-                <Input
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.01"
-                  value={form.commissionRate ?? ""}
-                  onChange={(event) => set("commissionRate", event.target.value === "" ? null : Number(event.target.value))}
-                />
-              </FormField>
-              <FormField label="Commission basis" hint="e.g. % of closed deal value." className="md:col-span-2">
-                <Input
-                  value={form.commissionBasis ?? ""}
-                  onChange={(event) => set("commissionBasis", event.target.value || null)}
-                />
-              </FormField>
-            </>
-          )}
         </FormSection>
-      )}
+
+        {!isEdit && (
+          <FormSection heading="Compensation">
+            <FormField label="Compensation type">
+              <Select
+                value={form.compensationType}
+                onChange={(event) => {
+                  const nextType = event.target.value as EmployeePayload["compensationType"];
+                  setForm((current) => ({
+                    ...current,
+                    compensationType: nextType,
+                    ...(nextType === "COMMISSION" ? {} : { commissionRate: null, commissionBasis: null }),
+                  }));
+                }}
+              >
+                {COMPENSATION_TYPES.map((value) => (
+                  <option key={value} value={value}>
+                    {label(value)}
+                  </option>
+                ))}
+              </Select>
+            </FormField>
+            <FormField
+              label="Monthly compensation"
+              hint="Enter the amount in rupees; it is stored in minor units."
+            >
+              <MoneyInput value={form.baseAmount ?? 0} onChange={(value) => set("baseAmount", value)} required />
+            </FormField>
+            <FormField label="Currency">
+              <Input
+                value={form.currency ?? "PKR"}
+                maxLength={3}
+                onChange={(event) => set("currency", event.target.value.toUpperCase())}
+                required
+              />
+            </FormField>
+            {form.compensationType === "COMMISSION" && (
+              <>
+                <FormField label="Commission rate" hint="Percentage, e.g. 5 for 5%.">
+                  <Input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value={form.commissionRate ?? ""}
+                    onChange={(event) => set("commissionRate", event.target.value === "" ? null : Number(event.target.value))}
+                  />
+                </FormField>
+                <FormField label="Commission basis" hint="e.g. % of closed deal value." className="md:col-span-2">
+                  <Input
+                    value={form.commissionBasis ?? ""}
+                    onChange={(event) => set("commissionBasis", event.target.value || null)}
+                  />
+                </FormField>
+              </>
+            )}
+          </FormSection>
+        )}
+      </FormPage>
 
       <FormDialog
         open={addingDesignation}
@@ -310,6 +312,6 @@ export function EmployeeFormPage() {
           />
         </FormField>
       </FormDialog>
-    </FormPage>
+    </>
   );
 }
