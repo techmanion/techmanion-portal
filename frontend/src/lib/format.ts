@@ -34,6 +34,14 @@ export function employeeTypeLabel(value: string): string {
   return employeeTypeLabels[value] ?? label(value);
 }
 
+const documentKindLabels: Record<string, string> = {
+  NDA: "NDA",
+};
+
+export function documentKindLabel(value: string): string {
+  return documentKindLabels[value] ?? label(value);
+}
+
 export function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (!parts.length) return "?";

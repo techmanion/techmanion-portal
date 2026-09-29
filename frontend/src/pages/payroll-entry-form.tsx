@@ -16,6 +16,7 @@ import type { BankAccount, Employee, PayrollEntry } from "../types";
 interface PayrollFormState {
   employeeId: string;
   baseCompensation: string;
+  commissionAmount: string;
   adjustment: string;
   currency: string;
   notes: string;
@@ -25,6 +26,7 @@ interface PayrollFormState {
 const emptyForm: PayrollFormState = {
   employeeId: "",
   baseCompensation: "",
+  commissionAmount: "0",
   adjustment: "0",
   currency: "PKR",
   notes: "",
@@ -58,6 +60,7 @@ export function PayrollEntryFormPage() {
         setForm({
           employeeId: String(row.employeeId),
           baseCompensation: String(row.baseCompensation / 100),
+          commissionAmount: String(row.commissionAmount / 100),
           adjustment: String(row.adjustment / 100),
           currency: row.currency,
           notes: row.notes ?? "",
@@ -90,6 +93,7 @@ export function PayrollEntryFormPage() {
       if (isEdit) {
         await updatePayrollEntry(Number(entryId), {
           baseCompensation: Math.round(Number(form.baseCompensation || 0) * 100),
+          commissionAmount: Math.round(Number(form.commissionAmount || 0) * 100),
           adjustment: Math.round(Number(form.adjustment || 0) * 100),
           currency: form.currency,
           notes: form.notes || null,
@@ -101,6 +105,7 @@ export function PayrollEntryFormPage() {
           employeeId: Number(form.employeeId),
           month,
           baseCompensation: Math.round(Number(form.baseCompensation || 0) * 100),
+          commissionAmount: Math.round(Number(form.commissionAmount || 0) * 100),
           adjustment: Math.round(Number(form.adjustment || 0) * 100),
           currency: form.currency,
           notes: form.notes || null,
@@ -150,6 +155,14 @@ export function PayrollEntryFormPage() {
             value={form.baseCompensation}
             onChange={(event) => set("baseCompensation", event.target.value)}
             required
+          />
+        </FormField>
+        <FormField label="Commission" hint="Commission earned for this cycle">
+          <Input
+            type="number"
+            min="0"
+            value={form.commissionAmount}
+            onChange={(event) => set("commissionAmount", event.target.value)}
           />
         </FormField>
         <FormField label="Adjustment" hint="Negative values are deductions">

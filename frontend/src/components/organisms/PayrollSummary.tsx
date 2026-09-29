@@ -28,6 +28,7 @@ function SummaryMetric({
 export function PayrollSummary({
   totalCount,
   base,
+  commission,
   adjustment,
   final,
   currency,
@@ -37,6 +38,7 @@ export function PayrollSummary({
 }: {
   totalCount: number;
   base: number;
+  commission: number;
   adjustment: number;
   final: number;
   currency: string;
@@ -49,6 +51,7 @@ export function PayrollSummary({
       <div className="grid grid-cols-2 gap-x-4 gap-y-5 sm:flex sm:gap-0 sm:divide-x sm:divide-outline-variant/50">
         <SummaryMetric labelText="Employees" value={String(totalCount)} />
         <SummaryMetric labelText="Base Compensation" value={formatMoney(base, currency)} />
+        <SummaryMetric labelText="Commission" value={formatMoney(commission, currency)} />
         <SummaryMetric labelText="Adjustments" value={formatMoney(adjustment, currency)} />
         <SummaryMetric labelText="Final Payable" value={formatMoney(final, currency)} tone="primary" />
       </div>

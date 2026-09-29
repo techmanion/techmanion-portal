@@ -9,15 +9,23 @@ export function CompensationPanel({
   employee,
   salary,
   effectiveDate,
+  commissionRate,
+  commissionBasis,
   onSalaryChange,
   onEffectiveDateChange,
+  onCommissionRateChange,
+  onCommissionBasisChange,
   onSubmit,
 }: {
   employee: Employee;
   salary: number;
   effectiveDate: string;
+  commissionRate: number | null;
+  commissionBasis: string | null;
   onSalaryChange: (value: number) => void;
   onEffectiveDateChange: (value: string) => void;
+  onCommissionRateChange: (value: number | null) => void;
+  onCommissionBasisChange: (value: string | null) => void;
   onSubmit: () => Promise<void>;
 }) {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -49,6 +57,12 @@ export function CompensationPanel({
               : "Not set"}
           </div>
           <span className="mt-1.5 block text-sm text-on-surface-variant">Fixed monthly salary</span>
+          {employee.currentSalary?.commissionRate != null && (
+            <span className="mt-1 block text-sm text-on-surface-variant">
+              Commission: {employee.currentSalary.commissionRate}%
+              {employee.currentSalary.commissionBasis ? ` · ${employee.currentSalary.commissionBasis}` : ""}
+            </span>
+          )}
         </div>
         <Button onClick={() => { setError(""); setDialogOpen(true); }}>
           <Icon className="text-[16px]">add</Icon>Add revision
@@ -72,6 +86,22 @@ export function CompensationPanel({
         </FormField>
         <FormField label="Effective date">
           <Input type="date" value={effectiveDate} onChange={(event) => onEffectiveDateChange(event.target.value)} required />
+        </FormField>
+        <FormField label="Commission rate" hint="Percentage, e.g. 5 for 5%. Optional.">
+          <Input
+            type="number"
+            min="0"
+            max="100"
+            step="0.01"
+            value={commissionRate ?? ""}
+            onChange={(event) => onCommissionRateChange(event.target.value === "" ? null : Number(event.target.value))}
+          />
+        </FormField>
+        <FormField label="Commission basis" hint="e.g. % of closed deal value. Optional.">
+          <Input
+            value={commissionBasis ?? ""}
+            onChange={(event) => onCommissionBasisChange(event.target.value || null)}
+          />
         </FormField>
       </FormDialog>
     </section>

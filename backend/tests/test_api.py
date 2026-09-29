@@ -648,6 +648,53 @@ def test_payroll_entry_out_includes_pkr_equivalent_when_paid_from_foreign_accoun
     assert response.json()["pkrEquivalent"] == 27900000
 
 
+def test_commission_employee_payroll_final_amount_includes_commission(
+    api_client: TestClient, executive_headers: dict[str, str]
+) -> None:
+    designation = api_client.post(
+        "/admin/settings/designations",
+        params={"name": f"Business Developer {date.today().isoformat()}"},
+        headers=executive_headers,
+    ).json()
+    employee = api_client.post(
+        "/admin/employees",
+        json={
+            "firstName": "Sam",
+            "lastName": "Sales",
+            "email": f"sam-{date.today().isoformat()}@example.com",
+            "phone": "03000000000",
+            "employeeType": "EMPLOYEE",
+            "status": "ACTIVE",
+            "compensationType": "COMMISSION",
+            "designationId": designation["id"],
+            "joiningDate": "2025-01-01",
+            "baseAmount": 50000,
+            "currency": "PKR",
+            "commissionRate": 5,
+            "commissionBasis": "% of closed deal value",
+        },
+        headers=executive_headers,
+    ).json()
+    assert employee["compensationType"] == "COMMISSION"
+    assert employee["currentSalary"]["commissionRate"] == 5
+    assert employee["currentSalary"]["commissionBasis"] == "% of closed deal value"
+
+    entry = api_client.post(
+        "/admin/finance/payroll",
+        json={
+            "employeeId": employee["id"],
+            "month": "2026-01",
+            "baseCompensation": 50000,
+            "commissionAmount": 20000,
+            "adjustment": 1000,
+            "currency": "PKR",
+        },
+        headers=executive_headers,
+    ).json()
+    assert entry["commissionAmount"] == 20000
+    assert entry["finalAmount"] == 71000
+
+
 def test_activity_endpoint_filters_by_entity_type(
     api_client: TestClient, executive_headers: dict[str, str]
 ) -> None:

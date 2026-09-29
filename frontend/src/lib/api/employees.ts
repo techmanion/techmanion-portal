@@ -25,7 +25,14 @@ export function uploadEmployeeAvatar(employeeId: string | number, file: File) {
 
 export function reviseSalary(
   employeeId: string | number,
-  payload: { baseAmount: number; currency: string; effectiveDate: string; reason: string },
+  payload: {
+    baseAmount: number;
+    currency: string;
+    commissionRate: number | null;
+    commissionBasis: string | null;
+    effectiveDate: string;
+    reason: string;
+  },
 ) {
   return api(`/admin/employees/${employeeId}/salary`, { method: "POST", body: JSON.stringify(payload) });
 }

@@ -27,6 +27,8 @@ export function EmployeeDetailPage() {
   const [activeTab, setActiveTab] = useState("Overview");
   const [salary, setSalary] = useState(0);
   const [effectiveDate, setEffectiveDate] = useState(new Date().toISOString().slice(0, 10));
+  const [commissionRate, setCommissionRate] = useState<number | null>(null);
+  const [commissionBasis, setCommissionBasis] = useState<string | null>(null);
   const [error, setError] = useState("");
   const toast = useToast();
 
@@ -45,10 +47,14 @@ export function EmployeeDetailPage() {
     await reviseSalary(employeeId!, {
       baseAmount: salary,
       currency: employee?.currentSalary?.currency ?? "PKR",
+      commissionRate,
+      commissionBasis,
       effectiveDate,
       reason: "RATE_CHANGE",
     });
     setSalary(0);
+    setCommissionRate(null);
+    setCommissionBasis(null);
     load();
     toast.success("Compensation revised.");
   }
@@ -127,8 +133,12 @@ export function EmployeeDetailPage() {
           employee={employee}
           salary={salary}
           effectiveDate={effectiveDate}
+          commissionRate={commissionRate}
+          commissionBasis={commissionBasis}
           onSalaryChange={setSalary}
           onEffectiveDateChange={setEffectiveDate}
+          onCommissionRateChange={setCommissionRate}
+          onCommissionBasisChange={setCommissionBasis}
           onSubmit={reviseSalaryEntry}
         />
       )}

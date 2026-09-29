@@ -1,15 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "../auth";
 import { Input, Select } from "../components/atoms";
-import { EditableAvatar, FormField, FormSection, MoneyInput } from "../components/molecules";
+import { EditableAvatar, FormDialog, FormField, FormSection, MoneyInput } from "../components/molecules";
 import { FormPage } from "../components/organisms";
 import { avatarSrc } from "../lib/api/client";
 import { createEmployee, getEmployee, updateEmployee, uploadEmployeeAvatar } from "../lib/api/employees";
-import { listDesignations } from "../lib/api/settings";
+import { addDesignation, listDesignations } from "../lib/api/settings";
 import { employeeTypeLabel, label } from "../lib/format";
-import { EMPLOYEE_STATUSES, EMPLOYEE_TYPES } from "../lib/options";
+import { COMPENSATION_TYPES, EMPLOYEE_STATUSES, EMPLOYEE_TYPES } from "../lib/options";
 import { useToast } from "../toast";
 import type { Employee, EmployeePayload, NamedOption } from "../types";
+
+const ADD_DESIGNATION_VALUE = "__add_designation__";
 
 const emptyEmployee: EmployeePayload = {
   firstName: "",
@@ -18,15 +21,19 @@ const emptyEmployee: EmployeePayload = {
   phone: "",
   employeeType: "EMPLOYEE",
   status: "ACTIVE",
+  compensationType: "FIXED",
   designationId: 0,
   joiningDate: new Date().toISOString().slice(0, 10),
   baseAmount: 0,
   currency: "PKR",
+  commissionRate: null,
+  commissionBasis: null,
 };
 
 export function EmployeeFormPage() {
   const { employeeId } = useParams();
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
   const isEdit = Boolean(employeeId);
   const [form, setForm] = useState<EmployeePayload>(emptyEmployee);
   const [fullName, setFullName] = useState("");
@@ -34,10 +41,18 @@ export function EmployeeFormPage() {
   const [designations, setDesignations] = useState<NamedOption[]>([]);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [addingDesignation, setAddingDesignation] = useState(false);
+  const [newDesignationName, setNewDesignationName] = useState("");
+  const [savingDesignation, setSavingDesignation] = useState(false);
+  const [designationError, setDesignationError] = useState("");
   const toast = useToast();
 
+  function refreshDesignations() {
+    return listDesignations().then(setDesignations);
+  }
+
   useEffect(() => {
-    listDesignations().then(setDesignations);
+    refreshDesignations();
     if (employeeId) {
       getEmployee(employeeId).then((employee: Employee) => {
         setFullName(employee.fullName);
@@ -49,12 +64,31 @@ export function EmployeeFormPage() {
           phone: employee.phone,
           employeeType: employee.employeeType,
           status: employee.status,
+          compensationType: employee.compensationType,
           designationId: employee.designationId,
           joiningDate: employee.joiningDate,
         });
       });
     }
   }, [employeeId]);
+
+  async function saveNewDesignation(event: React.FormEvent) {
+    event.preventDefault();
+    setSavingDesignation(true);
+    setDesignationError("");
+    try {
+      const created = await addDesignation(newDesignationName.trim());
+      await refreshDesignations();
+      set("designationId", created.id);
+      setAddingDesignation(false);
+      setNewDesignationName("");
+      toast.success("Designation added.");
+    } catch (reason) {
+      setDesignationError(reason instanceof Error ? reason.message : "Designation could not be added.");
+    } finally {
+      setSavingDesignation(false);
+    }
+  }
 
   async function uploadAvatar(file: File) {
     try {
@@ -83,6 +117,8 @@ export function EmployeeFormPage() {
       if (isEdit) {
         delete payload.baseAmount;
         delete payload.currency;
+        delete payload.commissionRate;
+        delete payload.commissionBasis;
         const saved = await updateEmployee(employeeId!, payload);
         navigate(`/employees/${saved.id}`);
         toast.success("Employee updated.");
@@ -136,7 +172,15 @@ export function EmployeeFormPage() {
         <FormField label="Designation">
           <Select
             value={form.designationId || ""}
-            onChange={(event) => set("designationId", Number(event.target.value))}
+            onChange={(event) => {
+              if (event.target.value === ADD_DESIGNATION_VALUE) {
+                setDesignationError("");
+                setNewDesignationName("");
+                setAddingDesignation(true);
+                return;
+              }
+              set("designationId", Number(event.target.value));
+            }}
             required
           >
             <option value="" disabled hidden>
@@ -147,6 +191,9 @@ export function EmployeeFormPage() {
                 {item.name}
               </option>
             ))}
+            {currentUser?.role === "EXECUTIVE" && (
+              <option value={ADD_DESIGNATION_VALUE}>+ Add new designation</option>
+            )}
           </Select>
         </FormField>
         <FormField label="Employment type">
@@ -185,6 +232,18 @@ export function EmployeeFormPage() {
 
       {!isEdit && (
         <FormSection heading="Compensation">
+          <FormField label="Compensation type">
+            <Select
+              value={form.compensationType}
+              onChange={(event) => set("compensationType", event.target.value as EmployeePayload["compensationType"])}
+            >
+              {COMPENSATION_TYPES.map((value) => (
+                <option key={value} value={value}>
+                  {label(value)}
+                </option>
+              ))}
+            </Select>
+          </FormField>
           <FormField
             label="Monthly compensation"
             hint="Enter the amount in rupees; it is stored in minor units."
@@ -199,8 +258,47 @@ export function EmployeeFormPage() {
               required
             />
           </FormField>
+          <FormField label="Commission rate" hint="Percentage, e.g. 5 for 5%. Optional.">
+            <Input
+              type="number"
+              min="0"
+              max="100"
+              step="0.01"
+              value={form.commissionRate ?? ""}
+              onChange={(event) => set("commissionRate", event.target.value === "" ? null : Number(event.target.value))}
+            />
+          </FormField>
+          <FormField label="Commission basis" hint="e.g. % of closed deal value. Optional." className="md:col-span-2">
+            <Input
+              value={form.commissionBasis ?? ""}
+              onChange={(event) => set("commissionBasis", event.target.value || null)}
+            />
+          </FormField>
         </FormSection>
       )}
+
+      <FormDialog
+        open={addingDesignation}
+        title="Add designation"
+        description="Create a designation for employee records."
+        icon="badge"
+        submitLabel="Add"
+        submittingLabel="Adding…"
+        submitting={savingDesignation}
+        submitDisabled={!newDesignationName.trim()}
+        error={designationError}
+        onSubmit={saveNewDesignation}
+        onClose={() => { setAddingDesignation(false); setNewDesignationName(""); setDesignationError(""); }}
+      >
+        <FormField label="Designation name">
+          <Input
+            value={newDesignationName}
+            onChange={(event) => setNewDesignationName(event.target.value)}
+            required
+            autoFocus
+          />
+        </FormField>
+      </FormDialog>
     </FormPage>
   );
 }

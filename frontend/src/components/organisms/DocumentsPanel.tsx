@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button, Icon, Input, Select } from "../atoms";
 import { SectionHeading } from "../atoms/Typography";
 import { EmptyState, FormDialog, FormField } from "../molecules";
-import { label } from "../../lib/format";
+import { documentKindLabel } from "../../lib/format";
 import { DOCUMENT_KINDS } from "../../lib/options";
 import type { EmployeeDocument } from "../../types";
 
@@ -50,7 +50,7 @@ export function DocumentsPanel({
                 <div>
                   <strong className="block text-sm">{document.fileName}</strong>
                   <span className="text-xs text-on-surface-variant">
-                    {label(document.kind)} · {Math.ceil(document.sizeBytes / 1024)} KB
+                    {documentKindLabel(document.kind)} · {Math.ceil(document.sizeBytes / 1024)} KB
                   </span>
                 </div>
               </div>
@@ -79,7 +79,7 @@ export function DocumentsPanel({
           <Select name="kind" defaultValue="CV">
             {DOCUMENT_KINDS.map((value) => (
               <option key={value} value={value}>
-                {label(value)}
+                {documentKindLabel(value)}
               </option>
             ))}
           </Select>

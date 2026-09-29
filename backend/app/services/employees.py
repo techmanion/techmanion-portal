@@ -60,7 +60,9 @@ def _retire_current_identifier(employee: Employee) -> None:
 
 
 def create_employee(db: Session, payload: EmployeeCreate, actor: User) -> Employee:
-    data = payload.model_dump(exclude={"base_amount", "currency"})
+    data = payload.model_dump(
+        exclude={"base_amount", "currency", "commission_rate", "commission_basis"}
+    )
     data["cnic"] = data.get("cnic") or f"PENDING-{uuid4().hex[:10].upper()}"
     employee = Employee(**data)
     db.add(employee)
@@ -72,6 +74,8 @@ def create_employee(db: Session, payload: EmployeeCreate, actor: User) -> Employ
                 employee_id=employee.id,
                 base_amount=payload.base_amount,
                 currency=payload.currency,
+                commission_rate=payload.commission_rate,
+                commission_basis=payload.commission_basis,
                 effective_date=payload.joining_date,
                 reason="HIRE",
                 created_by_user_id=actor.id,

@@ -81,7 +81,7 @@ export function LoginPage() {
         <div className="surface-panel relative flex w-full flex-col justify-between overflow-hidden p-8 sm:p-10 lg:p-14">
 
           <div className="relative z-10">
-            <div className="mx-auto w-full max-w-[440px]">
+            <div className="mx-auto w-full max-w-[640px]">
               <div className="mb-6">
                 <h2 className="mb-1.5 text-2xl md:text-4xl font-semibold text-on-surface">Welcome back</h2>
                 <p className="text-sm text-on-surface-variant">Sign in with your company account</p>

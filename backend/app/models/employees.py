@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from datetime import date, datetime
+from decimal import Decimal
 from enum import Enum
 
-from sqlalchemy import BigInteger, Date, DateTime, ForeignKey, String, Text
+from sqlalchemy import BigInteger, Date, DateTime, ForeignKey, Numeric, String, Text
 from sqlalchemy import Enum as SqlEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -39,6 +40,7 @@ class CompensationType(str, Enum):
     FIXED = "FIXED"
     HOURLY = "HOURLY"
     PROJECT = "PROJECT"
+    COMMISSION = "COMMISSION"
 
 
 class Employee(TimestampMixin, Base):
@@ -108,6 +110,8 @@ class SalaryRevision(TimestampMixin, Base):
     employee_id: Mapped[int] = mapped_column(ForeignKey("employees.id", ondelete="CASCADE"))
     base_amount: Mapped[int] = mapped_column(BigInteger)
     currency: Mapped[str] = mapped_column(String(3), default="PKR")
+    commission_rate: Mapped[Decimal | None] = mapped_column(Numeric(5, 2), nullable=True)
+    commission_basis: Mapped[str | None] = mapped_column(String(120), nullable=True)
     effective_date: Mapped[date] = mapped_column(Date)
     reason: Mapped[str] = mapped_column(String(32), default="HIRE")
     created_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))

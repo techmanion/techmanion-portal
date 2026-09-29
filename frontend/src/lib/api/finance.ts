@@ -18,6 +18,7 @@ export interface PayrollEntryPayload {
   employeeId: number;
   month: string;
   baseCompensation: number;
+  commissionAmount: number;
   adjustment: number;
   currency: string;
   notes: string | null;

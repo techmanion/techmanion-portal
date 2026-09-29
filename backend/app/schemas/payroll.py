@@ -10,6 +10,7 @@ class PayrollEntryCreate(ApiModel):
     employee_id: int
     month: str = Field(min_length=7, max_length=7)
     base_compensation: int = Field(ge=0)
+    commission_amount: int = 0
     adjustment: int = 0
     currency: str = Field(default="PKR", min_length=3, max_length=3)
     notes: str | None = None
@@ -22,6 +23,7 @@ class PayrollEntryCreate(ApiModel):
 
 class PayrollEntryUpdate(ApiModel):
     base_compensation: int = Field(ge=0)
+    commission_amount: int = 0
     adjustment: int = 0
     currency: str = Field(default="PKR", min_length=3, max_length=3)
     notes: str | None = None
@@ -39,6 +41,7 @@ class PayrollEntryOut(ApiModel):
     employee_name: str
     month: str
     base_compensation: int
+    commission_amount: int
     adjustment: int
     final_amount: int
     currency: str

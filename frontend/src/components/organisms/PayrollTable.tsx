@@ -24,6 +24,7 @@ export function PayrollTable({
         <TableHeadRow>
           <th className="px-7 py-3 font-medium">Employee</th>
           <th className="px-4 py-3 text-right font-medium">Base Compensation</th>
+          <th className="px-4 py-3 text-right font-medium">Commission</th>
           <th className="px-4 py-3 text-right font-medium">Adjustment</th>
           <th className="px-4 py-3 text-right font-medium">Final Amount</th>
           <th className="px-4 py-3 font-medium">Status</th>
@@ -38,6 +39,9 @@ export function PayrollTable({
             </td>
             <td className="px-4 text-right text-sm">
               {formatMoney(entry.baseCompensation, entry.currency)}
+            </td>
+            <td className="px-4 text-right text-sm">
+              {formatMoney(entry.commissionAmount, entry.currency)}
             </td>
             <td
               className={`px-4 text-right text-sm ${entry.adjustment < 0 ? "text-error" : "text-on-surface"}`}

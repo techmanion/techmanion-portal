@@ -1,5 +1,6 @@
 import type {
   CandidateStage,
+  CompensationType,
   Currency,
   EmployeeStatus,
   EmployeeType,
@@ -20,6 +21,13 @@ export const EMPLOYEE_STATUSES: EmployeeStatus[] = [
   "ON_LEAVE",
   "RESIGNED",
   "TERMINATED",
+];
+
+export const COMPENSATION_TYPES: CompensationType[] = [
+  "FIXED",
+  "HOURLY",
+  "PROJECT",
+  "COMMISSION",
 ];
 
 export const EXPENSE_TYPES: ExpenseType[] = ["ONE_TIME", "MONTHLY_RECURRING"];
@@ -75,7 +83,15 @@ export const INVENTORY_CATEGORY_ICONS: Record<InventoryCategory, string> = {
   OTHER: "category",
 };
 
-export const DOCUMENT_KINDS = ["CV", "CONTRACT", "ID_COPY", "CERTIFICATE", "OTHER"];
+export const DOCUMENT_KINDS = [
+  "CV",
+  "CONTRACT",
+  "NDA",
+  "OFFER_LETTER",
+  "ID_COPY",
+  "CERTIFICATE",
+  "OTHER",
+];
 
 export const ACTIVITY_ENTITY_TYPES = [
   "Project",

@@ -96,6 +96,7 @@ def serialize_payroll_entry(entry: PayrollEntry) -> PayrollEntryOut:
         employee_name=entry.employee.full_name,
         month=entry.month,
         base_compensation=entry.base_compensation,
+        commission_amount=entry.commission_amount,
         adjustment=entry.adjustment,
         final_amount=entry.final_amount,
         currency=entry.currency,

@@ -26,6 +26,7 @@ class PayrollEntry(TimestampMixin, Base):
     employee_id: Mapped[int] = mapped_column(ForeignKey("employees.id"))
     month: Mapped[str] = mapped_column(String(7), index=True)
     base_compensation: Mapped[int] = mapped_column(BigInteger)
+    commission_amount: Mapped[int] = mapped_column(BigInteger, default=0)
     adjustment: Mapped[int] = mapped_column(BigInteger, default=0)
     final_amount: Mapped[int] = mapped_column(BigInteger)
     currency: Mapped[str] = mapped_column(String(3), default="PKR")

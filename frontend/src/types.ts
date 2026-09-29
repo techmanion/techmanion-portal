@@ -1,5 +1,6 @@
 export type EmployeeStatus = "ACTIVE" | "ON_LEAVE" | "RESIGNED" | "TERMINATED";
 export type EmployeeType = "EXECUTIVE" | "EMPLOYEE" | "CONTRACTOR" | "INTERN";
+export type CompensationType = "FIXED" | "HOURLY" | "PROJECT" | "COMMISSION";
 /** User.role reuses EmployeeType: EXECUTIVE (core member) has elevated access. */
 export type UserRole = EmployeeType;
 export type ProjectStatus = "PLANNED" | "ACTIVE" | "ON_HOLD" | "COMPLETED";
@@ -97,6 +98,8 @@ export interface Salary {
   id: number;
   baseAmount: number;
   currency: string;
+  commissionRate: number | null;
+  commissionBasis: string | null;
   effectiveDate: string;
   reason: string;
 }
@@ -117,6 +120,7 @@ export interface Employee {
   phone: string;
   employeeType: EmployeeType;
   status: EmployeeStatus;
+  compensationType: CompensationType;
   employeeCode?: string;
   designationId: number;
   designation?: NamedOption;
@@ -141,6 +145,8 @@ export type EmployeePayload = Omit<
 > & {
   baseAmount?: number;
   currency?: string;
+  commissionRate?: number | null;
+  commissionBasis?: string | null;
 };
 
 export interface Job {
@@ -249,6 +255,7 @@ export interface PayrollEntry {
   employeeName: string;
   month: string;
   baseCompensation: number;
+  commissionAmount: number;
   adjustment: number;
   finalAmount: number;
   currency: string;

@@ -2,7 +2,7 @@ from datetime import date, datetime
 
 from pydantic import EmailStr, Field, field_validator
 
-from app.models import EmployeeStatus, EmployeeType
+from app.models import CompensationType, EmployeeStatus, EmployeeType
 from app.schemas.common import ApiModel, NamedOption
 
 
@@ -10,6 +10,8 @@ class SalaryOut(ApiModel):
     id: int
     base_amount: int
     currency: str
+    commission_rate: float | None = None
+    commission_basis: str | None = None
     effective_date: date
     reason: str
 
@@ -28,6 +30,7 @@ class EmployeeBase(ApiModel):
     phone: str = Field(default="", max_length=40)
     employee_type: EmployeeType
     status: EmployeeStatus = EmployeeStatus.ACTIVE
+    compensation_type: CompensationType = CompensationType.FIXED
     designation_id: int
     joining_date: date
 
@@ -35,6 +38,8 @@ class EmployeeBase(ApiModel):
 class EmployeeCreate(EmployeeBase):
     base_amount: int = Field(ge=0)
     currency: str = Field(default="PKR", min_length=3, max_length=3)
+    commission_rate: float | None = None
+    commission_basis: str | None = None
 
     @field_validator("currency")
     @classmethod
@@ -60,6 +65,8 @@ class EmployeeOut(EmployeeBase):
 class SalaryCreate(ApiModel):
     base_amount: int = Field(ge=0)
     currency: str = Field(default="PKR", min_length=3, max_length=3)
+    commission_rate: float | None = None
+    commission_basis: str | None = None
     effective_date: date
     reason: str = "RATE_CHANGE"
 

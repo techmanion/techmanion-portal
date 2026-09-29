@@ -43,8 +43,9 @@ def create_payroll_entry(
         employee_id=payload.employee_id,
         month=payload.month,
         base_compensation=payload.base_compensation,
+        commission_amount=payload.commission_amount,
         adjustment=payload.adjustment,
-        final_amount=payload.base_compensation + payload.adjustment,
+        final_amount=payload.base_compensation + payload.commission_amount + payload.adjustment,
         currency=payload.currency,
         notes=payload.notes,
     )
@@ -94,6 +95,7 @@ def generate_payroll_for_month(
             employee_id=employee.id,
             month=month,
             base_compensation=salary.base_amount,
+            commission_amount=0,
             adjustment=0,
             final_amount=salary.base_amount,
             currency=salary.currency,
@@ -119,8 +121,9 @@ def update_payroll_entry(
     db: Session, entry: PayrollEntry, payload: PayrollEntryUpdate, actor: User | None = None
 ) -> PayrollEntry:
     entry.base_compensation = payload.base_compensation
+    entry.commission_amount = payload.commission_amount
     entry.adjustment = payload.adjustment
-    entry.final_amount = payload.base_compensation + payload.adjustment
+    entry.final_amount = payload.base_compensation + payload.commission_amount + payload.adjustment
     entry.currency = payload.currency
     entry.notes = payload.notes
 
