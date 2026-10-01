@@ -1,7 +1,15 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from app.models import BankAccount, BankTransaction, Expense, PayrollEntry, Project, ProjectPayment
+from app.models import (
+    BankAccount,
+    BankTransaction,
+    Expense,
+    MiscIncome,
+    PayrollEntry,
+    Project,
+    ProjectPayment,
+)
 
 
 def _bank_account_options():
@@ -37,6 +45,15 @@ def list_expenses(db: Session) -> list[Expense]:
         select(Expense)
         .options(selectinload(Expense.bank_transaction))
         .order_by(Expense.expense_date.desc(), Expense.id.desc())
+    )
+    return list(db.scalars(statement).all())
+
+
+def list_misc_incomes(db: Session) -> list[MiscIncome]:
+    statement = (
+        select(MiscIncome)
+        .options(selectinload(MiscIncome.bank_transaction))
+        .order_by(MiscIncome.income_date.desc(), MiscIncome.id.desc())
     )
     return list(db.scalars(statement).all())
 

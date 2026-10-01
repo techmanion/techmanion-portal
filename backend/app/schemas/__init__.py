@@ -31,6 +31,10 @@ from app.schemas.finance import (
     FinanceOverviewOut,
     FinanceTransactionOut,
     IncomeOut,
+    MiscIncomeBase,
+    MiscIncomeCreate,
+    MiscIncomeOut,
+    MiscIncomeUpdate,
 )
 from app.schemas.hiring import (
     CandidateBase,
@@ -122,6 +126,10 @@ __all__ = [
     "JobCreate",
     "JobOut",
     "JobUpdate",
+    "MiscIncomeBase",
+    "MiscIncomeCreate",
+    "MiscIncomeOut",
+    "MiscIncomeUpdate",
     "NamedOption",
     "OrganizationOut",
     "OrganizationUpdate",

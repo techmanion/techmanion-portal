@@ -8,6 +8,8 @@ import type {
   ExpensePayload,
   FinanceIncome,
   FinanceOverview,
+  MiscIncome,
+  MiscIncomePayload,
   PayrollBackfillBankPayload,
   PayrollEntry,
   PayrollMarkPaidPayload,
@@ -58,6 +60,33 @@ export function updateExpense(expenseId: number, payload: ExpensePayload) {
 
 export function deleteExpense(expenseId: number) {
   return api<void>(`/admin/finance/expenses/${expenseId}`, { method: "DELETE" });
+}
+
+export function listMiscIncome() {
+  return api<MiscIncome[]>("/admin/finance/misc-income");
+}
+
+export async function getMiscIncome(miscIncomeId: number): Promise<MiscIncome | undefined> {
+  const rows = await listMiscIncome();
+  return rows.find((row) => row.id === miscIncomeId);
+}
+
+export function createMiscIncome(payload: MiscIncomePayload) {
+  return api<MiscIncome>("/admin/finance/misc-income", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateMiscIncome(miscIncomeId: number, payload: MiscIncomePayload) {
+  return api<MiscIncome>(`/admin/finance/misc-income/${miscIncomeId}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteMiscIncome(miscIncomeId: number) {
+  return api<void>(`/admin/finance/misc-income/${miscIncomeId}`, { method: "DELETE" });
 }
 
 export function listPayrollEntries(month: string) {

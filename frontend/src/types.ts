@@ -310,6 +310,22 @@ export type ExpensePayload = Omit<Expense, "id" | "bankAccountId" | "bankTransac
   pkrEquivalent: number | null;
 };
 
+export interface MiscIncome {
+  id: number;
+  title: string;
+  amount: number;
+  currency: string;
+  date: string;
+  notes: string | null;
+  bankAccountId: number | null;
+  bankTransactionId: number | null;
+}
+
+export type MiscIncomePayload = Omit<MiscIncome, "id" | "bankAccountId" | "bankTransactionId"> & {
+  bankAccountId: number;
+  pkrEquivalent: number | null;
+};
+
 export interface BankTransaction {
   id: number;
   bankAccountId: number;

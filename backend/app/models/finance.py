@@ -41,6 +41,22 @@ class Expense(TimestampMixin, Base):
     bank_transaction: Mapped["BankTransaction | None"] = relationship()
 
 
+class MiscIncome(TimestampMixin, Base):
+    __tablename__ = "misc_incomes"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String(160))
+    amount: Mapped[int] = mapped_column(BigInteger)
+    currency: Mapped[str] = mapped_column(String(3), default="PKR")
+    income_date: Mapped[date] = mapped_column(Date)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    bank_transaction_id: Mapped[int | None] = mapped_column(
+        ForeignKey("bank_transactions.id"), nullable=True
+    )
+
+    bank_transaction: Mapped["BankTransaction | None"] = relationship()
+
+
 class TransactionType(str, Enum):
     CREDIT = "CREDIT"
     DEBIT = "DEBIT"

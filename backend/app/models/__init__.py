@@ -7,6 +7,7 @@ from app.models.finance import (
     Expense,
     ExpenseFrequency,
     ExpenseType,
+    MiscIncome,
     TransactionSource,
     TransactionType,
 )
@@ -75,6 +76,7 @@ __all__ = [
     "Job",
     "JobStatus",
     "MilestoneStatus",
+    "MiscIncome",
     "PaymentStatus",
     "PayrollEntry",
     "PayrollEntryStatus",

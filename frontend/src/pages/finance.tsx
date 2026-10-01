@@ -8,6 +8,7 @@ import {
   FinanceIncomeTable,
   FinanceOverviewPanel,
   FilterToolbar,
+  MiscIncomeTable,
   PageHeader,
   PayrollSummary,
   PayrollTable,
@@ -16,17 +17,19 @@ import { useClearSearchParams, useSearchParamState } from "../hooks/useSearchPar
 import {
   backfillPayrollBank,
   deleteExpense,
+  deleteMiscIncome,
   deletePayrollEntry,
   generatePayroll,
   getFinanceOverview,
   listBankAccounts,
   listExpenses,
   listFinanceIncome,
+  listMiscIncome,
   listPayrollEntries,
   markPayrollPaid,
 } from "../lib/api/finance";
 import { useToast } from "../toast";
-import type { BankAccount, Expense, FinanceIncome, FinanceOverview, PayrollEntry } from "../types";
+import type { BankAccount, Expense, FinanceIncome, FinanceOverview, MiscIncome, PayrollEntry } from "../types";
 
 const tabs = ["Overview", "Payroll", "Income", "Expenses", "Bank Accounts"] as const;
 type FinanceTab = (typeof tabs)[number];
@@ -46,12 +49,14 @@ export function FinancePage() {
   const clearSearchParams = useClearSearchParams();
   const [overview, setOverview] = useState<FinanceOverview | null>(null);
   const [income, setIncome] = useState<FinanceIncome[]>([]);
+  const [miscIncome, setMiscIncome] = useState<MiscIncome[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [entries, setEntries] = useState<PayrollEntry[]>([]);
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [confirmExpense, setConfirmExpense] = useState<Expense | null>(null);
+  const [confirmMiscIncome, setConfirmMiscIncome] = useState<MiscIncome | null>(null);
   const [confirmGenerate, setConfirmGenerate] = useState(false);
   const [confirmPayroll, setConfirmPayroll] = useState<PayrollEntry | null>(null);
   const [payTarget, setPayTarget] = useState<PayrollEntry | null>(null);
@@ -78,7 +83,7 @@ export function FinancePage() {
       activeTab === "Overview"
         ? loadOverview()
         : activeTab === "Income"
-          ? listFinanceIncome().then(setIncome)
+          ? Promise.all([listFinanceIncome().then(setIncome), listMiscIncome().then(setMiscIncome)])
           : activeTab === "Expenses"
             ? listExpenses().then(setExpenses)
             : activeTab === "Bank Accounts"
@@ -209,6 +214,19 @@ export function FinancePage() {
     }
   }
 
+  async function removeMiscIncome() {
+    if (!confirmMiscIncome) return;
+    const row = confirmMiscIncome;
+    setConfirmMiscIncome(null);
+    try {
+      await deleteMiscIncome(row.id);
+      await listMiscIncome().then(setMiscIncome);
+      toast.success("Income deleted.");
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Income could not be deleted.");
+    }
+  }
+
   const actions = activeTab === "Payroll" ? (
     <>
       <label className="relative flex h-10 items-center rounded-full bg-surface-container-high px-4">
@@ -219,6 +237,8 @@ export function FinancePage() {
       <Button size="lg" onClick={() => setConfirmGenerate(true)}><Icon className="text-[18px]">add</Icon>Generate Payroll</Button>
       <Link to={`/finance/payroll/new?month=${month}`} className="inline-flex h-10 items-center gap-2 rounded-full bg-surface-container-highest px-5 text-sm font-medium text-on-surface ring-1 ring-outline-variant/40 hover:bg-surface-bright"><Icon className="text-[18px]">add</Icon>Add entry</Link>
     </>
+  ) : activeTab === "Income" ? (
+    <Link to="/finance/misc-income/new" className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-5 text-sm font-medium text-on-primary shadow-md shadow-black/10 hover:brightness-105"><Icon className="text-[18px]">add</Icon>Add misc income</Link>
   ) : activeTab === "Expenses" ? (
     <Link to="/finance/expenses/new" className="inline-flex h-10 items-center gap-2 rounded-full bg-primary px-5 text-sm font-medium text-on-primary shadow-md shadow-black/10 hover:brightness-105"><Icon className="text-[18px]">add</Icon>Add expense</Link>
   ) : activeTab === "Bank Accounts" ? (
@@ -236,7 +256,24 @@ export function FinancePage() {
       {loading && <div className="grid min-h-40 place-items-center"><Loading /></div>}
 
       {!loading && activeTab === "Overview" && overview && <FinanceOverviewPanel overview={overview} />}
-      {!loading && activeTab === "Income" && <section className="surface-panel overflow-hidden">{income.length ? <FinanceIncomeTable income={income} /> : <EmptyState>No project payments recorded yet.</EmptyState>}</section>}
+      {!loading && activeTab === "Income" && (
+        <div className="space-y-6">
+          <section className="surface-panel overflow-hidden">{income.length ? <FinanceIncomeTable income={income} /> : <EmptyState>No project payments recorded yet.</EmptyState>}</section>
+          <section className="surface-panel overflow-hidden">
+            <h2 className="px-6 pt-5 text-sm font-medium text-on-surface-variant">Other income</h2>
+            {miscIncome.length ? (
+              <MiscIncomeTable
+                miscIncome={miscIncome}
+                onEdit={(row) => navigate(`/finance/misc-income/${row.id}/edit`)}
+                onCopy={(row) => navigate("/finance/misc-income/new", { state: { copyFrom: row } })}
+                onDelete={setConfirmMiscIncome}
+              />
+            ) : (
+              <EmptyState>No miscellaneous income recorded yet.</EmptyState>
+            )}
+          </section>
+        </div>
+      )}
       {!loading && activeTab === "Expenses" && (
         <section className="surface-panel overflow-hidden">{expenses.length ? <ExpensesTable expenses={expenses} onEdit={(expense) => navigate(`/finance/expenses/${expense.id}/edit`)} onCopy={(expense) => navigate("/finance/expenses/new", { state: { copyFrom: expense } })} onDelete={setConfirmExpense} /> : <EmptyState>No expenses recorded yet.</EmptyState>}</section>
       )}
@@ -268,6 +305,7 @@ export function FinancePage() {
       <ConfirmDialog open={confirmGenerate} title={`Generate payroll for ${monthLabel}?`} description="This creates a pending payroll entry for every active employee who doesn't already have one this month." confirmLabel="Generate" tone="primary" onConfirm={generate} onCancel={() => setConfirmGenerate(false)} />
       <ConfirmDialog open={confirmPayroll !== null} title="Delete this payroll entry?" description={confirmPayroll ? `The entry for ${confirmPayroll.employeeName} will be permanently removed.` : undefined} confirmLabel="Delete entry" onConfirm={removePayroll} onCancel={() => setConfirmPayroll(null)} />
       <ConfirmDialog open={confirmExpense !== null} title="Delete this expense?" description={confirmExpense ? `"${confirmExpense.title}" will be permanently removed.` : undefined} confirmLabel="Delete expense" onConfirm={removeExpense} onCancel={() => setConfirmExpense(null)} />
+      <ConfirmDialog open={confirmMiscIncome !== null} title="Delete this income entry?" description={confirmMiscIncome ? `"${confirmMiscIncome.title}" will be permanently removed.` : undefined} confirmLabel="Delete income" onConfirm={removeMiscIncome} onCancel={() => setConfirmMiscIncome(null)} />
 
       <FormDialog
         open={payTarget !== null}

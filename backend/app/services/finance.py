@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.models import (
     BankAccount,
     Expense,
+    MiscIncome,
     PayrollEntry,
     PayrollEntryStatus,
     TransactionSource,
@@ -13,10 +14,18 @@ from app.models import (
 from app.repositories.finance import (
     list_bank_accounts,
     list_expenses,
+    list_misc_incomes,
     list_payroll_entries_detailed,
     list_project_payment_rows,
 )
-from app.schemas import ExpenseCreate, ExpenseUpdate, FinanceOverviewOut, FinanceTransactionOut
+from app.schemas import (
+    ExpenseCreate,
+    ExpenseUpdate,
+    FinanceOverviewOut,
+    FinanceTransactionOut,
+    MiscIncomeCreate,
+    MiscIncomeUpdate,
+)
 from app.services.activity import log_activity
 from app.services.bank import (
     _build_bank_transaction,
@@ -140,17 +149,138 @@ def delete_expense(db: Session, expense: Expense, actor: User | None = None) -> 
     db.commit()
 
 
+def _misc_income_values(payload: MiscIncomeCreate | MiscIncomeUpdate) -> dict:
+    values = payload.model_dump()
+    values["income_date"] = values.pop("date")
+    values.pop("bank_account_id")
+    values.pop("pkr_equivalent")
+    return values
+
+
+def _require_misc_income_currency_match(
+    payload: MiscIncomeCreate | MiscIncomeUpdate, account: BankAccount
+) -> None:
+    if payload.currency != account.currency.value:
+        raise HTTPException(
+            status_code=422,
+            detail="Income currency must match the selected bank account currency.",
+        )
+
+
+def create_misc_income(
+    db: Session, payload: MiscIncomeCreate, account: BankAccount, actor: User | None = None
+) -> MiscIncome:
+    _require_misc_income_currency_match(payload, account)
+    misc_income = MiscIncome(**_misc_income_values(payload))
+    db.add(misc_income)
+    db.flush()
+    transaction = _build_bank_transaction(
+        db,
+        account,
+        TransactionType.CREDIT,
+        transaction_date=payload.date,
+        amount=payload.amount,
+        pkr_equivalent_supplied=payload.pkr_equivalent,
+        description=f"Misc income · {payload.title}",
+        notes=payload.notes,
+        source=TransactionSource.INCOME,
+    )
+    misc_income.bank_transaction_id = transaction.id
+    db.flush()
+    log_activity(
+        db,
+        "MiscIncome",
+        misc_income.id,
+        "CREATE",
+        f"Created misc income {misc_income.title}",
+        performed_by_user_id=actor.id if actor else None,
+        metadata={"amount": misc_income.amount, "currency": misc_income.currency},
+    )
+    db.commit()
+    return misc_income
+
+
+def update_misc_income(
+    db: Session,
+    misc_income: MiscIncome,
+    payload: MiscIncomeUpdate,
+    account: BankAccount,
+    actor: User | None = None,
+) -> MiscIncome:
+    _require_misc_income_currency_match(payload, account)
+    for key, value in _misc_income_values(payload).items():
+        setattr(misc_income, key, value)
+
+    transaction = misc_income.bank_transaction
+    if transaction is None:
+        transaction = _build_bank_transaction(
+            db,
+            account,
+            TransactionType.CREDIT,
+            transaction_date=payload.date,
+            amount=payload.amount,
+            pkr_equivalent_supplied=payload.pkr_equivalent,
+            description=f"Misc income · {payload.title}",
+            notes=payload.notes,
+            source=TransactionSource.INCOME,
+        )
+        misc_income.bank_transaction_id = transaction.id
+    else:
+        _require_active_bank_account(account)
+        transaction.bank_account_id = account.id
+        transaction.transaction_date = payload.date
+        transaction.amount = payload.amount
+        transaction.pkr_equivalent = _resolve_pkr_equivalent(account, payload.amount, payload.pkr_equivalent)
+        transaction.description = f"Misc income · {payload.title}"
+        transaction.notes = payload.notes
+
+    log_activity(
+        db,
+        "MiscIncome",
+        misc_income.id,
+        "UPDATE",
+        f"Updated misc income {misc_income.title}",
+        performed_by_user_id=actor.id if actor else None,
+    )
+    db.commit()
+    return misc_income
+
+
+def delete_misc_income(db: Session, misc_income: MiscIncome, actor: User | None = None) -> None:
+    transaction = misc_income.bank_transaction
+    log_activity(
+        db,
+        "MiscIncome",
+        misc_income.id,
+        "DELETE",
+        f"Deleted misc income {misc_income.title}",
+        performed_by_user_id=actor.id if actor else None,
+    )
+    db.delete(misc_income)
+    db.flush()
+    if transaction is not None:
+        db.delete(transaction)
+    db.commit()
+
+
 def build_finance_overview(db: Session) -> FinanceOverviewOut:
     income_rows = list_project_payment_rows(db)
+    misc_incomes = list_misc_incomes(db)
     expenses = list_expenses(db)
     payroll_entries = list_payroll_entries_detailed(db)
     bank_accounts = list_bank_accounts(db)
 
-    total_income = sum(
+    project_income_total = sum(
         payment.bank_transaction.pkr_equivalent
         for payment, _ in income_rows
         if payment.bank_transaction is not None
     )
+    misc_income_total = sum(
+        misc_income.bank_transaction.pkr_equivalent
+        for misc_income in misc_incomes
+        if misc_income.bank_transaction is not None
+    )
+    total_income = project_income_total + misc_income_total
     expense_total = sum(
         expense.bank_transaction.pkr_equivalent
         for expense in expenses
@@ -184,6 +314,18 @@ def build_finance_overview(db: Session) -> FinanceOverviewOut:
         )
         for payment, project in income_rows
     ]
+    transactions.extend(
+        FinanceTransactionOut(
+            id=f"misc-income-{misc_income.id}",
+            kind="INCOME",
+            date=misc_income.income_date,
+            title=misc_income.title,
+            description="Misc income",
+            amount=misc_income.amount,
+            currency=misc_income.currency,
+        )
+        for misc_income in misc_incomes
+    )
     transactions.extend(
         FinanceTransactionOut(
             id=f"expense-{expense.id}",

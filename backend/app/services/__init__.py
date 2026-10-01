@@ -18,8 +18,11 @@ from app.services.employees import (
 from app.services.finance import (
     build_finance_overview,
     create_expense,
+    create_misc_income,
     delete_expense,
+    delete_misc_income,
     update_expense,
+    update_misc_income,
 )
 from app.services.hiring import convert_candidate_to_employee, update_candidate_stage
 from app.services.home import build_home_feed
@@ -70,8 +73,10 @@ __all__ = [
     "create_expense",
     "create_inventory_item",
     "create_project",
+    "create_misc_income",
     "create_payroll_entry",
     "delete_inventory_item",
+    "delete_misc_income",
     "delete_payroll_entry",
     "delete_expense",
     "delete_project",
@@ -90,6 +95,7 @@ __all__ = [
     "update_candidate_stage",
     "update_expense",
     "update_inventory_item",
+    "update_misc_income",
     "update_project",
     "update_payroll_entry",
 ]

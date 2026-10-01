@@ -49,6 +49,38 @@ class ExpenseOut(ExpenseBase):
     bank_transaction_id: int | None = None
 
 
+class MiscIncomeBase(ApiModel):
+    title: str = Field(min_length=1, max_length=160)
+    amount: int = Field(gt=0)
+    currency: str = Field(default="PKR", min_length=3, max_length=3)
+    date: date
+    notes: str | None = None
+
+    @field_validator("currency")
+    @classmethod
+    def uppercase_currency(cls, value: str) -> str:
+        return value.upper()
+
+
+class MiscIncomeWriteFields(ApiModel):
+    bank_account_id: int
+    pkr_equivalent: int | None = Field(default=None, gt=0)
+
+
+class MiscIncomeCreate(MiscIncomeBase, MiscIncomeWriteFields):
+    pass
+
+
+class MiscIncomeUpdate(MiscIncomeBase, MiscIncomeWriteFields):
+    pass
+
+
+class MiscIncomeOut(MiscIncomeBase):
+    id: int
+    bank_account_id: int | None = None
+    bank_transaction_id: int | None = None
+
+
 class IncomeOut(ApiModel):
     id: int
     date: date

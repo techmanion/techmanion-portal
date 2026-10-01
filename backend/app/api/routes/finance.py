@@ -2,11 +2,12 @@ from fastapi import APIRouter, HTTPException, status
 
 from app.api.dependencies import CurrentUser, DbSession
 from app.core.errors import get_or_404
-from app.models import BankAccount, BankTransaction, Employee, Expense, PayrollEntry
+from app.models import BankAccount, BankTransaction, Employee, Expense, MiscIncome, PayrollEntry
 from app.repositories.finance import (
     get_bank_account_detailed,
     list_bank_accounts,
     list_expenses,
+    list_misc_incomes,
     list_payroll_entries_detailed,
     list_project_payment_rows,
 )
@@ -24,6 +25,9 @@ from app.schemas import (
     ExpenseUpdate,
     FinanceOverviewOut,
     IncomeOut,
+    MiscIncomeCreate,
+    MiscIncomeOut,
+    MiscIncomeUpdate,
     PayrollBackfillBankTransaction,
     PayrollEntryCreate,
     PayrollEntryOut,
@@ -39,13 +43,16 @@ from app.services import (
     create_bank_account as create_bank_account_service,
     create_bank_transfer as create_bank_transfer_service,
     create_expense as create_expense_service,
+    create_misc_income as create_misc_income_service,
     create_payroll_entry as create_payroll_entry_service,
     delete_expense as delete_expense_service,
+    delete_misc_income as delete_misc_income_service,
     delete_payroll_entry as delete_payroll_entry_service,
     generate_payroll_for_month,
     mark_payroll_paid as mark_payroll_paid_service,
     update_bank_account as update_bank_account_service,
     update_expense as update_expense_service,
+    update_misc_income as update_misc_income_service,
     update_payroll_entry as update_payroll_entry_service,
 )
 
@@ -125,6 +132,21 @@ def serialize_expense(expense: Expense) -> ExpenseOut:
     )
 
 
+def serialize_misc_income(misc_income: MiscIncome) -> MiscIncomeOut:
+    return MiscIncomeOut(
+        id=misc_income.id,
+        title=misc_income.title,
+        amount=misc_income.amount,
+        currency=misc_income.currency,
+        date=misc_income.income_date,
+        notes=misc_income.notes,
+        bank_account_id=(
+            misc_income.bank_transaction.bank_account_id if misc_income.bank_transaction else None
+        ),
+        bank_transaction_id=misc_income.bank_transaction_id,
+    )
+
+
 @router.get("/overview", response_model=FinanceOverviewOut)
 def get_finance_overview(db: DbSession, _: CurrentUser) -> FinanceOverviewOut:
     return build_finance_overview(db)
@@ -147,6 +169,32 @@ def list_income(db: DbSession, _: CurrentUser) -> list[IncomeOut]:
         )
         for payment, project in list_project_payment_rows(db)
     ]
+
+
+@router.get("/misc-income", response_model=list[MiscIncomeOut])
+def get_misc_incomes(db: DbSession, _: CurrentUser) -> list[MiscIncomeOut]:
+    return [serialize_misc_income(misc_income) for misc_income in list_misc_incomes(db)]
+
+
+@router.post("/misc-income", response_model=MiscIncomeOut, status_code=status.HTTP_201_CREATED)
+def create_misc_income(payload: MiscIncomeCreate, db: DbSession, user: CurrentUser) -> MiscIncomeOut:
+    account = get_or_404(db, BankAccount, payload.bank_account_id, "Bank account was not found.")
+    return serialize_misc_income(create_misc_income_service(db, payload, account, user))
+
+
+@router.put("/misc-income/{misc_income_id}", response_model=MiscIncomeOut)
+def update_misc_income(
+    misc_income_id: int, payload: MiscIncomeUpdate, db: DbSession, user: CurrentUser
+) -> MiscIncomeOut:
+    misc_income = get_or_404(db, MiscIncome, misc_income_id, "Misc income was not found.")
+    account = get_or_404(db, BankAccount, payload.bank_account_id, "Bank account was not found.")
+    return serialize_misc_income(update_misc_income_service(db, misc_income, payload, account, user))
+
+
+@router.delete("/misc-income/{misc_income_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_misc_income(misc_income_id: int, db: DbSession, user: CurrentUser) -> None:
+    misc_income = get_or_404(db, MiscIncome, misc_income_id, "Misc income was not found.")
+    delete_misc_income_service(db, misc_income, user)
 
 
 @router.get("/expenses", response_model=list[ExpenseOut])

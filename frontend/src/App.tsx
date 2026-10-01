@@ -27,6 +27,7 @@ import { InventoryItemFormPage } from "./pages/inventory-item-form";
 import { JobFormPage } from "./pages/job-form";
 import { JobDetailPage } from "./pages/job-detail";
 import { LoginPage } from "./pages/login";
+import { MiscIncomeFormPage } from "./pages/misc-income-form";
 import { NotFoundPage } from "./pages/not-found";
 import { OrganizationPage } from "./pages/organization";
 import { OrganizationFormPage } from "./pages/organization-form";
@@ -125,6 +126,8 @@ export function App() {
         <Route path="/finance/bank-accounts/:accountId/edit" element={<BankAccountFormPage />} />
         <Route path="/finance/expenses/new" element={<ExpenseFormPage />} />
         <Route path="/finance/expenses/:expenseId/edit" element={<ExpenseFormPage />} />
+        <Route path="/finance/misc-income/new" element={<MiscIncomeFormPage />} />
+        <Route path="/finance/misc-income/:incomeId/edit" element={<MiscIncomeFormPage />} />
         <Route path="/finance/payroll/new" element={<PayrollEntryFormPage />} />
         <Route path="/finance/payroll/:entryId/edit" element={<PayrollEntryFormPage />} />
         <Route path="/activity" element={<ActivityPage />} />

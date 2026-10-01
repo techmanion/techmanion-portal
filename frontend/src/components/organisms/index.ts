@@ -24,6 +24,8 @@ export * from "./InventoryShelfPanel";
 export * from "./InventoryTable";
 export * from "./JobsTable";
 export * from "./JobDetailPanel";
+export * from "./MiscIncomeFormPanel";
+export * from "./MiscIncomeTable";
 export * from "./PageHeader";
 export * from "./PayrollSummary";
 export * from "./PayrollTable";
