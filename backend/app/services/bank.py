@@ -160,7 +160,7 @@ def add_bank_credit(
         "BankTransaction",
         transaction.id,
         "CREATE",
-        f"Recorded credit of {payload.amount} for {account.name}",
+        f"Recorded credit of {account.currency.value} {payload.amount / 100:,.2f} for {account.name}",
         performed_by_user_id=_actor_id(actor),
     )
     db.commit()
@@ -186,7 +186,7 @@ def add_bank_debit(
         "BankTransaction",
         transaction.id,
         "CREATE",
-        f"Recorded debit of {payload.amount} for {account.name}",
+        f"Recorded debit of {account.currency.value} {payload.amount / 100:,.2f} for {account.name}",
         performed_by_user_id=_actor_id(actor),
     )
     db.commit()
@@ -263,7 +263,7 @@ def create_bank_transfer(
         "BankTransfer",
         transfer_id,
         "CREATE",
-        f"Transferred {payload.source_amount} from {source.name} to {destination.name}",
+        f"Transferred {source.currency.value} {payload.source_amount / 100:,.2f} from {source.name} to {destination.name}",
         performed_by_user_id=_actor_id(actor),
         metadata={
             "source_account_id": source.id,
