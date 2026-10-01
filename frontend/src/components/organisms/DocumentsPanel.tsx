@@ -46,7 +46,7 @@ export function DocumentsPanel({
   }
 
   return (
-    <div className="surface-panel mt-8 max-w-5xl p-6">
+    <section className="surface-panel mt-8 max-w-5xl p-6">
       <div className="mb-6 flex items-center justify-between gap-4">
         <SectionHeading>Employee Documents</SectionHeading>
         <Button size="sm" onClick={() => { setError(""); setDialogOpen(true); }}><Icon className="text-[16px]">upload</Icon>Upload document</Button>
@@ -128,6 +128,6 @@ export function DocumentsPanel({
         onConfirm={confirmDeleteDocument}
         onCancel={() => setConfirmDelete(null)}
       />
-    </div>
+    </section>
   );
 }

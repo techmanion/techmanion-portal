@@ -48,26 +48,24 @@ export function CompensationPanel({
 
   return (
     <section className="surface-panel mt-8 max-w-5xl p-6">
-      <div className="flex flex-wrap items-start justify-between gap-5">
-        <div>
-          <SectionHeading className="mb-6">Current Compensation</SectionHeading>
-          <div className="text-2xl font-semibold text-on-surface">
-            {employee.currentSalary
-              ? formatMoney(employee.currentSalary.baseAmount, employee.currentSalary.currency)
-              : "Not set"}
-          </div>
-          <span className="mt-1.5 block text-sm text-on-surface-variant">Fixed monthly salary</span>
-          {employee.currentSalary?.commissionRate != null && (
-            <span className="mt-1 block text-sm text-on-surface-variant">
-              Commission: {employee.currentSalary.commissionRate}%
-              {employee.currentSalary.commissionBasis ? ` · ${employee.currentSalary.commissionBasis}` : ""}
-            </span>
-          )}
-        </div>
-        <Button onClick={() => { setError(""); setDialogOpen(true); }}>
+      <div className="mb-6 flex items-center justify-between gap-4">
+        <SectionHeading>Current Compensation</SectionHeading>
+        <Button size="sm" onClick={() => { setError(""); setDialogOpen(true); }}>
           <Icon className="text-[16px]">add</Icon>Add revision
         </Button>
       </div>
+      <div className="text-2xl font-semibold text-on-surface">
+        {employee.currentSalary
+          ? formatMoney(employee.currentSalary.baseAmount, employee.currentSalary.currency)
+          : "Not set"}
+      </div>
+      <span className="mt-1.5 block text-sm text-on-surface-variant">Fixed monthly salary</span>
+      {employee.currentSalary?.commissionRate != null && (
+        <span className="mt-1 block text-sm text-on-surface-variant">
+          Commission: {employee.currentSalary.commissionRate}%
+          {employee.currentSalary.commissionBasis ? ` · ${employee.currentSalary.commissionBasis}` : ""}
+        </span>
+      )}
 
       <FormDialog
         open={dialogOpen}
