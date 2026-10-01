@@ -86,6 +86,7 @@ class Employee(TimestampMixin, Base):
         cascade="all, delete-orphan",
         order_by="EmployeeIdentifier.issued_at",
     )
+    linked_user: Mapped[User | None] = relationship(uselist=False, viewonly=True)
 
     @property
     def full_name(self) -> str:

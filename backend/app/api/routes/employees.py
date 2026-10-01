@@ -38,7 +38,7 @@ def serialize_employee(employee: Employee) -> EmployeeOut:
         designation=employee.designation,
         current_salary=salary,
         identifier_history=list(employee.identifiers),
-        avatar_url=employee.avatar_url,
+        avatar_url=employee.avatar_url or (employee.linked_user.avatar_url if employee.linked_user else None),
     )
 
 
@@ -56,6 +56,7 @@ def list_employees(
             selectinload(Employee.designation),
             selectinload(Employee.salary_revisions),
             selectinload(Employee.identifiers),
+            selectinload(Employee.linked_user),
         )
         .order_by(Employee.first_name, Employee.last_name)
     )

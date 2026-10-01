@@ -13,6 +13,7 @@ def get_employee_detailed(db: Session, employee_id: int) -> Employee | None:
             selectinload(Employee.designation),
             selectinload(Employee.salary_revisions),
             selectinload(Employee.identifiers),
+            selectinload(Employee.linked_user),
         )
     )
     return db.scalar(statement)
