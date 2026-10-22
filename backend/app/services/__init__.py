@@ -26,6 +26,7 @@ from app.services.finance import (
 )
 from app.services.hiring import convert_candidate_to_employee, update_candidate_stage
 from app.services.home import build_home_feed
+from app.services.leads import create_lead, update_lead_status
 from app.services.inventory import (
     apply_inventory_action,
     build_inventory_overview,
@@ -72,6 +73,7 @@ __all__ = [
     "create_employee",
     "create_expense",
     "create_inventory_item",
+    "create_lead",
     "create_project",
     "create_misc_income",
     "create_payroll_entry",
@@ -95,6 +97,7 @@ __all__ = [
     "update_candidate_stage",
     "update_expense",
     "update_inventory_item",
+    "update_lead_status",
     "update_misc_income",
     "update_project",
     "update_payroll_entry",

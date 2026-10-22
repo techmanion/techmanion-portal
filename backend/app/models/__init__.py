@@ -24,6 +24,7 @@ from app.models.employees import (
     SalaryRevision,
 )
 from app.models.hiring import Candidate, CandidateStage, Job, JobStatus
+from app.models.leads import Lead, LeadAudience, LeadStatus
 from app.models.inventory import (
     InventoryCategory,
     InventoryCondition,
@@ -75,6 +76,9 @@ __all__ = [
     "InventoryStatus",
     "Job",
     "JobStatus",
+    "Lead",
+    "LeadAudience",
+    "LeadStatus",
     "MilestoneStatus",
     "MiscIncome",
     "PaymentStatus",

@@ -27,6 +27,9 @@ export type CandidateStage =
   | "HIRED"
   | "REJECTED";
 
+export type LeadAudience = "FOUNDER" | "BUSINESS";
+export type LeadStatus = "NEW" | "CONTACTED" | "QUALIFIED" | "ARCHIVED";
+
 export type InventoryCategory =
   | "LAPTOP"
   | "MONITOR"
@@ -165,6 +168,17 @@ export interface Job {
 }
 
 export type JobPayload = Omit<Job, "id" | "createdAt">;
+
+export interface Lead {
+  id: number;
+  name: string;
+  email: string;
+  company: string | null;
+  goal: string | null;
+  audience: LeadAudience;
+  status: LeadStatus;
+  createdAt: string;
+}
 
 export interface Candidate {
   id: number;

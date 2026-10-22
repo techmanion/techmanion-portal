@@ -1,12 +1,19 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, status
 from sqlalchemy import select
 
 from app.api.dependencies import DbSession
 from app.api.routes.hiring import serialize_job
 from app.models import CompanyProfile, Job, JobStatus
-from app.schemas import JobOut, OrganizationOut
+from app.schemas import JobOut, LeadCreate, LeadReceiptOut, OrganizationOut
+from app.services import create_lead
 
 router = APIRouter(tags=["public"])
+
+
+@router.post("/leads", response_model=LeadReceiptOut, status_code=status.HTTP_201_CREATED)
+def submit_lead(payload: LeadCreate, db: DbSession) -> LeadReceiptOut:
+    lead = create_lead(db, payload)
+    return LeadReceiptOut(id=lead.id)
 
 
 @router.get("/jobs", response_model=list[JobOut])

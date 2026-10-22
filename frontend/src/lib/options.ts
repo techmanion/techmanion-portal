@@ -9,6 +9,8 @@ import type {
   InventoryCondition,
   InventoryStatus,
   JobStatus,
+  LeadAudience,
+  LeadStatus,
   ProjectStatus,
   ProjectType,
   MilestoneStatus,
@@ -38,6 +40,9 @@ export const MILESTONE_STATUSES: MilestoneStatus[] = ["PENDING", "IN_PROGRESS", 
 export const PROJECT_CURRENCIES: Currency[] = ["PKR", "USD", "EUR", "GBP"];
 
 export const JOB_STATUSES: JobStatus[] = ["OPEN", "CLOSED"];
+
+export const LEAD_STATUSES: LeadStatus[] = ["NEW", "CONTACTED", "QUALIFIED", "ARCHIVED"];
+export const LEAD_AUDIENCES: LeadAudience[] = ["FOUNDER", "BUSINESS"];
 
 export const CANDIDATE_STAGES: CandidateStage[] = [
   "APPLIED",

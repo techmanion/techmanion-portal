@@ -49,6 +49,7 @@ from app.schemas.hiring import (
     JobUpdate,
 )
 from app.schemas.home import HomeItem, HomeOut
+from app.schemas.leads import LeadCreate, LeadOut, LeadReceiptOut, LeadStatusUpdate
 from app.schemas.inventory import (
     InventoryAction,
     InventoryActionPayload,
@@ -126,6 +127,10 @@ __all__ = [
     "JobCreate",
     "JobOut",
     "JobUpdate",
+    "LeadCreate",
+    "LeadOut",
+    "LeadReceiptOut",
+    "LeadStatusUpdate",
     "MiscIncomeBase",
     "MiscIncomeCreate",
     "MiscIncomeOut",

@@ -5,7 +5,8 @@ export function StatusChip({ value }: { value: string }) {
     value === "COMPLETED" ||
     value === "FULLY_PAID" ||
     value === "RECONCILED" ||
-    value === "AVAILABLE"
+    value === "AVAILABLE" ||
+    value === "QUALIFIED"
       ? "bg-primary/10 text-primary"
       : value === "TERMINATED" ||
           value === "CANCELLED" ||
@@ -16,7 +17,8 @@ export function StatusChip({ value }: { value: string }) {
         : value === "PARTIALLY_PAID" ||
             value === "IN_PROGRESS" ||
             value === "IN_REPAIR" ||
-            value === "IN_USE"
+            value === "IN_USE" ||
+            value === "NEW"
           ? "bg-tertiary/10 text-tertiary"
           : "bg-surface-container-highest text-on-surface-variant";
   const text = value

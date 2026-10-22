@@ -8,6 +8,7 @@ from app.api.routes import (
     hiring,
     home,
     inventory,
+    leads,
     organization,
     projects,
     public,
@@ -27,6 +28,7 @@ admin_router.include_router(activity.router)
 admin_router.include_router(employees.router)
 admin_router.include_router(hiring.router)
 admin_router.include_router(inventory.router)
+admin_router.include_router(leads.router)
 admin_router.include_router(projects.router)
 admin_router.include_router(finance.router)
 admin_router.include_router(home.router)

@@ -26,6 +26,7 @@ import { InventoryItemDetailPage } from "./pages/inventory-item-detail";
 import { InventoryItemFormPage } from "./pages/inventory-item-form";
 import { JobFormPage } from "./pages/job-form";
 import { JobDetailPage } from "./pages/job-detail";
+import { LeadsPage } from "./pages/leads";
 import { LoginPage } from "./pages/login";
 import { MiscIncomeFormPage } from "./pages/misc-income-form";
 import { NotFoundPage } from "./pages/not-found";
@@ -86,6 +87,7 @@ export function App() {
       <Route element={<ProtectedLayout />}>
         <Route index element={<Navigate to="/home" replace />} />
         <Route path="/home" element={<HomePage />} />
+        <Route path="/leads" element={<LeadsPage />} />
         <Route path="/hiring" element={<HiringPage />} />
         <Route path="/hiring/jobs/new" element={<JobFormPage />} />
         <Route path="/hiring/jobs/:jobId" element={<JobDetailPage />} />
