@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 
 from app.api.dependencies import CurrentUser, DbSession
 from app.core.errors import get_or_404
@@ -149,8 +149,12 @@ def serialize_misc_income(misc_income: MiscIncome) -> MiscIncomeOut:
 
 
 @router.get("/overview", response_model=FinanceOverviewOut)
-def get_finance_overview(db: DbSession, _: CurrentUser) -> FinanceOverviewOut:
-    return build_finance_overview(db)
+def get_finance_overview(
+    db: DbSession,
+    _: CurrentUser,
+    month: str | None = Query(default=None, pattern=r"^\d{4}-(0[1-9]|1[0-2])$"),
+) -> FinanceOverviewOut:
+    return build_finance_overview(db, month)
 
 
 @router.get("/income", response_model=list[IncomeOut])

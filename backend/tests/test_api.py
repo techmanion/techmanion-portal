@@ -485,6 +485,13 @@ def test_finance_overview_reconciles_to_zero(
     assert body["unreconciledAmount"] == 0
 
 
+def test_finance_overview_rejects_invalid_month(
+    api_client: TestClient, executive_headers: dict[str, str]
+) -> None:
+    response = api_client.get("/admin/finance/overview?month=2026-13", headers=executive_headers)
+    assert response.status_code == 422
+
+
 def test_finance_overview_opening_balance_does_not_inflate_unreconciled(
     api_client: TestClient, executive_headers: dict[str, str]
 ) -> None:

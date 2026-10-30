@@ -28,7 +28,7 @@ import {
   listPayrollEntries,
   markPayrollPaid,
 } from "../lib/api/finance";
-import { currentMonth, formatMonth, label } from "../lib/format";
+import { currentMonth, formatCurrencyTotals, formatMonth, label } from "../lib/format";
 import { distinctValues, EXPENSE_TYPES, PROJECT_CURRENCIES } from "../lib/options";
 import { useToast } from "../toast";
 import type { BankAccount, Expense, FinanceIncome, FinanceOverview, MiscIncome, PayrollEntry } from "../types";
@@ -59,6 +59,8 @@ export function FinancePage() {
   const [period, setPeriod] = useSearchParamState("period", thisMonth);
   const [search, setSearch] = useSearchParamState("search");
   const [status, setStatus] = useSearchParamState("status");
+  const [overviewScope, setOverviewScope] = useSearchParamState("overview");
+  const overviewMonth = overviewScope === "month" ? thisMonth : undefined;
   const [source, setSource] = useSearchParamState("source");
   const [currencyFilter, setCurrencyFilter] = useSearchParamState("currency");
   const [category, setCategory] = useSearchParamState("category");
@@ -93,14 +95,11 @@ export function FinancePage() {
     listBankAccounts().then(setBankAccounts).catch(() => undefined);
   }, []);
 
-  function loadOverview() {
-    return getFinanceOverview().then(setOverview);
-  }
-
   useEffect(() => {
+    let stale = false;
     const request =
       activeTab === "Overview"
-        ? loadOverview()
+        ? getFinanceOverview(overviewMonth).then((result) => { if (!stale) setOverview(result); })
         : activeTab === "Income"
           ? Promise.all([listFinanceIncome().then(setIncome), listMiscIncome().then(setMiscIncome)])
           : activeTab === "Expenses"
@@ -109,7 +108,8 @@ export function FinancePage() {
               ? listBankAccounts().then(setBankAccounts)
               : listPayrollEntries(month).then(setEntries);
     request.catch((reason: Error) => setError(reason.message)).finally(() => setLoading(false));
-  }, [activeTab, month]);
+    return () => { stale = true; };
+  }, [activeTab, month, overviewMonth]);
 
   const visiblePayroll = useMemo(
     () =>
@@ -285,7 +285,25 @@ export function FinancePage() {
     }
   }
 
-  const actions = activeTab === "Payroll" ? (
+  const overviewOptions = [{ value: "", text: "Overall" }, { value: "month", text: "This month" }];
+  const actions = activeTab === "Overview" ? (
+    <div role="group" aria-label="Overview period" className="flex items-center gap-0.5 rounded-full bg-surface-container-high p-1">
+      {overviewOptions.map((option) => {
+        const selected = (overviewMonth ? "month" : "") === option.value;
+        return (
+          <button
+            key={option.text}
+            type="button"
+            aria-pressed={selected}
+            onClick={() => { if (!selected) { setLoading(true); setError(""); setOverviewScope(option.value); } }}
+            className={`h-8 rounded-full px-4 text-sm font-medium transition ${selected ? "bg-primary text-on-primary" : "text-on-surface-variant hover:text-on-surface"}`}
+          >
+            {option.text}
+          </button>
+        );
+      })}
+    </div>
+  ) : activeTab === "Payroll" ? (
     <>
       <MonthInput labelText="Payroll month" value={month} onChange={(value) => { setLoading(true); setError(""); setMonth(value); }} />
       <Button size="lg" onClick={() => setConfirmGenerate(true)}><Icon className="text-[18px]">add</Icon>Generate Payroll</Button>
@@ -309,7 +327,7 @@ export function FinancePage() {
       {error && <div className="mb-6 rounded-xl bg-error/10 px-4 py-3 text-sm text-error">{error}</div>}
       {loading && <div className="grid min-h-40 place-items-center"><Loading /></div>}
 
-      {!loading && activeTab === "Overview" && overview && <FinanceOverviewPanel overview={overview} />}
+      {!loading && activeTab === "Overview" && overview && <FinanceOverviewPanel overview={overview} monthLabel={overviewMonth ? formatMonth(overviewMonth) : undefined} />}
       {!loading && activeTab === "Income" && (
         <div className="space-y-6">
           <section className="surface-panel overflow-hidden">
@@ -359,7 +377,7 @@ export function FinancePage() {
             </FilterToolbar>
           </div>
           {visibleExpenses.length ? <ExpensesTable expenses={visibleExpenses} onEdit={(expense) => navigate(`/finance/expenses/${expense.id}/edit`)} onCopy={(expense) => navigate("/finance/expenses/new", { state: { copyFrom: expense } })} onDelete={setConfirmExpense} /> : <EmptyState>{expenses.length ? "No expenses match these filters." : "No expenses recorded yet."}</EmptyState>}
-          <footer className="flex flex-wrap items-center justify-between gap-4 border-t border-outline-variant/30 bg-surface-container-highest/20 px-7 py-4 text-sm text-on-surface-variant"><span>Showing {visibleExpenses.length} of {expenses.length} expenses</span></footer>
+          <footer className="flex flex-wrap items-center justify-between gap-4 border-t border-outline-variant/30 bg-surface-container-highest/20 px-7 py-4 text-sm text-on-surface-variant"><span>Showing {visibleExpenses.length} of {expenses.length} expenses</span><span>Total: <strong className="font-semibold text-on-surface">{formatCurrencyTotals(visibleExpenses)}</strong></span></footer>
         </section>
       )}
       {!loading && activeTab === "Bank Accounts" && (

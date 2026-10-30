@@ -27,8 +27,8 @@ export interface PayrollEntryPayload {
   pkrEquivalent?: number | null;
 }
 
-export function getFinanceOverview() {
-  return api<FinanceOverview>("/admin/finance/overview");
+export function getFinanceOverview(month?: string) {
+  return api<FinanceOverview>(`/admin/finance/overview${month ? `?month=${month}` : ""}`);
 }
 
 export function listFinanceIncome() {

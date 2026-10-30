@@ -263,13 +263,7 @@ def delete_misc_income(db: Session, misc_income: MiscIncome, actor: User | None 
     db.commit()
 
 
-def build_finance_overview(db: Session) -> FinanceOverviewOut:
-    income_rows = list_project_payment_rows(db)
-    misc_incomes = list_misc_incomes(db)
-    expenses = list_expenses(db)
-    payroll_entries = list_payroll_entries_detailed(db)
-    bank_accounts = list_bank_accounts(db)
-
+def _income_total(income_rows: list, misc_incomes: list[MiscIncome]) -> int:
     project_income_total = sum(
         payment.bank_transaction.pkr_equivalent
         for payment, _ in income_rows
@@ -280,19 +274,53 @@ def build_finance_overview(db: Session) -> FinanceOverviewOut:
         for misc_income in misc_incomes
         if misc_income.bank_transaction is not None
     )
-    total_income = project_income_total + misc_income_total
+    return project_income_total + misc_income_total
+
+
+def _expenses_total(expenses: list[Expense], paid_payroll_entries: list[PayrollEntry]) -> int:
     expense_total = sum(
         expense.bank_transaction.pkr_equivalent
         for expense in expenses
         if expense.bank_transaction is not None
     )
+    payroll_total = sum(entry.bank_transaction.pkr_equivalent for entry in paid_payroll_entries)
+    return expense_total + payroll_total
+
+
+def build_finance_overview(db: Session, month: str | None = None) -> FinanceOverviewOut:
+    """Summarize finances overall, or for one YYYY-MM month by the date money moved.
+
+    The bank balance and reconciliation always cover all time: a balance is a point-in-time
+    figure, and reconciliation compares the whole ledger against opening balances.
+    """
+    income_rows = list_project_payment_rows(db)
+    misc_incomes = list_misc_incomes(db)
+    expenses = list_expenses(db)
+    payroll_entries = list_payroll_entries_detailed(db)
+    bank_accounts = list_bank_accounts(db)
     paid_payroll_entries = [
         entry
         for entry in payroll_entries
         if entry.status == PayrollEntryStatus.PAID and entry.bank_transaction is not None
     ]
-    payroll_total = sum(entry.bank_transaction.pkr_equivalent for entry in paid_payroll_entries)
-    total_expenses = expense_total + payroll_total
+
+    overall_income = _income_total(income_rows, misc_incomes)
+    overall_expenses = _expenses_total(expenses, paid_payroll_entries)
+
+    if month is not None:
+        income_rows = [row for row in income_rows if row[0].payment_date.strftime("%Y-%m") == month]
+        misc_incomes = [row for row in misc_incomes if row.income_date.strftime("%Y-%m") == month]
+        expenses = [row for row in expenses if row.expense_date.strftime("%Y-%m") == month]
+        paid_payroll_entries = [
+            entry
+            for entry in paid_payroll_entries
+            if entry.bank_transaction.transaction_date.strftime("%Y-%m") == month
+        ]
+        # A month only lists money that moved in it, matching its totals.
+        payroll_entries = paid_payroll_entries
+
+    total_income = _income_total(income_rows, misc_incomes)
+    total_expenses = _expenses_total(expenses, paid_payroll_entries)
 
     bank_balance = sum(bank_account_balance_pkr(account) for account in bank_accounts)
     opening_capital = sum(bank_account_opening_balance_pkr(account) for account in bank_accounts)
@@ -300,7 +328,7 @@ def build_finance_overview(db: Session) -> FinanceOverviewOut:
     # Opening balances are capital contributed to the business, not income, so they're
     # excluded from the bank activity reconciled against tracked income/expenses.
     net_bank_activity = bank_balance - opening_capital
-    unreconciled_amount = total_income - total_expenses - net_bank_activity
+    unreconciled_amount = overall_income - overall_expenses - net_bank_activity
 
     transactions = [
         FinanceTransactionOut(
