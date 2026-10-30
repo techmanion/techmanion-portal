@@ -39,11 +39,6 @@ export function listExpenses() {
   return api<Expense[]>("/admin/finance/expenses");
 }
 
-export async function getExpense(expenseId: number): Promise<Expense | undefined> {
-  const expenses = await listExpenses();
-  return expenses.find((expense) => expense.id === expenseId);
-}
-
 export function createExpense(payload: ExpensePayload) {
   return api<Expense>("/admin/finance/expenses", {
     method: "POST",

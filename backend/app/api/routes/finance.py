@@ -121,6 +121,7 @@ def serialize_expense(expense: Expense) -> ExpenseOut:
         id=expense.id,
         title=expense.title,
         category=expense.category,
+        label=expense.label,
         amount=expense.amount,
         currency=expense.currency,
         expense_type=expense.expense_type,

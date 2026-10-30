@@ -575,6 +575,26 @@ def test_create_expense_creates_linked_bank_debit(db_session: Session) -> None:
     assert bank_account_balance(account) == 90_000_00
 
 
+def test_create_expense_stores_label(db_session: Session) -> None:
+    account = _create_bank_account(db_session, opening_balance=100_000_00)
+
+    expense = create_expense(
+        db_session,
+        ExpenseCreate(
+            title="AWS bill",
+            category="Infrastructure",
+            label="Client hosting",
+            amount=10_000_00,
+            expense_type="ONE_TIME",
+            date=date(2026, 1, 10),
+            bank_account_id=account.id,
+        ),
+        account,
+    )
+
+    assert expense.label == "Client hosting"
+
+
 def test_create_expense_rejects_currency_mismatch(db_session: Session) -> None:
     account = _create_bank_account(db_session, currency="USD")
 

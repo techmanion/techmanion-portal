@@ -32,6 +32,16 @@ export const COMPENSATION_TYPES: CompensationType[] = [
   "COMMISSION",
 ];
 
+/** Unique non-empty values, treating different capitalisations as the same value. */
+export function distinctValues(values: (string | null)[]): string[] {
+  const unique = new Map<string, string>();
+  for (const value of values) {
+    const trimmed = value?.trim();
+    if (trimmed && !unique.has(trimmed.toLowerCase())) unique.set(trimmed.toLowerCase(), trimmed);
+  }
+  return [...unique.values()].sort((a, b) => a.localeCompare(b));
+}
+
 export const EXPENSE_TYPES: ExpenseType[] = ["ONE_TIME", "MONTHLY_RECURRING"];
 
 export const PROJECT_STATUSES: ProjectStatus[] = ["PLANNED", "ACTIVE", "ON_HOLD", "COMPLETED"];

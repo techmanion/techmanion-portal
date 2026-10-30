@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Button, Input, Select, Textarea } from "../atoms";
 import { Icon } from "../atoms/Icon";
-import { FormField, MoneyInput } from "../molecules";
+import { Combobox, FormField, MoneyInput } from "../molecules";
 import { label } from "../../lib/format";
 import { EXPENSE_TYPES } from "../../lib/options";
 import type { BankAccount, Expense, ExpensePayload, ExpenseType } from "../../types";
@@ -9,6 +9,7 @@ import type { BankAccount, Expense, ExpensePayload, ExpenseType } from "../../ty
 const emptyExpense = (defaultBankAccountId: number | null): ExpensePayload => ({
   title: "",
   category: "",
+  label: null,
   amount: 0,
   currency: "PKR",
   expenseType: "ONE_TIME",
@@ -23,6 +24,7 @@ const emptyExpense = (defaultBankAccountId: number | null): ExpensePayload => ({
 const expenseToPayload = (source: Expense, defaultBankAccountId: number | null): ExpensePayload => ({
   title: source.title,
   category: source.category,
+  label: source.label,
   amount: source.amount,
   currency: source.currency,
   expenseType: source.expenseType,
@@ -37,12 +39,16 @@ export function ExpenseFormPanel({
   expense,
   copyFrom,
   bankAccounts,
+  categories,
+  labels,
   onSubmit,
   onCancel,
 }: {
   expense: Expense | null;
   copyFrom?: Expense | null;
   bankAccounts: BankAccount[];
+  categories: string[];
+  labels: string[];
   onSubmit: (payload: ExpensePayload) => Promise<void>;
   onCancel: () => void;
 }) {
@@ -51,6 +57,7 @@ export function ExpenseFormPanel({
       return {
         title: expense.title,
         category: expense.category,
+        label: expense.label,
         amount: expense.amount,
         currency: expense.currency,
         expenseType: expense.expenseType,
@@ -118,7 +125,10 @@ export function ExpenseFormPanel({
           <Input value={form.title} onChange={(event) => set("title", event.target.value)} required />
         </FormField>
         <FormField label="Category">
-          <Input value={form.category} onChange={(event) => set("category", event.target.value)} required />
+          <Combobox value={form.category} onChange={(value) => set("category", value)} options={categories} placeholder="Select or add a category" required />
+        </FormField>
+        <FormField label="Label">
+          <Combobox value={form.label ?? ""} onChange={(value) => set("label", value || null)} options={labels} placeholder="Select or add a label" />
         </FormField>
         <FormField label="Amount" hint={form.currency}>
           <MoneyInput value={form.amount} onChange={(amount) => set("amount", amount)} required />

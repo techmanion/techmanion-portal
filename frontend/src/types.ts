@@ -309,6 +309,7 @@ export interface Expense {
   id: number;
   title: string;
   category: string;
+  label: string | null;
   amount: number;
   currency: string;
   expenseType: ExpenseType;

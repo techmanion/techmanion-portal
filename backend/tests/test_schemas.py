@@ -187,6 +187,32 @@ def test_expense_create_requires_bank_account() -> None:
         ExpenseCreate(**payload)
 
 
+def test_expense_trims_category_and_treats_blank_label_as_none() -> None:
+    expense = ExpenseCreate(
+        title="AWS bill",
+        category="  Infrastructure ",
+        label="   ",
+        amount=1000,
+        expense_type="ONE_TIME",
+        date=date(2026, 1, 10),
+        bank_account_id=1,
+    )
+    assert expense.category == "Infrastructure"
+    assert expense.label is None
+
+
+def test_expense_rejects_blank_category() -> None:
+    with pytest.raises(ValidationError):
+        ExpenseCreate(
+            title="AWS bill",
+            category="   ",
+            amount=1000,
+            expense_type="ONE_TIME",
+            date=date(2026, 1, 10),
+            bank_account_id=1,
+        )
+
+
 def test_payroll_mark_paid_requires_bank_account() -> None:
     with pytest.raises(ValidationError):
         PayrollMarkPaid()

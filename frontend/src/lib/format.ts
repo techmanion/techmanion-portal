@@ -15,6 +15,17 @@ export function formatDate(value?: string): string {
   }).format(new Date(`${value.slice(0, 10)}T00:00:00`));
 }
 
+export function formatMonth(month: string): string {
+  return new Intl.DateTimeFormat("en", { month: "long", year: "numeric" }).format(
+    new Date(`${month}-01T00:00:00`),
+  );
+}
+
+/** The current month as YYYY-MM in the viewer's local time. */
+export function currentMonth(now = new Date()): string {
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
 export function formatDateTime(value?: string): string {
   if (!value) return "—";
   return new Intl.DateTimeFormat("en-PK", {

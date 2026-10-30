@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button, Icon, Loading, Select } from "../components/atoms";
-import { ConfirmDialog, EmptyState, FilterSelect, FormDialog, FormField, MoneyInput, SearchInput } from "../components/molecules";
+import { ConfirmDialog, EmptyState, FilterSelect, FormDialog, FormField, MoneyInput, MonthInput, SearchInput } from "../components/molecules";
 import {
   BankAccountsTable,
   ExpensesTable,
@@ -13,7 +13,7 @@ import {
   PayrollSummary,
   PayrollTable,
 } from "../components/organisms";
-import { useClearSearchParams, useSearchParamState } from "../hooks/useSearchParamState";
+import { useClearSearchParams, useSearchParamState, useSearchParamsUpdater } from "../hooks/useSearchParamState";
 import {
   backfillPayrollBank,
   deleteExpense,
@@ -28,25 +28,44 @@ import {
   listPayrollEntries,
   markPayrollPaid,
 } from "../lib/api/finance";
+import { currentMonth, formatMonth, label } from "../lib/format";
+import { distinctValues, EXPENSE_TYPES, PROJECT_CURRENCIES } from "../lib/options";
 import { useToast } from "../toast";
 import type { BankAccount, Expense, FinanceIncome, FinanceOverview, MiscIncome, PayrollEntry } from "../types";
 
 const tabs = ["Overview", "Payroll", "Income", "Expenses", "Bank Accounts"] as const;
 type FinanceTab = (typeof tabs)[number];
 
+const ALL_TIME = "all";
+const INCOME_FILTER_PARAMS = ["period", "search", "source", "currency"] as const;
+const EXPENSE_FILTER_PARAMS = ["period", "search", "category", "label", "type"] as const;
+
 function resolveTab(value: string): FinanceTab {
   return tabs.find((tab) => tab.toLowerCase() === value) ?? "Overview";
+}
+
+function matchesSearch(search: string, values: (string | null)[]): boolean {
+  const term = search.trim().toLowerCase();
+  return !term || values.some((value) => value?.toLowerCase().includes(term));
 }
 
 export function FinancePage() {
   const navigate = useNavigate();
   const toast = useToast();
-  const [tabParam, setTabParam] = useSearchParamState("tab", "overview");
+  const [tabParam] = useSearchParamState("tab", "overview");
   const activeTab = resolveTab(tabParam);
-  const [month, setMonth] = useSearchParamState("month", new Date().toISOString().slice(0, 7));
+  const thisMonth = currentMonth();
+  const [month, setMonth] = useSearchParamState("month", thisMonth);
+  const [period, setPeriod] = useSearchParamState("period", thisMonth);
   const [search, setSearch] = useSearchParamState("search");
   const [status, setStatus] = useSearchParamState("status");
+  const [source, setSource] = useSearchParamState("source");
+  const [currencyFilter, setCurrencyFilter] = useSearchParamState("currency");
+  const [category, setCategory] = useSearchParamState("category");
+  const [labelFilter, setLabelFilter] = useSearchParamState("label");
+  const [expenseType, setExpenseType] = useSearchParamState("type");
   const clearSearchParams = useClearSearchParams();
+  const updateSearchParams = useSearchParamsUpdater();
   const [overview, setOverview] = useState<FinanceOverview | null>(null);
   const [income, setIncome] = useState<FinanceIncome[]>([]);
   const [miscIncome, setMiscIncome] = useState<MiscIncome[]>([]);
@@ -101,6 +120,47 @@ export function FinancePage() {
       ),
     [entries, search, status],
   );
+  const inPeriod = (date: string) => period === ALL_TIME || date.startsWith(period);
+  const visibleIncome = source === "other" ? [] : income.filter(
+    (row) =>
+      inPeriod(row.date) &&
+      (!currencyFilter || row.currency === currencyFilter) &&
+      matchesSearch(search, [row.projectName, row.clientName, row.reference, row.notes]),
+  );
+  const visibleMiscIncome = source === "project" ? [] : miscIncome.filter(
+    (row) =>
+      inPeriod(row.date) &&
+      (!currencyFilter || row.currency === currencyFilter) &&
+      matchesSearch(search, [row.title, row.notes]),
+  );
+  const visibleExpenses = expenses.filter(
+    (row) =>
+      inPeriod(row.date) &&
+      (!category || row.category.toLowerCase() === category.toLowerCase()) &&
+      (!labelFilter || row.label?.toLowerCase() === labelFilter.toLowerCase()) &&
+      (!expenseType || row.expenseType === expenseType) &&
+      matchesSearch(search, [row.title, row.category, row.label, row.notes]),
+  );
+  const expenseCategories = useMemo(() => distinctValues(expenses.map((row) => row.category)), [expenses]);
+  const expenseLabels = useMemo(() => distinctValues(expenses.map((row) => row.label)), [expenses]);
+  const hasPeriodFilter = period !== thisMonth;
+  const hasIncomeFilters = Boolean(hasPeriodFilter || search || source || currencyFilter);
+  const hasExpenseFilters = Boolean(hasPeriodFilter || search || category || labelFilter || expenseType);
+  const periodControls = (
+    <>
+      <MonthInput
+        labelText="Filter by month"
+        value={period === ALL_TIME ? "" : period}
+        onChange={setPeriod}
+        placeholder="All time"
+        className="bg-surface-container-highest"
+      />
+      <Button variant="ghost" size="sm" onClick={() => setPeriod(period === ALL_TIME ? "" : ALL_TIME)}>
+        <Icon className="text-[16px]">{period === ALL_TIME ? "today" : "date_range"}</Icon>
+        {period === ALL_TIME ? "This month" : "All time"}
+      </Button>
+    </>
+  );
   const payrollTotals = useMemo(
     () => ({
       base: entries.reduce((sum, row) => sum + row.baseCompensation, 0),
@@ -114,9 +174,7 @@ export function FinancePage() {
   );
   const currency = entries[0]?.currency ?? "PKR";
   const paidPct = entries.length ? (payrollTotals.paidCount / entries.length) * 100 : 0;
-  const monthLabel = new Intl.DateTimeFormat("en", { month: "long", year: "numeric" }).format(
-    new Date(`${month}-01T00:00:00`),
-  );
+  const monthLabel = formatMonth(month);
 
   async function generate() {
     setConfirmGenerate(false);
@@ -229,11 +287,7 @@ export function FinancePage() {
 
   const actions = activeTab === "Payroll" ? (
     <>
-      <label className="relative flex h-10 items-center rounded-full bg-surface-container-high px-4">
-        <Icon className="mr-2.5 text-[18px]">calendar_month</Icon>
-        <input aria-label="Payroll month" type="month" value={month} onChange={(event) => { setLoading(true); setError(""); setMonth(event.target.value); }} className="w-32 bg-transparent text-sm font-medium text-on-surface outline-none" />
-        <span className="pointer-events-none absolute inset-y-0 left-11 flex items-center bg-surface-container-high pr-3 text-sm font-medium">{monthLabel}</span>
-      </label>
+      <MonthInput labelText="Payroll month" value={month} onChange={(value) => { setLoading(true); setError(""); setMonth(value); }} />
       <Button size="lg" onClick={() => setConfirmGenerate(true)}><Icon className="text-[18px]">add</Icon>Generate Payroll</Button>
       <Link to={`/finance/payroll/new?month=${month}`} className="inline-flex h-10 items-center gap-2 rounded-full bg-surface-container-highest px-5 text-sm font-medium text-on-surface ring-1 ring-outline-variant/40 hover:bg-surface-bright"><Icon className="text-[18px]">add</Icon>Add entry</Link>
     </>
@@ -249,7 +303,7 @@ export function FinancePage() {
     <div className="mx-auto max-w-[1540px] px-6 py-7">
       <PageHeader className="mb-8 px-1" title="Finance" description="Track cash flow, payroll, income, and expenses." actions={actions} />
       <nav className="mb-6 flex gap-8 border-b border-outline-variant/60">
-        {tabs.map((tab) => <button key={tab} onClick={() => { setLoading(true); setError(""); setTabParam(tab.toLowerCase()); }} className={`relative whitespace-nowrap pb-3 text-sm font-medium tracking-wide transition ${activeTab === tab ? "text-primary" : "text-on-surface-variant hover:text-on-surface"}`}>{tab}{activeTab === tab && <span className="absolute inset-x-0 bottom-0 h-0.5 rounded-t-full bg-primary" />}</button>)}
+        {tabs.map((tab) => <button key={tab} onClick={() => { setLoading(true); setError(""); updateSearchParams({ tab: tab.toLowerCase(), search: undefined, status: undefined, source: undefined, currency: undefined, category: undefined, label: undefined, type: undefined }); }} className={`relative whitespace-nowrap pb-3 text-sm font-medium tracking-wide transition ${activeTab === tab ? "text-primary" : "text-on-surface-variant hover:text-on-surface"}`}>{tab}{activeTab === tab && <span className="absolute inset-x-0 bottom-0 h-0.5 rounded-t-full bg-primary" />}</button>)}
       </nav>
 
       {error && <div className="mb-6 rounded-xl bg-error/10 px-4 py-3 text-sm text-error">{error}</div>}
@@ -258,24 +312,55 @@ export function FinancePage() {
       {!loading && activeTab === "Overview" && overview && <FinanceOverviewPanel overview={overview} />}
       {!loading && activeTab === "Income" && (
         <div className="space-y-6">
-          <section className="surface-panel overflow-hidden">{income.length ? <FinanceIncomeTable income={income} /> : <EmptyState>No project payments recorded yet.</EmptyState>}</section>
           <section className="surface-panel overflow-hidden">
-            <h2 className="px-6 pt-5 text-sm font-medium text-on-surface-variant">Other income</h2>
-            {miscIncome.length ? (
-              <MiscIncomeTable
-                miscIncome={miscIncome}
-                onEdit={(row) => navigate(`/finance/misc-income/${row.id}/edit`)}
-                onCopy={(row) => navigate("/finance/misc-income/new", { state: { copyFrom: row } })}
-                onDelete={setConfirmMiscIncome}
-              />
-            ) : (
-              <EmptyState>No miscellaneous income recorded yet.</EmptyState>
-            )}
+            <div className="bg-surface-container-high/30 px-6 py-4">
+              <FilterToolbar>
+                <SearchInput value={search} onChange={setSearch} placeholder="Search income..." className="lg:max-w-[380px]" />
+                {periodControls}
+                <FilterSelect value={source} onChange={setSource} labelText="Source" placeholder="Filter by source"><option value="project">Project payments</option><option value="other">Other income</option></FilterSelect>
+                <FilterSelect value={currencyFilter} onChange={setCurrencyFilter} labelText="Currency" placeholder="Filter by currency">{PROJECT_CURRENCIES.map((option) => <option key={option} value={option}>{option}</option>)}</FilterSelect>
+                {hasIncomeFilters && <Button variant="ghost" size="sm" onClick={() => clearSearchParams(INCOME_FILTER_PARAMS)}><Icon className="text-[16px]">filter_alt_off</Icon>Clear filters</Button>}
+              </FilterToolbar>
+            </div>
+            <footer className="border-t border-outline-variant/30 bg-surface-container-highest/20 px-7 py-4 text-sm text-on-surface-variant">Showing {visibleIncome.length + visibleMiscIncome.length} of {income.length + miscIncome.length} income entries</footer>
           </section>
+          {source !== "other" && (
+            <section className="surface-panel overflow-hidden">
+              {visibleIncome.length ? <FinanceIncomeTable income={visibleIncome} /> : <EmptyState>{income.length ? "No project payments match these filters." : "No project payments recorded yet."}</EmptyState>}
+            </section>
+          )}
+          {source !== "project" && (
+            <section className="surface-panel overflow-hidden">
+              <h2 className="px-6 pt-5 text-sm font-medium text-on-surface-variant">Other income</h2>
+              {visibleMiscIncome.length ? (
+                <MiscIncomeTable
+                  miscIncome={visibleMiscIncome}
+                  onEdit={(row) => navigate(`/finance/misc-income/${row.id}/edit`)}
+                  onCopy={(row) => navigate("/finance/misc-income/new", { state: { copyFrom: row } })}
+                  onDelete={setConfirmMiscIncome}
+                />
+              ) : (
+                <EmptyState>{miscIncome.length ? "No miscellaneous income matches these filters." : "No miscellaneous income recorded yet."}</EmptyState>
+              )}
+            </section>
+          )}
         </div>
       )}
       {!loading && activeTab === "Expenses" && (
-        <section className="surface-panel overflow-hidden">{expenses.length ? <ExpensesTable expenses={expenses} onEdit={(expense) => navigate(`/finance/expenses/${expense.id}/edit`)} onCopy={(expense) => navigate("/finance/expenses/new", { state: { copyFrom: expense } })} onDelete={setConfirmExpense} /> : <EmptyState>No expenses recorded yet.</EmptyState>}</section>
+        <section className="surface-panel overflow-hidden">
+          <div className="bg-surface-container-high/30 px-6 py-4">
+            <FilterToolbar>
+              <SearchInput value={search} onChange={setSearch} placeholder="Search expenses..." className="lg:max-w-[380px]" />
+              {periodControls}
+              <FilterSelect value={category} onChange={setCategory} labelText="Category" placeholder="Filter by category">{expenseCategories.map((option) => <option key={option} value={option}>{option}</option>)}</FilterSelect>
+              {expenseLabels.length > 0 && <FilterSelect value={labelFilter} onChange={setLabelFilter} labelText="Label" placeholder="Filter by label">{expenseLabels.map((option) => <option key={option} value={option}>{option}</option>)}</FilterSelect>}
+              <FilterSelect value={expenseType} onChange={setExpenseType} labelText="Type" placeholder="Filter by type">{EXPENSE_TYPES.map((option) => <option key={option} value={option}>{label(option)}</option>)}</FilterSelect>
+              {hasExpenseFilters && <Button variant="ghost" size="sm" onClick={() => clearSearchParams(EXPENSE_FILTER_PARAMS)}><Icon className="text-[16px]">filter_alt_off</Icon>Clear filters</Button>}
+            </FilterToolbar>
+          </div>
+          {visibleExpenses.length ? <ExpensesTable expenses={visibleExpenses} onEdit={(expense) => navigate(`/finance/expenses/${expense.id}/edit`)} onCopy={(expense) => navigate("/finance/expenses/new", { state: { copyFrom: expense } })} onDelete={setConfirmExpense} /> : <EmptyState>{expenses.length ? "No expenses match these filters." : "No expenses recorded yet."}</EmptyState>}
+          <footer className="flex flex-wrap items-center justify-between gap-4 border-t border-outline-variant/30 bg-surface-container-highest/20 px-7 py-4 text-sm text-on-surface-variant"><span>Showing {visibleExpenses.length} of {expenses.length} expenses</span></footer>
+        </section>
       )}
       {!loading && activeTab === "Bank Accounts" && (
         <section className="surface-panel overflow-hidden">

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatMoney } from "./format";
+import { currentMonth, formatMoney } from "./format";
 
 describe("formatMoney", () => {
   it("formats minor units using the given currency", () => {
@@ -14,5 +14,15 @@ describe("formatMoney", () => {
 
   it("defaults to PKR when no currency is supplied", () => {
     expect(formatMoney(500000)).toBe(formatMoney(500000, "PKR"));
+  });
+});
+
+describe("currentMonth", () => {
+  it("uses the local month with a zero-padded number", () => {
+    expect(currentMonth(new Date(2026, 2, 15))).toBe("2026-03");
+  });
+
+  it("does not roll back to the previous month at the start of a local month", () => {
+    expect(currentMonth(new Date(2026, 10, 1, 0, 30))).toBe("2026-11");
   });
 });
