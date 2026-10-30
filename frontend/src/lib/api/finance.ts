@@ -20,6 +20,8 @@ export interface PayrollEntryPayload {
   employeeId: number;
   month: string;
   baseCompensation: number;
+  bonus: number;
+  holidayCompensation: number;
   commissionAmount: number;
   adjustment: number;
   currency: string;

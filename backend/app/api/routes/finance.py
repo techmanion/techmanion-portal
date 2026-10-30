@@ -97,12 +97,18 @@ def serialize_bank_account(account: BankAccount) -> BankAccountOut:
 
 
 def serialize_payroll_entry(entry: PayrollEntry) -> PayrollEntryOut:
+    identifier = entry.employee.current_identifier
     return PayrollEntryOut(
         id=entry.id,
         employee_id=entry.employee_id,
         employee_name=entry.employee.full_name,
+        employee_code=identifier.code if identifier else None,
+        designation_name=entry.employee.designation.name,
+        employee_type=entry.employee.employee_type,
         month=entry.month,
         base_compensation=entry.base_compensation,
+        bonus=entry.bonus,
+        holiday_compensation=entry.holiday_compensation,
         commission_amount=entry.commission_amount,
         adjustment=entry.adjustment,
         final_amount=entry.final_amount,

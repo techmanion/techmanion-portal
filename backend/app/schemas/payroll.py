@@ -2,7 +2,7 @@ from datetime import date
 
 from pydantic import Field, field_validator
 
-from app.models import PayrollEntryStatus
+from app.models import EmployeeType, PayrollEntryStatus
 from app.schemas.common import ApiModel
 
 
@@ -10,6 +10,8 @@ class PayrollEntryCreate(ApiModel):
     employee_id: int
     month: str = Field(min_length=7, max_length=7)
     base_compensation: int = Field(ge=0)
+    bonus: int = Field(default=0, ge=0)
+    holiday_compensation: int = Field(default=0, ge=0)
     commission_amount: int = 0
     adjustment: int = 0
     currency: str = Field(default="PKR", min_length=3, max_length=3)
@@ -23,6 +25,8 @@ class PayrollEntryCreate(ApiModel):
 
 class PayrollEntryUpdate(ApiModel):
     base_compensation: int = Field(ge=0)
+    bonus: int = Field(default=0, ge=0)
+    holiday_compensation: int = Field(default=0, ge=0)
     commission_amount: int = 0
     adjustment: int = 0
     currency: str = Field(default="PKR", min_length=3, max_length=3)
@@ -39,8 +43,13 @@ class PayrollEntryOut(ApiModel):
     id: int
     employee_id: int
     employee_name: str
+    employee_code: str | None = None
+    designation_name: str | None = None
+    employee_type: EmployeeType | None = None
     month: str
     base_compensation: int
+    bonus: int = 0
+    holiday_compensation: int = 0
     commission_amount: int
     adjustment: int
     final_amount: int

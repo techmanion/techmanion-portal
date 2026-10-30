@@ -164,6 +164,7 @@ export function FinancePage() {
   const payrollTotals = useMemo(
     () => ({
       base: entries.reduce((sum, row) => sum + row.baseCompensation, 0),
+      bonusAndHoliday: entries.reduce((sum, row) => sum + row.bonus + row.holidayCompensation, 0),
       commission: entries.reduce((sum, row) => sum + row.commissionAmount, 0),
       adjustment: entries.reduce((sum, row) => sum + row.adjustment, 0),
       final: entries.reduce((sum, row) => sum + row.finalAmount, 0),
@@ -395,10 +396,10 @@ export function FinancePage() {
       )}
       {!loading && activeTab === "Payroll" && (
         <div className="space-y-6">
-          <section className="surface-panel p-6"><PayrollSummary totalCount={entries.length} base={payrollTotals.base} commission={payrollTotals.commission} adjustment={payrollTotals.adjustment} final={payrollTotals.final} currency={currency} paidCount={payrollTotals.paidCount} pendingCount={payrollTotals.pendingCount} paidPct={paidPct} /></section>
+          <section className="surface-panel p-6"><PayrollSummary totalCount={entries.length} base={payrollTotals.base} bonusAndHoliday={payrollTotals.bonusAndHoliday} commission={payrollTotals.commission} adjustment={payrollTotals.adjustment} final={payrollTotals.final} currency={currency} paidCount={payrollTotals.paidCount} pendingCount={payrollTotals.pendingCount} paidPct={paidPct} /></section>
           <section className="surface-panel overflow-hidden">
             <div className="bg-surface-container-high/30 px-6 py-4"><FilterToolbar><SearchInput value={search} onChange={setSearch} placeholder="Search employees..." className="lg:max-w-[380px]" /><FilterSelect value={status} onChange={setStatus} labelText="Status" placeholder="Filter by status"><option value="PENDING">Pending</option><option value="PAID">Paid</option></FilterSelect>{(search || status) && <Button variant="ghost" size="sm" onClick={() => clearSearchParams(["search", "status"])}><Icon className="text-[16px]">filter_alt_off</Icon>Clear filters</Button>}</FilterToolbar></div>
-            {entries.length ? <PayrollTable entries={visiblePayroll} onMarkPaid={openMarkPaid} onBackfillBank={openBackfillBank} onEdit={(entry) => navigate(`/finance/payroll/${entry.id}/edit?month=${month}`)} onDelete={setConfirmPayroll} /> : <EmptyState>No payroll entries for this month. Generate payroll or add an entry.</EmptyState>}
+            {entries.length ? <PayrollTable entries={visiblePayroll} onMarkPaid={openMarkPaid} onBackfillBank={openBackfillBank} onPrintSlip={(entry) => window.open(`/finance/payroll/${entry.id}/slip?month=${entry.month}`, "_blank")} onEdit={(entry) => navigate(`/finance/payroll/${entry.id}/edit?month=${month}`)} onDelete={setConfirmPayroll} /> : <EmptyState>No payroll entries for this month. Generate payroll or add an entry.</EmptyState>}
             {entries.length > 0 && !visiblePayroll.length && <EmptyState>No entries match these filters.</EmptyState>}
             <footer className="flex flex-wrap items-center justify-between gap-4 border-t border-outline-variant/30 bg-surface-container-highest/20 px-7 py-4 text-sm text-on-surface-variant"><span>Showing {visiblePayroll.length} of {entries.length} employees</span></footer>
           </section>

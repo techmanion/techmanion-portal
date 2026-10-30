@@ -16,6 +16,8 @@ import type { BankAccount, Employee, PayrollEntry } from "../types";
 interface PayrollFormState {
   employeeId: string;
   baseCompensation: string;
+  bonus: string;
+  holidayCompensation: string;
   commissionAmount: string;
   adjustment: string;
   currency: string;
@@ -26,6 +28,8 @@ interface PayrollFormState {
 const emptyForm: PayrollFormState = {
   employeeId: "",
   baseCompensation: "",
+  bonus: "0",
+  holidayCompensation: "0",
   commissionAmount: "0",
   adjustment: "0",
   currency: "PKR",
@@ -60,6 +64,8 @@ export function PayrollEntryFormPage() {
         setForm({
           employeeId: String(row.employeeId),
           baseCompensation: String(row.baseCompensation / 100),
+          bonus: String(row.bonus / 100),
+          holidayCompensation: String(row.holidayCompensation / 100),
           commissionAmount: String(row.commissionAmount / 100),
           adjustment: String(row.adjustment / 100),
           currency: row.currency,
@@ -93,6 +99,8 @@ export function PayrollEntryFormPage() {
       if (isEdit) {
         await updatePayrollEntry(Number(entryId), {
           baseCompensation: Math.round(Number(form.baseCompensation || 0) * 100),
+          bonus: Math.round(Number(form.bonus || 0) * 100),
+          holidayCompensation: Math.round(Number(form.holidayCompensation || 0) * 100),
           commissionAmount: Math.round(Number(form.commissionAmount || 0) * 100),
           adjustment: Math.round(Number(form.adjustment || 0) * 100),
           currency: form.currency,
@@ -105,6 +113,8 @@ export function PayrollEntryFormPage() {
           employeeId: Number(form.employeeId),
           month,
           baseCompensation: Math.round(Number(form.baseCompensation || 0) * 100),
+          bonus: Math.round(Number(form.bonus || 0) * 100),
+          holidayCompensation: Math.round(Number(form.holidayCompensation || 0) * 100),
           commissionAmount: Math.round(Number(form.commissionAmount || 0) * 100),
           adjustment: Math.round(Number(form.adjustment || 0) * 100),
           currency: form.currency,
@@ -152,22 +162,43 @@ export function PayrollEntryFormPage() {
           <Input
             type="number"
             min="0"
+            step="0.01"
             value={form.baseCompensation}
             onChange={(event) => set("baseCompensation", event.target.value)}
             required
+          />
+        </FormField>
+        <FormField label="Bonus">
+          <Input
+            type="number"
+            min="0"
+            step="0.01"
+            value={form.bonus}
+            onChange={(event) => set("bonus", event.target.value)}
+          />
+        </FormField>
+        <FormField label="Holiday work compensation">
+          <Input
+            type="number"
+            min="0"
+            step="0.01"
+            value={form.holidayCompensation}
+            onChange={(event) => set("holidayCompensation", event.target.value)}
           />
         </FormField>
         <FormField label="Commission" hint="Commission earned for this cycle">
           <Input
             type="number"
             min="0"
+            step="0.01"
             value={form.commissionAmount}
             onChange={(event) => set("commissionAmount", event.target.value)}
           />
         </FormField>
-        <FormField label="Adjustment" hint="Negative values are deductions">
+        <FormField label="Adjustment" hint="Negative values show as deductions on the salary slip">
           <Input
             type="number"
+            step="0.01"
             value={form.adjustment}
             onChange={(event) => set("adjustment", event.target.value)}
           />

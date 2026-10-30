@@ -267,8 +267,13 @@ export interface PayrollEntry {
   id: number;
   employeeId: number;
   employeeName: string;
+  employeeCode: string | null;
+  designationName: string | null;
+  employeeType: EmployeeType | null;
   month: string;
   baseCompensation: number;
+  bonus: number;
+  holidayCompensation: number;
   commissionAmount: number;
   adjustment: number;
   finalAmount: number;
