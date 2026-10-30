@@ -20,6 +20,8 @@ export interface PayrollEntryPayload {
   employeeId: number;
   month: string;
   baseCompensation: number;
+  bonus: number;
+  holidayCompensation: number;
   commissionAmount: number;
   adjustment: number;
   currency: string;
@@ -27,8 +29,8 @@ export interface PayrollEntryPayload {
   pkrEquivalent?: number | null;
 }
 
-export function getFinanceOverview() {
-  return api<FinanceOverview>("/admin/finance/overview");
+export function getFinanceOverview(month?: string) {
+  return api<FinanceOverview>(`/admin/finance/overview${month ? `?month=${month}` : ""}`);
 }
 
 export function listFinanceIncome() {
@@ -37,11 +39,6 @@ export function listFinanceIncome() {
 
 export function listExpenses() {
   return api<Expense[]>("/admin/finance/expenses");
-}
-
-export async function getExpense(expenseId: number): Promise<Expense | undefined> {
-  const expenses = await listExpenses();
-  return expenses.find((expense) => expense.id === expenseId);
 }
 
 export function createExpense(payload: ExpensePayload) {

@@ -33,6 +33,7 @@ import { NotFoundPage } from "./pages/not-found";
 import { OrganizationPage } from "./pages/organization";
 import { OrganizationFormPage } from "./pages/organization-form";
 import { PayrollEntryFormPage } from "./pages/payroll-entry-form";
+import { SalarySlipPage } from "./pages/salary-slip";
 import { ProfilePage } from "./pages/profile";
 import { ProjectDetailPage } from "./pages/project-detail";
 import { ProjectFormPage } from "./pages/project-form";
@@ -51,6 +52,13 @@ function ProtectedLayout() {
   const location = useLocation();
   if (loading) return <FullScreenLoading />;
   return user ? <AppShell /> : <Navigate to="/login" state={{ from: location }} replace />;
+}
+
+function RequireSession({ children }: { children: ReactNode }) {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+  if (loading) return <FullScreenLoading />;
+  return user ? <>{children}</> : <Navigate to="/login" state={{ from: location }} replace />;
 }
 
 function RequireExecutive({ children }: { children: ReactNode }) {
@@ -84,6 +92,14 @@ export function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginRoute />} />
+      <Route
+        path="/finance/payroll/:entryId/slip"
+        element={
+          <RequireSession>
+            <SalarySlipPage />
+          </RequireSession>
+        }
+      />
       <Route element={<ProtectedLayout />}>
         <Route index element={<Navigate to="/home" replace />} />
         <Route path="/home" element={<HomePage />} />

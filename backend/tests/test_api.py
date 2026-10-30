@@ -485,6 +485,13 @@ def test_finance_overview_reconciles_to_zero(
     assert body["unreconciledAmount"] == 0
 
 
+def test_finance_overview_rejects_invalid_month(
+    api_client: TestClient, executive_headers: dict[str, str]
+) -> None:
+    response = api_client.get("/admin/finance/overview?month=2026-13", headers=executive_headers)
+    assert response.status_code == 422
+
+
 def test_finance_overview_opening_balance_does_not_inflate_unreconciled(
     api_client: TestClient, executive_headers: dict[str, str]
 ) -> None:
@@ -693,6 +700,70 @@ def test_commission_employee_payroll_final_amount_includes_commission(
     ).json()
     assert entry["commissionAmount"] == 20000
     assert entry["finalAmount"] == 71000
+
+
+def test_payroll_entry_includes_bonus_holiday_pay_and_salary_slip_details(
+    api_client: TestClient, executive_headers: dict[str, str]
+) -> None:
+    designation = api_client.post(
+        "/admin/settings/designations",
+        params={"name": f"Slip Engineer {date.today().isoformat()}"},
+        headers=executive_headers,
+    ).json()
+    employee = api_client.post(
+        "/admin/employees",
+        json={
+            "firstName": "Sana",
+            "lastName": "Slip",
+            "email": f"sana-slip-{date.today().isoformat()}@example.com",
+            "phone": "03000000000",
+            "employeeType": "EMPLOYEE",
+            "status": "ACTIVE",
+            "designationId": designation["id"],
+            "joiningDate": "2025-01-01",
+            "baseAmount": 100000,
+            "currency": "PKR",
+        },
+        headers=executive_headers,
+    ).json()
+
+    created = api_client.post(
+        "/admin/finance/payroll",
+        json={
+            "employeeId": employee["id"],
+            "month": "2026-01",
+            "baseCompensation": 100000,
+            "bonus": 5000,
+            "holidayCompensation": 2000,
+            "adjustment": -1000,
+            "currency": "PKR",
+        },
+        headers=executive_headers,
+    ).json()
+    assert created["finalAmount"] == 106000
+    assert created["employeeCode"] == employee["employeeCode"]
+    assert created["designationName"] == designation["name"]
+    assert created["employeeType"] == "EMPLOYEE"
+
+    updated = api_client.put(
+        f"/admin/finance/payroll/{created['id']}",
+        json={"baseCompensation": 100000, "bonus": 9000, "currency": "PKR"},
+        headers=executive_headers,
+    ).json()
+    assert updated["bonus"] == 9000
+    assert updated["holidayCompensation"] == 0
+    assert updated["finalAmount"] == 109000
+
+
+def test_payroll_entry_rejects_negative_bonus(
+    api_client: TestClient, executive_headers: dict[str, str]
+) -> None:
+    response = api_client.post(
+        "/admin/finance/payroll",
+        json={"employeeId": 1, "month": "2026-01", "baseCompensation": 1000, "bonus": -1},
+        headers=executive_headers,
+    )
+    assert response.status_code == 422
 
 
 def test_delete_document_removes_it_and_its_stored_file(

@@ -3,7 +3,8 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Loading } from "../components/atoms";
 import { Breadcrumb, EmptyState } from "../components/molecules";
 import { ExpenseFormPanel, PageHeader } from "../components/organisms";
-import { createExpense, getExpense, listBankAccounts, updateExpense } from "../lib/api/finance";
+import { createExpense, listBankAccounts, listExpenses, updateExpense } from "../lib/api/finance";
+import { distinctValues } from "../lib/options";
 import { useToast } from "../toast";
 import type { BankAccount, Expense, ExpensePayload } from "../types";
 
@@ -14,6 +15,7 @@ export function ExpenseFormPage() {
   const toast = useToast();
   const isEdit = Boolean(expenseId);
   const copyFrom = (location.state as { copyFrom?: Expense } | null)?.copyFrom ?? null;
+  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [expense, setExpense] = useState<Expense | null>(null);
   const [bankAccounts, setBankAccounts] = useState<BankAccount[]>([]);
   const [loading, setLoading] = useState(isEdit);
@@ -25,9 +27,11 @@ export function ExpenseFormPage() {
   }, []);
 
   useEffect(() => {
-    if (!expenseId) return;
-    getExpense(Number(expenseId))
-      .then((row) => {
+    listExpenses()
+      .then((rows) => {
+        setExpenses(rows);
+        if (!expenseId) return;
+        const row = rows.find((candidate) => candidate.id === Number(expenseId));
         if (row) setExpense(row);
         else setError("Expense was not found.");
       })
@@ -61,6 +65,8 @@ export function ExpenseFormPage() {
         expense={expense}
         copyFrom={copyFrom}
         bankAccounts={bankAccounts}
+        categories={distinctValues(expenses.map((row) => row.category))}
+        labels={distinctValues(expenses.map((row) => row.label))}
         onSubmit={save}
         onCancel={() => navigate(cancelTo)}
       />

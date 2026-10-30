@@ -35,6 +35,16 @@ def payroll_period_end(month: str) -> date:
         raise HTTPException(status_code=422, detail="Month must use YYYY-MM format.") from None
 
 
+def _final_amount(payload: PayrollEntryCreate | PayrollEntryUpdate) -> int:
+    return (
+        payload.base_compensation
+        + payload.bonus
+        + payload.holiday_compensation
+        + payload.commission_amount
+        + payload.adjustment
+    )
+
+
 def create_payroll_entry(
     db: Session, payload: PayrollEntryCreate, employee: Employee, actor: User | None = None
 ) -> PayrollEntry:
@@ -43,9 +53,11 @@ def create_payroll_entry(
         employee_id=payload.employee_id,
         month=payload.month,
         base_compensation=payload.base_compensation,
+        bonus=payload.bonus,
+        holiday_compensation=payload.holiday_compensation,
         commission_amount=payload.commission_amount,
         adjustment=payload.adjustment,
-        final_amount=payload.base_compensation + payload.commission_amount + payload.adjustment,
+        final_amount=_final_amount(payload),
         currency=payload.currency,
         notes=payload.notes,
     )
@@ -121,9 +133,11 @@ def update_payroll_entry(
     db: Session, entry: PayrollEntry, payload: PayrollEntryUpdate, actor: User | None = None
 ) -> PayrollEntry:
     entry.base_compensation = payload.base_compensation
+    entry.bonus = payload.bonus
+    entry.holiday_compensation = payload.holiday_compensation
     entry.commission_amount = payload.commission_amount
     entry.adjustment = payload.adjustment
-    entry.final_amount = payload.base_compensation + payload.commission_amount + payload.adjustment
+    entry.final_amount = _final_amount(payload)
     entry.currency = payload.currency
     entry.notes = payload.notes
 

@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.models import (
     BankAccount,
     BankTransaction,
+    Employee,
     Expense,
     MiscIncome,
     PayrollEntry,
@@ -62,7 +63,8 @@ def list_payroll_entries_detailed(db: Session, month: str | None = None) -> list
     statement = (
         select(PayrollEntry)
         .options(
-            selectinload(PayrollEntry.employee),
+            selectinload(PayrollEntry.employee).selectinload(Employee.designation),
+            selectinload(PayrollEntry.employee).selectinload(Employee.identifiers),
             selectinload(PayrollEntry.bank_transaction),
         )
         .order_by(PayrollEntry.month.desc(), PayrollEntry.id)

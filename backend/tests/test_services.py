@@ -575,6 +575,26 @@ def test_create_expense_creates_linked_bank_debit(db_session: Session) -> None:
     assert bank_account_balance(account) == 90_000_00
 
 
+def test_create_expense_stores_label(db_session: Session) -> None:
+    account = _create_bank_account(db_session, opening_balance=100_000_00)
+
+    expense = create_expense(
+        db_session,
+        ExpenseCreate(
+            title="AWS bill",
+            category="Infrastructure",
+            label="Client hosting",
+            amount=10_000_00,
+            expense_type="ONE_TIME",
+            date=date(2026, 1, 10),
+            bank_account_id=account.id,
+        ),
+        account,
+    )
+
+    assert expense.label == "Client hosting"
+
+
 def test_create_expense_rejects_currency_mismatch(db_session: Session) -> None:
     account = _create_bank_account(db_session, currency="USD")
 
@@ -871,6 +891,41 @@ def test_build_finance_overview_reconciles_to_zero_when_fully_linked(db_session:
     assert overview.bank_balance == 120_000_00
     assert overview.net_position == 120_000_00
     assert overview.unreconciled_amount == 0
+
+
+def test_build_finance_overview_for_month_only_counts_that_month(db_session: Session) -> None:
+    account = _create_bank_account(db_session, opening_balance=0)
+    for amount, expense_date in [(10_000_00, date(2026, 1, 16)), (4_000_00, date(2026, 2, 3))]:
+        create_expense(
+            db_session,
+            ExpenseCreate(
+                title="AWS bill",
+                category="Infrastructure",
+                amount=amount,
+                expense_type="ONE_TIME",
+                date=expense_date,
+                bank_account_id=account.id,
+            ),
+            account,
+        )
+    paid = _create_payroll_entry(db_session, final_amount=3_000_00)
+    mark_payroll_paid(
+        db_session,
+        paid,
+        PayrollMarkPaid(bank_account_id=account.id, payment_date=date(2026, 2, 28)),
+        account,
+    )
+    _create_payroll_entry(db_session, final_amount=9_000_00, month="2026-02")
+
+    february = build_finance_overview(db_session, "2026-02")
+    overall = build_finance_overview(db_session)
+
+    assert february.total_expenses == 7_000_00
+    assert february.net_position == -7_000_00
+    assert {row.date for row in february.recent_transactions} == {date(2026, 2, 3), date(2026, 2, 28)}
+    assert february.bank_balance == overall.bank_balance == -17_000_00
+    assert february.unreconciled_amount == overall.unreconciled_amount == 0
+    assert overall.total_expenses == 17_000_00
 
 
 def test_build_finance_overview_flags_unreconciled_manual_bank_activity(db_session: Session) -> None:

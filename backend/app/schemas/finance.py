@@ -9,6 +9,7 @@ from app.schemas.common import ApiModel
 class ExpenseBase(ApiModel):
     title: str = Field(min_length=1, max_length=160)
     category: str = Field(min_length=1, max_length=100)
+    label: str | None = Field(default=None, max_length=100)
     amount: int = Field(gt=0)
     currency: str = Field(default="PKR", min_length=3, max_length=3)
     expense_type: ExpenseType
@@ -20,6 +21,18 @@ class ExpenseBase(ApiModel):
     @classmethod
     def uppercase_currency(cls, value: str) -> str:
         return value.upper()
+
+    @field_validator("category", mode="before")
+    @classmethod
+    def strip_category(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
+
+    @field_validator("label", mode="before")
+    @classmethod
+    def normalize_label(cls, value: object) -> object:
+        if isinstance(value, str):
+            return value.strip() or None
+        return value
 
     @model_validator(mode="after")
     def validate_frequency(self) -> "ExpenseBase":

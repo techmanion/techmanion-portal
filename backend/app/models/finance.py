@@ -26,6 +26,7 @@ class Expense(TimestampMixin, Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(160))
     category: Mapped[str] = mapped_column(String(100))
+    label: Mapped[str | None] = mapped_column(String(100), nullable=True)
     amount: Mapped[int] = mapped_column(BigInteger)
     currency: Mapped[str] = mapped_column(String(3), default="PKR")
     expense_type: Mapped[ExpenseType] = mapped_column(SqlEnum(ExpenseType))

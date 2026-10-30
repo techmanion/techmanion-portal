@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 
 from app.api.dependencies import CurrentUser, DbSession
 from app.core.errors import get_or_404
@@ -97,12 +97,18 @@ def serialize_bank_account(account: BankAccount) -> BankAccountOut:
 
 
 def serialize_payroll_entry(entry: PayrollEntry) -> PayrollEntryOut:
+    identifier = entry.employee.current_identifier
     return PayrollEntryOut(
         id=entry.id,
         employee_id=entry.employee_id,
         employee_name=entry.employee.full_name,
+        employee_code=identifier.code if identifier else None,
+        designation_name=entry.employee.designation.name,
+        employee_type=entry.employee.employee_type,
         month=entry.month,
         base_compensation=entry.base_compensation,
+        bonus=entry.bonus,
+        holiday_compensation=entry.holiday_compensation,
         commission_amount=entry.commission_amount,
         adjustment=entry.adjustment,
         final_amount=entry.final_amount,
@@ -121,6 +127,7 @@ def serialize_expense(expense: Expense) -> ExpenseOut:
         id=expense.id,
         title=expense.title,
         category=expense.category,
+        label=expense.label,
         amount=expense.amount,
         currency=expense.currency,
         expense_type=expense.expense_type,
@@ -148,8 +155,12 @@ def serialize_misc_income(misc_income: MiscIncome) -> MiscIncomeOut:
 
 
 @router.get("/overview", response_model=FinanceOverviewOut)
-def get_finance_overview(db: DbSession, _: CurrentUser) -> FinanceOverviewOut:
-    return build_finance_overview(db)
+def get_finance_overview(
+    db: DbSession,
+    _: CurrentUser,
+    month: str | None = Query(default=None, pattern=r"^\d{4}-(0[1-9]|1[0-2])$"),
+) -> FinanceOverviewOut:
+    return build_finance_overview(db, month)
 
 
 @router.get("/income", response_model=list[IncomeOut])

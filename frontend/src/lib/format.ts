@@ -6,6 +6,17 @@ export function formatMoney(amount: number, currency = "PKR"): string {
   }).format(amount / 100);
 }
 
+/** Total per currency, since amounts in different currencies can't be added together. */
+export function formatCurrencyTotals(rows: { amount: number; currency: string }[]): string {
+  const totals = new Map<string, number>();
+  for (const row of rows) totals.set(row.currency, (totals.get(row.currency) ?? 0) + row.amount);
+  if (!totals.size) return formatMoney(0);
+  return [...totals.entries()]
+    .sort(([a], [b]) => (a === "PKR" ? -1 : b === "PKR" ? 1 : a.localeCompare(b)))
+    .map(([currency, amount]) => formatMoney(amount, currency))
+    .join(" · ");
+}
+
 export function formatDate(value?: string): string {
   if (!value) return "—";
   return new Intl.DateTimeFormat("en-PK", {
@@ -13,6 +24,17 @@ export function formatDate(value?: string): string {
     month: "short",
     year: "numeric",
   }).format(new Date(`${value.slice(0, 10)}T00:00:00`));
+}
+
+export function formatMonth(month: string): string {
+  return new Intl.DateTimeFormat("en", { month: "long", year: "numeric" }).format(
+    new Date(`${month}-01T00:00:00`),
+  );
+}
+
+/** The current month as YYYY-MM in the viewer's local time. */
+export function currentMonth(now = new Date()): string {
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
 
 export function formatDateTime(value?: string): string {
