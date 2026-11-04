@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { NotInTotalsTag } from "../atoms/Badge";
 import { formatDate, formatMoney } from "../../lib/format";
 import type { FinanceIncome } from "../../types";
 import { DataTable, TableHeadRow, TableRow } from "./DataTable";
@@ -25,6 +26,7 @@ export function FinanceIncomeTable({ income }: { income: FinanceIncome[] }) {
               <Link to={`/projects/${payment.projectId}`} className="text-on-surface hover:text-primary">
                 {payment.projectName}
               </Link>
+              {payment.excludedFromTotals && <span className="block"><NotInTotalsTag /></span>}
             </td>
             <td className="px-4 text-sm text-on-surface">{payment.clientName}</td>
             <td className="px-4 text-right text-sm font-semibold text-primary">

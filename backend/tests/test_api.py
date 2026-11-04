@@ -485,6 +485,24 @@ def test_finance_overview_reconciles_to_zero(
     assert body["unreconciledAmount"] == 0
 
 
+def test_rows_paid_from_excluded_account_are_marked_excluded(
+    api_client: TestClient, executive_headers: dict[str, str]
+) -> None:
+    account = api_client.post(
+        "/admin/finance/bank-accounts",
+        json=_bank_account_payload(excludeFromTotals=True),
+        headers=executive_headers,
+    ).json()
+    assert account["excludeFromTotals"] is True
+
+    expense = api_client.post(
+        "/admin/finance/expenses",
+        json=_expense_payload(bankAccountId=account["id"]),
+        headers=executive_headers,
+    ).json()
+    assert expense["excludedFromTotals"] is True
+
+
 def test_finance_overview_rejects_invalid_month(
     api_client: TestClient, executive_headers: dict[str, str]
 ) -> None:

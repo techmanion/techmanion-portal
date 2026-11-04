@@ -1,4 +1,5 @@
 import { Icon, IconButton } from "../atoms";
+import { NotInTotalsTag } from "../atoms/Badge";
 import { formatDate, formatMoney, label } from "../../lib/format";
 import type { Expense } from "../../types";
 import { DataTable, TableHeadRow, TableRow } from "./DataTable";
@@ -21,7 +22,7 @@ export function ExpensesTable({
         {expenses.map((expense) => (
           <TableRow key={expense.id}>
             <td className="px-6 text-sm text-on-surface">{formatDate(expense.date)}</td>
-            <td className="px-4"><strong className="block text-sm font-medium text-on-surface">{expense.title}</strong>{expense.notes && <span className="mt-1 block max-w-56 truncate text-xs text-on-surface-variant">{expense.notes}</span>}</td>
+            <td className="px-4"><strong className="block text-sm font-medium text-on-surface">{expense.title}</strong>{expense.notes && <span className="mt-1 block max-w-56 truncate text-xs text-on-surface-variant">{expense.notes}</span>}{expense.excludedFromTotals && <NotInTotalsTag />}</td>
             <td className="px-4 text-sm text-on-surface">{expense.category}</td>
             <td className="px-4 text-sm text-on-surface">{expense.label || "—"}</td>
             <td className="px-4 text-sm text-on-surface">{label(expense.expenseType)}</td>

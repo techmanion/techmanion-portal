@@ -928,6 +928,89 @@ def test_build_finance_overview_for_month_only_counts_that_month(db_session: Ses
     assert overall.total_expenses == 17_000_00
 
 
+def test_build_finance_overview_ignores_excluded_account_activity(db_session: Session) -> None:
+    company = _create_bank_account(db_session, name="Company", opening_balance=100_000_00)
+    founder = _create_bank_account(
+        db_session, name="Founder", opening_balance=500_000_00, exclude_from_totals=True
+    )
+    before = build_finance_overview(db_session)
+
+    create_expense(
+        db_session,
+        ExpenseCreate(
+            title="Paid personally",
+            category="Infrastructure",
+            amount=10_000_00,
+            expense_type="ONE_TIME",
+            date=date(2026, 1, 10),
+            bank_account_id=founder.id,
+        ),
+        founder,
+    )
+    salary = _create_payroll_entry(db_session, final_amount=50_000_00)
+    mark_payroll_paid(db_session, salary, PayrollMarkPaid(bank_account_id=founder.id), founder)
+    add_bank_credit(
+        db_session,
+        founder,
+        BankTransactionCreate(date=date(2026, 1, 11), amount=5_000_00, description="Top up"),
+    )
+
+    after = build_finance_overview(db_session)
+
+    assert after.total_expenses == before.total_expenses
+    assert after.total_income == before.total_income
+    assert after.net_position == before.net_position
+    assert after.bank_balance == before.bank_balance
+    assert after.unreconciled_amount == 0
+    assert after.recent_transactions == before.recent_transactions
+    assert bank_account_balance(founder) == 445_000_00
+    assert bank_account_balance(company) == 100_000_00
+    assert all(row.is_reconciled for row in founder.transactions)
+
+
+def test_build_finance_overview_transfers_with_excluded_account_are_not_profit_or_flagged(
+    db_session: Session,
+) -> None:
+    company = _create_bank_account(db_session, name="Company", opening_balance=100_000_00)
+    founder = _create_bank_account(
+        db_session, name="Founder", opening_balance=0, exclude_from_totals=True
+    )
+    create_bank_transfer(
+        db_session,
+        company,
+        founder,
+        BankTransferCreate(
+            source_account_id=company.id,
+            destination_account_id=founder.id,
+            source_amount=30_000_00,
+            destination_amount=30_000_00,
+            date=date(2026, 1, 10),
+            description="To founder",
+        ),
+    )
+    create_bank_transfer(
+        db_session,
+        founder,
+        company,
+        BankTransferCreate(
+            source_account_id=founder.id,
+            destination_account_id=company.id,
+            source_amount=10_000_00,
+            destination_amount=10_000_00,
+            date=date(2026, 1, 12),
+            description="Back from founder",
+        ),
+    )
+
+    overview = build_finance_overview(db_session)
+
+    assert overview.bank_balance == 80_000_00
+    assert overview.total_income == 0
+    assert overview.total_expenses == 0
+    assert overview.net_position == 0
+    assert overview.unreconciled_amount == 0
+
+
 def test_build_finance_overview_flags_unreconciled_manual_bank_activity(db_session: Session) -> None:
     account = _create_bank_account(db_session, opening_balance=0)
     add_bank_credit(

@@ -36,6 +36,8 @@ export function PayrollSummary({
   paidCount,
   pendingCount,
   paidPct,
+  excludedCount,
+  excludedTotal,
 }: {
   totalCount: number;
   base: number;
@@ -47,6 +49,8 @@ export function PayrollSummary({
   paidCount: number;
   pendingCount: number;
   paidPct: number;
+  excludedCount: number;
+  excludedTotal: number;
 }) {
   return (
     <div>
@@ -71,6 +75,11 @@ export function PayrollSummary({
             <i className="size-2 rounded-full bg-outline-variant" />
             {pendingCount} Pending
           </span>
+          {excludedCount > 0 && (
+            <span>
+              {excludedCount} paid from excluded accounts ({formatMoney(excludedTotal, currency)}), not in these totals
+            </span>
+          )}
         </div>
       </div>
     </div>

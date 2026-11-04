@@ -1,4 +1,4 @@
-import { StatusChip } from "../atoms/Badge";
+import { NotInTotalsTag, StatusChip } from "../atoms/Badge";
 import { IconButton, Icon } from "../atoms";
 import { formatMoney } from "../../lib/format";
 import type { BankAccount } from "../../types";
@@ -28,7 +28,7 @@ export function BankAccountsTable({
       <tbody className="divide-y divide-outline-variant/30">
         {accounts.map((account) => (
           <TableRow key={account.id} onClick={() => onSelect(account)}>
-            <td className="px-6"><strong className="block text-sm font-medium text-on-surface">{account.name}</strong>{account.accountIdentifier && <span className="mt-1 block text-xs text-on-surface-variant">{account.accountIdentifier}</span>}</td>
+            <td className="px-6"><strong className="block text-sm font-medium text-on-surface">{account.name}</strong>{account.accountIdentifier && <span className="mt-1 block text-xs text-on-surface-variant">{account.accountIdentifier}</span>}{account.excludeFromTotals && <NotInTotalsTag />}</td>
             <td className="px-4 text-sm text-on-surface">{account.bankName}</td>
             <td className="px-4 text-sm text-on-surface">{account.currency}</td>
             <td className="px-4 text-right text-sm font-semibold text-on-surface">{formatMoney(account.balance, account.currency)}</td>

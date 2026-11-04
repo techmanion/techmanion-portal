@@ -284,6 +284,7 @@ export interface PayrollEntry {
   bankAccountId: number | null;
   bankTransactionId: number | null;
   pkrEquivalent: number | null;
+  excludedFromTotals: boolean;
 }
 
 export interface PayrollMarkPaidPayload {
@@ -308,6 +309,7 @@ export interface FinanceIncome {
   paymentMethod: string;
   reference: string | null;
   notes: string | null;
+  excludedFromTotals: boolean;
 }
 
 export interface Expense {
@@ -323,9 +325,10 @@ export interface Expense {
   notes: string | null;
   bankAccountId: number | null;
   bankTransactionId: number | null;
+  excludedFromTotals: boolean;
 }
 
-export type ExpensePayload = Omit<Expense, "id" | "bankAccountId" | "bankTransactionId"> & {
+export type ExpensePayload = Omit<Expense, "id" | "bankAccountId" | "bankTransactionId" | "excludedFromTotals"> & {
   bankAccountId: number;
   pkrEquivalent: number | null;
 };
@@ -339,9 +342,10 @@ export interface MiscIncome {
   notes: string | null;
   bankAccountId: number | null;
   bankTransactionId: number | null;
+  excludedFromTotals: boolean;
 }
 
-export type MiscIncomePayload = Omit<MiscIncome, "id" | "bankAccountId" | "bankTransactionId"> & {
+export type MiscIncomePayload = Omit<MiscIncome, "id" | "bankAccountId" | "bankTransactionId" | "excludedFromTotals"> & {
   bankAccountId: number;
   pkrEquivalent: number | null;
 };
@@ -371,6 +375,7 @@ export interface BankAccount {
   openingBalance: number;
   openingBalancePkr: number | null;
   isActive: boolean;
+  excludeFromTotals: boolean;
   accountIdentifier: string | null;
   notes: string | null;
   balance: number;

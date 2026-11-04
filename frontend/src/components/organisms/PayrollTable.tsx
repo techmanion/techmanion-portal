@@ -1,5 +1,5 @@
 import { Icon, IconButton } from "../atoms";
-import { StatusChip } from "../atoms/Badge";
+import { NotInTotalsTag, StatusChip } from "../atoms/Badge";
 import { EmployeeCell } from "../molecules/EmployeeCell";
 import { formatMoney } from "../../lib/format";
 import type { PayrollEntry } from "../../types";
@@ -39,6 +39,7 @@ export function PayrollTable({
           <TableRow key={entry.id}>
             <td className="px-6">
               <EmployeeCell name={entry.employeeName} subtitle={`Employee #${entry.employeeId}`} />
+              {entry.excludedFromTotals && <NotInTotalsTag />}
             </td>
             <td className="px-3 text-right text-sm">
               {formatMoney(entry.baseCompensation, entry.currency)}

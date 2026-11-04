@@ -3,6 +3,7 @@ import { Button, Icon, Input, Select, Textarea } from "../atoms";
 import { StatusChip } from "../atoms/Badge";
 import { EmptyState, FormDialog, FormField, MoneyInput } from "../molecules";
 import { formatDate, formatMoney } from "../../lib/format";
+import { bankAccountOptionLabel } from "../../lib/options";
 import type { BankAccount, BankTransactionPayload, BankTransferPayload } from "../../types";
 import { DataTable, TableHeadRow, TableRow } from "./DataTable";
 
@@ -194,7 +195,7 @@ function TransferDialog({
             required
           >
             {otherAccounts.map((row) => (
-              <option key={row.id} value={row.id}>{row.name} ({row.currency})</option>
+              <option key={row.id} value={row.id}>{bankAccountOptionLabel(row)}</option>
             ))}
           </Select>
         </FormField>

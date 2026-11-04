@@ -60,6 +60,7 @@ class ExpenseOut(ExpenseBase):
     id: int
     bank_account_id: int | None = None
     bank_transaction_id: int | None = None
+    excluded_from_totals: bool = False
 
 
 class MiscIncomeBase(ApiModel):
@@ -92,6 +93,7 @@ class MiscIncomeOut(MiscIncomeBase):
     id: int
     bank_account_id: int | None = None
     bank_transaction_id: int | None = None
+    excluded_from_totals: bool = False
 
 
 class IncomeOut(ApiModel):
@@ -105,6 +107,7 @@ class IncomeOut(ApiModel):
     payment_method: str
     reference: str | None = None
     notes: str | None = None
+    excluded_from_totals: bool = False
 
 
 class FinanceTransactionOut(ApiModel):
@@ -133,6 +136,7 @@ class BankAccountBase(ApiModel):
     opening_balance: int = Field(default=0, ge=0)
     opening_balance_pkr: int | None = Field(default=None, ge=0)
     is_active: bool = True
+    exclude_from_totals: bool = False
     account_identifier: str | None = Field(default=None, max_length=160)
     notes: str | None = None
 

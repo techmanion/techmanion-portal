@@ -29,7 +29,7 @@ import {
   markPayrollPaid,
 } from "../lib/api/finance";
 import { currentMonth, formatCurrencyTotals, formatMonth, label } from "../lib/format";
-import { distinctValues, EXPENSE_TYPES, PROJECT_CURRENCIES } from "../lib/options";
+import { bankAccountOptionLabel, defaultBankAccountId, distinctValues, EXPENSE_TYPES, PROJECT_CURRENCIES } from "../lib/options";
 import { useToast } from "../toast";
 import type { BankAccount, Expense, FinanceIncome, FinanceOverview, MiscIncome, PayrollEntry } from "../types";
 
@@ -161,18 +161,21 @@ export function FinancePage() {
       </Button>
     </>
   );
-  const payrollTotals = useMemo(
-    () => ({
-      base: entries.reduce((sum, row) => sum + row.baseCompensation, 0),
-      bonusAndHoliday: entries.reduce((sum, row) => sum + row.bonus + row.holidayCompensation, 0),
-      commission: entries.reduce((sum, row) => sum + row.commissionAmount, 0),
-      adjustment: entries.reduce((sum, row) => sum + row.adjustment, 0),
-      final: entries.reduce((sum, row) => sum + row.finalAmount, 0),
+  const payrollTotals = useMemo(() => {
+    const counted = entries.filter((row) => !row.excludedFromTotals);
+    const excluded = entries.filter((row) => row.excludedFromTotals);
+    return {
+      base: counted.reduce((sum, row) => sum + row.baseCompensation, 0),
+      bonusAndHoliday: counted.reduce((sum, row) => sum + row.bonus + row.holidayCompensation, 0),
+      commission: counted.reduce((sum, row) => sum + row.commissionAmount, 0),
+      adjustment: counted.reduce((sum, row) => sum + row.adjustment, 0),
+      final: counted.reduce((sum, row) => sum + row.finalAmount, 0),
+      excludedCount: excluded.length,
+      excludedTotal: excluded.reduce((sum, row) => sum + row.finalAmount, 0),
       paidCount: entries.filter((row) => row.status === "PAID").length,
       pendingCount: entries.filter((row) => row.status === "PENDING").length,
-    }),
-    [entries],
-  );
+    };
+  }, [entries]);
   const currency = entries[0]?.currency ?? "PKR";
   const paidPct = entries.length ? (payrollTotals.paidCount / entries.length) * 100 : 0;
   const monthLabel = formatMonth(month);
@@ -191,7 +194,7 @@ export function FinancePage() {
 
   function openMarkPaid(entry: PayrollEntry) {
     setPayTarget(entry);
-    setPayBankAccountId(bankAccounts[0]?.id ?? "");
+    setPayBankAccountId(defaultBankAccountId(bankAccounts) ?? "");
     setPayPkrEquivalent(0);
     setPayError("");
   }
@@ -220,7 +223,7 @@ export function FinancePage() {
 
   function openBackfillBank(entry: PayrollEntry) {
     setBackfillTarget(entry);
-    setBackfillBankAccountId(bankAccounts[0]?.id ?? "");
+    setBackfillBankAccountId(defaultBankAccountId(bankAccounts) ?? "");
     setBackfillPkrEquivalent(0);
     setBackfillError("");
   }
@@ -378,7 +381,7 @@ export function FinancePage() {
             </FilterToolbar>
           </div>
           {visibleExpenses.length ? <ExpensesTable expenses={visibleExpenses} onEdit={(expense) => navigate(`/finance/expenses/${expense.id}/edit`)} onCopy={(expense) => navigate("/finance/expenses/new", { state: { copyFrom: expense } })} onDelete={setConfirmExpense} /> : <EmptyState>{expenses.length ? "No expenses match these filters." : "No expenses recorded yet."}</EmptyState>}
-          <footer className="flex flex-wrap items-center justify-between gap-4 border-t border-outline-variant/30 bg-surface-container-highest/20 px-7 py-4 text-sm text-on-surface-variant"><span>Showing {visibleExpenses.length} of {expenses.length} expenses</span><span>Total: <strong className="font-semibold text-on-surface">{formatCurrencyTotals(visibleExpenses)}</strong></span></footer>
+          <footer className="flex flex-wrap items-center justify-between gap-4 border-t border-outline-variant/30 bg-surface-container-highest/20 px-7 py-4 text-sm text-on-surface-variant"><span>Showing {visibleExpenses.length} of {expenses.length} expenses</span><span>{visibleExpenses.some((row) => row.excludedFromTotals) && <span className="mr-3">Not in totals: {formatCurrencyTotals(visibleExpenses.filter((row) => row.excludedFromTotals))}</span>}Total: <strong className="font-semibold text-on-surface">{formatCurrencyTotals(visibleExpenses.filter((row) => !row.excludedFromTotals))}</strong></span></footer>
         </section>
       )}
       {!loading && activeTab === "Bank Accounts" && (
@@ -396,7 +399,7 @@ export function FinancePage() {
       )}
       {!loading && activeTab === "Payroll" && (
         <div className="space-y-6">
-          <section className="surface-panel p-6"><PayrollSummary totalCount={entries.length} base={payrollTotals.base} bonusAndHoliday={payrollTotals.bonusAndHoliday} commission={payrollTotals.commission} adjustment={payrollTotals.adjustment} final={payrollTotals.final} currency={currency} paidCount={payrollTotals.paidCount} pendingCount={payrollTotals.pendingCount} paidPct={paidPct} /></section>
+          <section className="surface-panel p-6"><PayrollSummary totalCount={entries.length} base={payrollTotals.base} bonusAndHoliday={payrollTotals.bonusAndHoliday} commission={payrollTotals.commission} adjustment={payrollTotals.adjustment} final={payrollTotals.final} currency={currency} paidCount={payrollTotals.paidCount} pendingCount={payrollTotals.pendingCount} paidPct={paidPct} excludedCount={payrollTotals.excludedCount} excludedTotal={payrollTotals.excludedTotal} /></section>
           <section className="surface-panel overflow-hidden">
             <div className="bg-surface-container-high/30 px-6 py-4"><FilterToolbar><SearchInput value={search} onChange={setSearch} placeholder="Search employees..." className="lg:max-w-[380px]" /><FilterSelect value={status} onChange={setStatus} labelText="Status" placeholder="Filter by status"><option value="PENDING">Pending</option><option value="PAID">Paid</option></FilterSelect>{(search || status) && <Button variant="ghost" size="sm" onClick={() => clearSearchParams(["search", "status"])}><Icon className="text-[16px]">filter_alt_off</Icon>Clear filters</Button>}</FilterToolbar></div>
             {entries.length ? <PayrollTable entries={visiblePayroll} onMarkPaid={openMarkPaid} onBackfillBank={openBackfillBank} onPrintSlip={(entry) => window.open(`/finance/payroll/${entry.id}/slip?month=${entry.month}`, "_blank")} onEdit={(entry) => navigate(`/finance/payroll/${entry.id}/edit?month=${month}`)} onDelete={setConfirmPayroll} /> : <EmptyState>No payroll entries for this month. Generate payroll or add an entry.</EmptyState>}
@@ -425,7 +428,7 @@ export function FinancePage() {
         onClose={() => setPayTarget(null)}
       >
         <div className="grid gap-4">
-          <FormField label="Source bank account">
+          <FormField label="Source bank account" hint={payAccount?.excludeFromTotals ? "This salary won't count towards company expenses or net." : undefined}>
             <Select
               value={payBankAccountId}
               onChange={(event) => setPayBankAccountId(Number(event.target.value))}
@@ -433,7 +436,7 @@ export function FinancePage() {
             >
               <option value="" disabled hidden>Select bank account</option>
               {bankAccounts.map((account) => (
-                <option key={account.id} value={account.id}>{account.name} ({account.currency})</option>
+                <option key={account.id} value={account.id}>{bankAccountOptionLabel(account)}</option>
               ))}
             </Select>
           </FormField>
@@ -471,7 +474,7 @@ export function FinancePage() {
             >
               <option value="" disabled hidden>Select bank account</option>
               {bankAccounts.map((account) => (
-                <option key={account.id} value={account.id}>{account.name} ({account.currency})</option>
+                <option key={account.id} value={account.id}>{bankAccountOptionLabel(account)}</option>
               ))}
             </Select>
           </FormField>
