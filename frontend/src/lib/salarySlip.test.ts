@@ -21,6 +21,7 @@ const entry = (overrides: Partial<PayrollEntry> = {}): PayrollEntry => ({
   bankAccountId: null,
   bankTransactionId: null,
   pkrEquivalent: null,
+  excludedFromTotals: false,
   ...overrides,
 });
 

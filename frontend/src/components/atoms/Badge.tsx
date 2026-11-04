@@ -1,3 +1,11 @@
+export function NotInTotalsTag() {
+  return (
+    <span className="mt-1 inline-flex rounded-full bg-tertiary/10 px-2 py-0.5 text-[11px] font-medium text-tertiary">
+      Not in totals
+    </span>
+  );
+}
+
 export function StatusChip({ value }: { value: string }) {
   const tone =
     value === "ACTIVE" ||

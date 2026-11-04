@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.models import (
     BankAccount,
+    BankTransaction,
     Expense,
     MiscIncome,
     PayrollEntry,
@@ -292,12 +293,21 @@ def build_finance_overview(db: Session, month: str | None = None) -> FinanceOver
 
     The bank balance and reconciliation always cover all time: a balance is a point-in-time
     figure, and reconciliation compares the whole ledger against opening balances.
+    Accounts excluded from totals, and anything recorded against them, are left out entirely.
     """
-    income_rows = list_project_payment_rows(db)
-    misc_incomes = list_misc_incomes(db)
-    expenses = list_expenses(db)
-    payroll_entries = list_payroll_entries_detailed(db)
-    bank_accounts = list_bank_accounts(db)
+    all_accounts = list_bank_accounts(db)
+    excluded_ids = {account.id for account in all_accounts if account.exclude_from_totals}
+    bank_accounts = [account for account in all_accounts if account.id not in excluded_ids]
+
+    def is_counted(transaction: BankTransaction | None) -> bool:
+        return transaction is None or transaction.bank_account_id not in excluded_ids
+
+    income_rows = [row for row in list_project_payment_rows(db) if is_counted(row[0].bank_transaction)]
+    misc_incomes = [row for row in list_misc_incomes(db) if is_counted(row.bank_transaction)]
+    expenses = [row for row in list_expenses(db) if is_counted(row.bank_transaction)]
+    payroll_entries = [
+        row for row in list_payroll_entries_detailed(db) if is_counted(row.bank_transaction)
+    ]
     paid_payroll_entries = [
         entry
         for entry in payroll_entries
@@ -327,7 +337,15 @@ def build_finance_overview(db: Session, month: str | None = None) -> FinanceOver
     net_position = total_income - total_expenses
     # Opening balances are capital contributed to the business, not income, so they're
     # excluded from the bank activity reconciled against tracked income/expenses.
-    net_bank_activity = bank_balance - opening_capital
+    # Transfers with excluded accounts are money entering or leaving the company, not income
+    # or expenses, so they're excluded from that bank activity too.
+    net_excluded_transfers = sum(
+        row.pkr_equivalent if row.transaction_type == TransactionType.CREDIT else -row.pkr_equivalent
+        for account in bank_accounts
+        for row in account.transactions
+        if row.counterparty_account_id in excluded_ids
+    )
+    net_bank_activity = bank_balance - opening_capital - net_excluded_transfers
     unreconciled_amount = overall_income - overall_expenses - net_bank_activity
 
     transactions = [

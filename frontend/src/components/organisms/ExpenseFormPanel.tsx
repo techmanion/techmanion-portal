@@ -3,7 +3,7 @@ import { Button, Input, Select, Textarea } from "../atoms";
 import { Icon } from "../atoms/Icon";
 import { Combobox, FormField, MoneyInput } from "../molecules";
 import { label } from "../../lib/format";
-import { EXPENSE_TYPES } from "../../lib/options";
+import { bankAccountOptionLabel, defaultBankAccountId, EXPENSE_TYPES } from "../../lib/options";
 import type { BankAccount, Expense, ExpensePayload, ExpenseType } from "../../types";
 
 const emptyExpense = (defaultBankAccountId: number | null): ExpensePayload => ({
@@ -64,12 +64,12 @@ export function ExpenseFormPanel({
         frequency: expense.frequency,
         date: expense.date,
         notes: expense.notes,
-        bankAccountId: expense.bankAccountId ?? bankAccounts[0]?.id ?? 0,
+        bankAccountId: expense.bankAccountId ?? defaultBankAccountId(bankAccounts) ?? 0,
         pkrEquivalent: null,
       };
     }
-    if (copyFrom) return expenseToPayload(copyFrom, bankAccounts[0]?.id ?? null);
-    return emptyExpense(bankAccounts[0]?.id ?? null);
+    if (copyFrom) return expenseToPayload(copyFrom, defaultBankAccountId(bankAccounts));
+    return emptyExpense(defaultBankAccountId(bankAccounts));
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -142,7 +142,7 @@ export function ExpenseFormPanel({
             <option value="" disabled hidden>Select bank account</option>
             {bankAccounts.map((account) => (
               <option key={account.id} value={account.id}>
-                {account.name} ({account.currency})
+                {bankAccountOptionLabel(account)}
               </option>
             ))}
           </Select>

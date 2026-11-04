@@ -59,6 +59,10 @@ from app.services import (
 router = APIRouter(prefix="/finance", tags=["finance"])
 
 
+def is_excluded_from_totals(transaction: BankTransaction | None) -> bool:
+    return transaction is not None and transaction.bank_account.exclude_from_totals
+
+
 def serialize_bank_transaction(transaction: BankTransaction) -> BankTransactionOut:
     return BankTransactionOut(
         id=transaction.id,
@@ -89,6 +93,7 @@ def serialize_bank_account(account: BankAccount) -> BankAccountOut:
         opening_balance=account.opening_balance,
         opening_balance_pkr=account.opening_balance_pkr,
         is_active=account.is_active,
+        exclude_from_totals=account.exclude_from_totals,
         account_identifier=account.account_identifier,
         notes=account.notes,
         balance=bank_account_balance(account),
@@ -119,6 +124,7 @@ def serialize_payroll_entry(entry: PayrollEntry) -> PayrollEntryOut:
         bank_account_id=entry.bank_transaction.bank_account_id if entry.bank_transaction else None,
         bank_transaction_id=entry.bank_transaction_id,
         pkr_equivalent=entry.bank_transaction.pkr_equivalent if entry.bank_transaction else None,
+        excluded_from_totals=is_excluded_from_totals(entry.bank_transaction),
     )
 
 
@@ -136,6 +142,7 @@ def serialize_expense(expense: Expense) -> ExpenseOut:
         notes=expense.notes,
         bank_account_id=expense.bank_transaction.bank_account_id if expense.bank_transaction else None,
         bank_transaction_id=expense.bank_transaction_id,
+        excluded_from_totals=is_excluded_from_totals(expense.bank_transaction),
     )
 
 
@@ -151,6 +158,7 @@ def serialize_misc_income(misc_income: MiscIncome) -> MiscIncomeOut:
             misc_income.bank_transaction.bank_account_id if misc_income.bank_transaction else None
         ),
         bank_transaction_id=misc_income.bank_transaction_id,
+        excluded_from_totals=is_excluded_from_totals(misc_income.bank_transaction),
     )
 
 
@@ -177,6 +185,7 @@ def list_income(db: DbSession, _: CurrentUser) -> list[IncomeOut]:
             payment_method=payment.method,
             reference=payment.reference,
             notes=payment.notes,
+            excluded_from_totals=is_excluded_from_totals(payment.bank_transaction),
         )
         for payment, project in list_project_payment_rows(db)
     ]

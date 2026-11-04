@@ -60,6 +60,7 @@ class PayrollEntryOut(ApiModel):
     bank_account_id: int | None = None
     bank_transaction_id: int | None = None
     pkr_equivalent: int | None = None
+    excluded_from_totals: bool = False
 
 
 class PayrollMarkPaid(ApiModel):

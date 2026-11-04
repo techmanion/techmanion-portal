@@ -4,6 +4,7 @@ import { StatusChip } from "../atoms/Badge";
 import { SectionHeading } from "../atoms/Typography";
 import { EmptyState, FormDialog, FormField, MoneyInput } from "../molecules";
 import { formatDate, formatMoney } from "../../lib/format";
+import { bankAccountOptionLabel, defaultBankAccountId } from "../../lib/options";
 import type { BankAccount, Project, ProjectPaymentPayload } from "../../types";
 import { DataTable, TableHeadRow, TableRow } from "./DataTable";
 
@@ -34,7 +35,7 @@ export function ProjectPaymentsPanel({
     () => bankAccounts.filter((account) => account.currency === project.currency),
     [bankAccounts, project.currency],
   );
-  const [form, setForm] = useState(() => emptyPayment(eligibleAccounts[0]?.id ?? null));
+  const [form, setForm] = useState(() => emptyPayment(defaultBankAccountId(eligibleAccounts)));
   const [dialogOpen, setDialogOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -47,7 +48,7 @@ export function ProjectPaymentsPanel({
     setError("");
     try {
       await onAdd(form);
-      setForm(emptyPayment(eligibleAccounts[0]?.id ?? null));
+      setForm(emptyPayment(defaultBankAccountId(eligibleAccounts)));
       setDialogOpen(false);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Payment could not be added.");
@@ -88,7 +89,7 @@ export function ProjectPaymentsPanel({
         submitDisabled={form.amount <= 0 || !form.bankAccountId}
         error={error}
         onSubmit={submit}
-        onClose={() => { setDialogOpen(false); setError(""); setForm(emptyPayment(eligibleAccounts[0]?.id ?? null)); }}
+        onClose={() => { setDialogOpen(false); setError(""); setForm(emptyPayment(defaultBankAccountId(eligibleAccounts))); }}
       >
         <div className="grid gap-4 md:grid-cols-2">
           <FormField label="Amount" hint={project.currency}>
@@ -105,7 +106,7 @@ export function ProjectPaymentsPanel({
             >
               <option value="" disabled hidden>Select bank account</option>
               {eligibleAccounts.map((account) => (
-                <option key={account.id} value={account.id}>{account.name}</option>
+                <option key={account.id} value={account.id}>{bankAccountOptionLabel(account)}</option>
               ))}
             </Select>
           </FormField>

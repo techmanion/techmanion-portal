@@ -81,6 +81,9 @@ class BankAccount(TimestampMixin, Base):
     opening_balance: Mapped[int] = mapped_column(BigInteger, default=0)
     opening_balance_pkr: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    # Money that isn't the company's, such as a founder's account: its balance and anything
+    # recorded against it stay out of company totals and reconciliation.
+    exclude_from_totals: Mapped[bool] = mapped_column(Boolean, default=False)
     account_identifier: Mapped[str | None] = mapped_column(String(160), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
 
@@ -131,5 +134,5 @@ class BankTransaction(TimestampMixin, Base):
     def is_reconciled(self) -> bool:
         """A transaction is reconciled once it's explained by a tracked income,
         expense, payroll payment, or transfer leg — as opposed to a manual credit or
-        debit recorded without a linked source."""
-        return self.source != TransactionSource.MANUAL
+        debit recorded without a linked source. Excluded accounts aren't reconciled at all."""
+        return self.source != TransactionSource.MANUAL or self.bank_account.exclude_from_totals

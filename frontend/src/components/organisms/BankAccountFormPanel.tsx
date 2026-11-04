@@ -11,6 +11,7 @@ const emptyAccount = (): BankAccountPayload => ({
   openingBalance: 0,
   openingBalancePkr: 0,
   isActive: true,
+  excludeFromTotals: false,
   accountIdentifier: null,
   notes: null,
 });
@@ -33,6 +34,7 @@ export function BankAccountFormPanel({
           openingBalance: account.openingBalance,
           openingBalancePkr: account.openingBalancePkr,
           isActive: account.isActive,
+          excludeFromTotals: account.excludeFromTotals,
           accountIdentifier: account.accountIdentifier,
           notes: account.notes,
         }
@@ -113,6 +115,18 @@ export function BankAccountFormPanel({
           >
             <option value="ACTIVE">Active</option>
             <option value="INACTIVE">Inactive</option>
+          </Select>
+        </FormField>
+        <FormField
+          label="Company totals"
+          hint={form.excludeFromTotals ? "This account and everything recorded against it, including past entries, stay out of income, expenses, net, and bank balance on the Overview." : "Counts towards income, expenses, net, and bank balance on the Overview."}
+        >
+          <Select
+            value={form.excludeFromTotals ? "EXCLUDED" : "INCLUDED"}
+            onChange={(event) => set("excludeFromTotals", event.target.value === "EXCLUDED")}
+          >
+            <option value="INCLUDED">Include in totals</option>
+            <option value="EXCLUDED">Exclude from totals</option>
           </Select>
         </FormField>
         <FormField label="Notes" className="md:col-span-2">

@@ -1,4 +1,5 @@
 import type {
+  BankAccount,
   CandidateStage,
   CompensationType,
   Currency,
@@ -31,6 +32,15 @@ export const COMPENSATION_TYPES: CompensationType[] = [
   "PROJECT",
   "COMMISSION",
 ];
+
+/** The first account to offer by default; excluded accounts must be picked on purpose. */
+export function defaultBankAccountId(accounts: BankAccount[]): number | null {
+  return accounts.find((account) => !account.excludeFromTotals)?.id ?? null;
+}
+
+export function bankAccountOptionLabel(account: BankAccount): string {
+  return `${account.name} (${account.currency})${account.excludeFromTotals ? " · Not in totals" : ""}`;
+}
 
 /** Unique non-empty values, treating different capitalisations as the same value. */
 export function distinctValues(values: (string | null)[]): string[] {

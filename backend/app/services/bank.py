@@ -41,6 +41,7 @@ def update_bank_account(
             detail="Bank account currency cannot be changed once transactions exist.",
         )
     was_active = account.is_active
+    was_excluded = account.exclude_from_totals
     for key, value in payload.model_dump().items():
         setattr(account, key, value)
 
@@ -50,12 +51,16 @@ def update_bank_account(
         action, verb = "ACTIVATE", "Activated"
     else:
         action, verb = "UPDATE", "Updated"
+    description = f"{verb} bank account {account.name}"
+    if was_excluded != account.exclude_from_totals:
+        change = "excluded from" if account.exclude_from_totals else "included in"
+        description += f" and {change} company totals"
     log_activity(
         db,
         "BankAccount",
         account.id,
         action,
-        f"{verb} bank account {account.name}",
+        description,
         performed_by_user_id=_actor_id(actor),
     )
     db.commit()

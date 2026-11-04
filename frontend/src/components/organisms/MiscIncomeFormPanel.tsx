@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Button, Input, Select, Textarea } from "../atoms";
 import { Icon } from "../atoms/Icon";
 import { FormField, MoneyInput } from "../molecules";
+import { bankAccountOptionLabel, defaultBankAccountId } from "../../lib/options";
 import type { BankAccount, MiscIncome, MiscIncomePayload } from "../../types";
 
 const emptyMiscIncome = (defaultBankAccountId: number | null): MiscIncomePayload => ({
@@ -49,12 +50,12 @@ export function MiscIncomeFormPanel({
         currency: miscIncome.currency,
         date: miscIncome.date,
         notes: miscIncome.notes,
-        bankAccountId: miscIncome.bankAccountId ?? bankAccounts[0]?.id ?? 0,
+        bankAccountId: miscIncome.bankAccountId ?? defaultBankAccountId(bankAccounts) ?? 0,
         pkrEquivalent: null,
       };
     }
-    if (copyFrom) return miscIncomeToPayload(copyFrom, bankAccounts[0]?.id ?? null);
-    return emptyMiscIncome(bankAccounts[0]?.id ?? null);
+    if (copyFrom) return miscIncomeToPayload(copyFrom, defaultBankAccountId(bankAccounts));
+    return emptyMiscIncome(defaultBankAccountId(bankAccounts));
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -118,7 +119,7 @@ export function MiscIncomeFormPanel({
             <option value="" disabled hidden>Select bank account</option>
             {bankAccounts.map((account) => (
               <option key={account.id} value={account.id}>
-                {account.name} ({account.currency})
+                {bankAccountOptionLabel(account)}
               </option>
             ))}
           </Select>

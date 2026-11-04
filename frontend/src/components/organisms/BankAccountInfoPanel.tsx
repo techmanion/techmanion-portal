@@ -26,6 +26,7 @@ export function BankAccountInfoPanel({ account }: { account: BankAccount }) {
         <Detail labelText="Bank / provider">{account.bankName}</Detail>
         <Detail labelText="Account identifier">{account.accountIdentifier || "—"}</Detail>
         <Detail labelText="Status">{account.isActive ? "Active" : "Inactive"}</Detail>
+        <Detail labelText="Company totals">{account.excludeFromTotals ? "Excluded" : "Included"}</Detail>
         {account.notes && (
           <div className="md:col-span-3">
             <dt className="mb-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-on-surface-variant/70">
